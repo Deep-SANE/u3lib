@@ -1,0 +1,50 @@
+Here are some cases for testing that you requested. 
+Time elapsed is measured on Macbook Air M1. (s: second, m: minute, h: hour)
+
+lambda and mu are given in ()
+n13, n23, n33 are given in []
+lambda = n13-n23 and mu = n23-n33
+
+Program U3SO3_to_U3U2U1.cpp
+	(100,50), kaapa_max = 26, L = 62 		===> 68.966s
+	(50,50),  kappa_max = 26, L = 50 		===> 3.848s
+
+Program U3U2U1xU3U2U1.cpp
+	[10,5,0] x [20,2,0] 	-> [23,2,0]     ===> 64.234s
+	[10,5,0] x [20,2,0] 	-> [24,4,0]		===> 194.304s
+	[10,5,0] x [20,2,0]		-> [30,7,0]		===> Segmentation fault
+
+Program U3SO3xU3SO3.cpp
+	(10,0) x (0,10)			-> (10,10)		===> 3.167m
+	(10,5) x (5,0) 			-> (14,4)		===> 13.821m
+	(5,5)  x (18,2)			-> (21,2)		===> >2h
+
+Program U3_U6Coeffs.cpp
+	u3a: [10,5,0]; u3b: [10,5,0]; u3c: [10,10,0]; u3ab: [10,5,0]; u3bc: [10,10,0]; u3abc: [16,7,0] 		===> 68.472s
+	u3a: [10,5,0]; u3b: [20,2,0]; u3c: [10,5,0]; u3ab: [22,3,0]; u3bc: [20,5,0]; u3abc: [24,4,0] 		===> 129.035s
+	u3a: [15,5,0]; u3b: [20,2,0]; u3c: [10,5,0]; u3ab: [25,5,0]; u3bc: [24,4,0]; u3abc: [26,4,0] 		===> 22.417m
+
+Program U3_Z6Coeffs.cpp
+	It should be comparable to U3_U6Coeffs.cpp
+
+Program U3_U9Coeffs.cpp
+	u3a: [10,2,0]; u3b: [10,5,0]; u3c: [10,10,0]; u3d: [12,2,0]; u3ab: [10,8,0]; u3ac: [10,4,0]; u3bd: [10,4,0]; u3cd: [8,5,0]; u3abcd: [12,10,0]		===> 16.493m
+
+Program U3generatorsRME.cpp (compute RME's of Q, i.e., option==1)
+	(100,50), L' (bra) = 100, L (ket) = 98		===> 7.259s
+	(100,50), L' (bra) = 62, L (ket) = 60		===> 105.172s
+
+
+------------------------------------------------------------------------------------------------
+
+Recommended improvements:
+
+1. utils/inverseSolver.h: I set the sparsity boundary based on my experience with the nullspace solver. I have not actually tested what a good sparsity should be to switch from dense-matrix solver to sparse-matrix solver.
+
+2. utils/nullspaceSolver.h: I set the sparsity boundary based on my experience. However, I remember from our conversation during last summer that sparsity should be much higher for a matrix to be consider as sparse. 
+
+3. The scheme for searching Gelfand states (u3::gelfand) is currently done by going through arrays and using "if" statement to check. It would be great to have a faster searching method. Perhaps fast lookup table will be useful here.
+
+4. Similarly for searching canonical coupling coefficients (U3U2U1xU3U2U1).
+
+5. Recommendations 3 and 4 are particularly important for the algorithm implemented in U3SO3xU3SO3.h, which is pretty slow at the moment going to high (lambda,mu) values. 

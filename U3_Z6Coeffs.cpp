@@ -1,0 +1,125 @@
+#include <iostream>
+#include <iomanip>
+#include <vector>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <chrono>
+
+#include "src/U3basis.h"
+#include "src/decomposition.h"
+#include "src/U3_U6Z6Coeffs.h"
+
+
+int main() {
+
+	std::cout << "This program compute Z6-recoupling coefficients of three U(3) irreps" << std::endl;
+
+	int n13a, n23a, n33a;
+	std::cout << "Please enter the I. irrep [n13a,n23a,n33a]: ";
+	std::cin >> n13a >> n23a >> n33a;
+	u3::irrep u3a(n13a,n23a,n33a);
+	if (n33a!=0){
+		u3a.normalize();
+		std::cout << "Your irrep is normalized to " << u3a << std::endl;
+	}
+
+	int n13b, n23b, n33b;
+	std::cout << "Please enter the II. irrep [n13b,n23b,n33b]: ";
+	std::cin >> n13b >> n23b >> n33b;
+	u3::irrep u3b(n13b,n23b,n33b);
+	if (n33b!=0){
+		u3b.normalize();
+		std::cout << "Your irrep is normalized to " << u3b << std::endl;
+	}
+
+	int n13c, n23c, n33c;
+	std::cout << "Please enter the III. irrep [n13c,n23c,n33c]: ";
+	std::cin >> n13c >> n23c >> n33c;
+	u3::irrep u3c(n13c,n23c,n33c);
+	if (n33c!=0){
+		u3c.normalize();
+		std::cout << "Your irrep is normalized to " << u3c << std::endl;
+	}
+
+	//couple the I. and II. irreps
+	std::vector<int> rhomaxsab;
+	std::vector<u3::irrep> u3ab = u3::decomposition(u3a,u3b,rhomaxsab);
+
+	std::cout << "The normalized coupled irreps of the I and II are: " << std::endl;
+	for(int i=0; i<u3ab.size(); i++){
+		std::cout << "(" << i << "): [" << u3ab[i].n13-u3ab[i].n33 << "," << u3ab[i].n23-u3ab[i].n33 << ",0] \t rho = 1 ... " << rhomaxsab[i] << std::endl;
+	}
+
+	//couple the I. and III. irreps
+	std::vector<int> rhomaxsac;
+	std::vector<u3::irrep> u3ac = u3::decomposition(u3a,u3c,rhomaxsac);
+
+	std::cout << "The normalized coupled irreps of the I and III are: " << std::endl;
+	for(int i=0; i<u3ac.size(); i++){
+		std::cout << "(" << i << "): [" << u3ac[i].n13-u3ac[i].n33 << "," << u3ac[i].n23-u3ac[i].n33 << ",0] \t rho = 1 ... " << rhomaxsac[i] << std::endl;
+	}
+
+	int i_ab, i_ac, i_abc;
+	std::cout << "Please enter the index of the I-II coupled irrep you are interested: ";
+	std::cin >> i_ab;
+	std::cout << "Please enter the index of the I-III coupled irrep you are interested: ";
+	std::cin >> i_ac;
+
+	//couple the three irreps in scheme (I-II)-III
+	std::vector<int> rhomaxsab_c;
+	std::vector<u3::irrep> u3ab_c = u3::decomposition(u3ab[i_ab],u3c,rhomaxsab_c);
+
+	std::cout << "The normalized coupled irreps of the I, II and III are: " << std::endl;
+	for(int i=0; i<u3ab_c.size(); i++){
+		std::cout << "(" << i << "): [" << u3ab_c[i].n13-u3ab_c[i].n33 << "," << u3ab_c[i].n23-u3ab_c[i].n33 << ",0] \t rho = 1 ... " << rhomaxsab_c[i] << std::endl;
+	}
+	std::cout << "Please enter the indices of the I-II-III coupled irrep you are interested: ";
+	std::cin >> i_abc;
+
+	//couple the three irreps in scheme (I-III)-II
+	std::vector<int> rhomaxsac_b;
+	std::vector<u3::irrep> u3ac_b = u3::decomposition(u3ac[i_ac],u3b,rhomaxsac_b);
+
+	int flag=0;
+	for(int j=0; j<u3ac_b.size(); j++){
+		if( u3ab_c[i_abc].n13==u3ac_b[j].n13 && u3ab_c[i_abc].n23==u3ac_b[j].n23 && u3ab_c[i_abc].n33==u3ac_b[j].n33 ){
+			flag++;
+			break;
+		}
+	}
+
+	if(flag>0){
+		std::vector<int> rhoab, rhoab_c, rhoac, rhoac_b;
+
+		// Start time measurement
+    	auto t0 = std::chrono::high_resolution_clock::now();
+
+		std::vector<double> coeffs = u3::Z6(u3b,u3a,u3ab_c[i_abc],u3c,u3ab[i_ab],rhoab,rhoab_c,u3ac[i_ac],rhoac,rhoac_b);
+
+		// End time measurement
+    	auto t1 = std::chrono::high_resolution_clock::now();
+
+		u3ab[i_ab].normalize();
+		u3ac[i_ac].normalize();
+		u3ab_c[i_abc].normalize();
+
+		std::cout << "Z([ni3b], [ni3a], [ni3],  [ni3c] ;[ni3ab],rab,rab_c,[ni3ac],rac,rac_b)" << std::endl;
+		std::cout << "  " << u3b << "," << u3a << "," << u3ab_c[i_abc] << "," << u3c << ";" << u3ab[i_ab] << ",\t    " << u3ac[i_ac] << std::endl;
+		for(int i=0; i<coeffs.size(); i++){
+			std::cout << "\t\t\t\t\t  " << rhoab[i] << "   " << rhoab_c[i] << "\t\t     " << rhoac[i] << "  " << rhoac_b[i] << "\t -> " << coeffs[i] << std::endl;
+		}
+
+		// Calculate the duration
+    	std::chrono::duration<double> duration = t1 - t0;
+
+    	// Output the time in seconds
+    	std::cout << "Elapsed time: " << duration.count() << " seconds or " << duration.count()/60.0 << " minutes" << std::endl;
+	}
+	else{
+		std::cout << "Recoupling does not exist" << std::endl;
+	}
+
+
+	return 0;
+}
