@@ -1,0 +1,5 @@
+= U3Lib
+
+C++ library for fast and accurate evaluation of U(3) Wigner coupling and Racah recoupling coefficients
+
+Paper: https://doi.org/10.1140/epjp/s13360-024-05501-8
