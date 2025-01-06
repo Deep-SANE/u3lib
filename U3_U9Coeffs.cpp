@@ -85,7 +85,7 @@ int main() {
 
 	std::cout << "The normalized coupled irreps of the III and IV are: " << std::endl;
 	for(int i=0; i<u3cd.size(); i++){
-		std::cout << "(" << i << "): [" << u3cd[i].n13-u3cd[i].n33 << "," << u3cd[i].n23-u3cd[i].n33 << ",0] \t rho = 1 ... " << rhomaxscd[i] std::endl;
+		std::cout << "(" << i << "): [" << u3cd[i].n13-u3cd[i].n33 << "," << u3cd[i].n23-u3cd[i].n33 << ",0] \t rho = 1 ... " << rhomaxscd[i] << std::endl;
 	}
 
 	int i_ab, i_ac, i_bd, i_cd, i_ab_cd, i_ac_bd;
