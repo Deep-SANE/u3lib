@@ -1,11 +1,15 @@
+# Copy this file to 'config.mk' and update it according to your system.
+
 # set if needed:
-#EIGEN_DIR=/usr/include/eigen3
-#WIGXJPF_DIR=$(HOME)/qcx/software/wigxjpf-1.13
+#BOOST_ROOT=
+#EIGEN_DIR=
+#WIGXJPF_DIR=
 
 CXX = g++
 
+# include (if needed):
 INC += -I$(WIGXJPF_DIR)/inc
-#INC += -I$(BOOST_ROOT)/include
+INC += -I$(BOOST_ROOT)/include
 INC += -I$(EIGEN_DIR)
 
 CXXFLAGS += -std=c++17
@@ -20,6 +24,6 @@ CXXFLAGS += -DNDEBUG
 
 LDFLAGS += -L$(WIGXJPF_DIR)/lib -lwigxjpf
 
-## OpenMP if applicable:
+# OpenMP (if applicable):
 #CXXFLAGS += -fopenmp
 #LDFLAGS += -fopenmp
