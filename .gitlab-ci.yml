@@ -7,9 +7,10 @@ manual:
   script:
     - cd doc
     - latexmk -pdf Manual.tex
+    - mv Manual.tex ../
   rules:
     - changes:
       - doc/*
   artifacts:
     paths:
-      - doc/Manual.pdf
+      - Manual.pdf
