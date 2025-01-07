@@ -15,6 +15,7 @@ NamespaceIndentation: All
 PackConstructorInitializers: NextLine
 PointerAlignment: Left
 RemoveBracesLLVM: true
+SortIncludes:    CaseInsensitive
 SpaceInEmptyBlock: true
 
 # dump of the LLVM style settings:
