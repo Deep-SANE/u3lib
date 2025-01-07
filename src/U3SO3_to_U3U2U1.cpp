@@ -3,9 +3,9 @@
 #include <vector>
 #include <chrono>
 
-#include "src/U3basis.h"
-#include "src/U3SO3_to_U3U2U1.h"
-#include "src/utils/nullspaceSolver.h"
+#include <U3basis.h>
+#include <U3SO3_to_U3U2U1.h>
+#include <utils/nullspaceSolver.h>
 
 
 int main() {

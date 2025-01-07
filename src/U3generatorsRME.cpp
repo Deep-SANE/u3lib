@@ -1,8 +1,8 @@
 #include <chrono>
 #include <iostream>
 
-#include "src/U3basis.h"
-#include "src/U3generatorsRME.h"
+#include <U3basis.h>
+#include <U3generatorsRME.h>
 
 int main(){
 

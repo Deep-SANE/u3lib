@@ -13,3 +13,5 @@
 *.xlsx
 
 config.mk
+
+bin/

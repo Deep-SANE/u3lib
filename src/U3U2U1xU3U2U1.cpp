@@ -6,9 +6,9 @@
 #include <string>
 #include <chrono>
 
-#include "src/U3basis.h"
-#include "src/decomposition.h"
-#include "src/U3U2U1xU3U2U1.h"
+#include <U3basis.h>
+#include <decomposition.h>
+#include <U3U2U1xU3U2U1.h>
 
 
 int main() {
