@@ -3,6 +3,7 @@
 *.bbl
 *.blg
 *.docx
+*.DS_Store
 *.exe
 *.fdb_latexmk
 *.fls
