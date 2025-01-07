@@ -5,8 +5,8 @@ manual:
   stage: build
   image: registry.gitlab.com/islandoftex/images/texlive:latest
   script:
-    cd doc
-    latexmk Manual
+    - cd doc
+    - latexmk Manual
   artifacts:
     paths:
       - doc/Manual.pdf
