@@ -7,7 +7,7 @@ manual:
   script:
     - cd doc
     - latexmk -pdf Manual.tex
-    - mv Manual.tex ../
+    - mv Manual.pdf ../
   rules:
     - changes:
       - doc/*
