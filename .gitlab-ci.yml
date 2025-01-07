@@ -6,7 +6,7 @@ manual:
   image: registry.gitlab.com/islandoftex/images/texlive:latest
   script:
     - cd doc
-    - latexmk Manual
+    - latexmk -pdf Manual.tex
   artifacts:
     paths:
       - doc/Manual.pdf
