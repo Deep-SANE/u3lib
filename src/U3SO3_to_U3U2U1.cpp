@@ -55,6 +55,9 @@ int main() {
     // Output the time in seconds
     std::cout << "Elapsed time: " << duration.count() << " seconds or " << duration.count()/60.0 << " minutes" << std::endl;
 
+    //Print error
+    //std::cout << "Error: " << error(Lproj,nullspace) << std::endl;
+
 
     return 0;
 }
