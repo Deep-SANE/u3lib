@@ -5,6 +5,7 @@ manual:
   stage: build
   image: registry.gitlab.com/islandoftex/images/texlive:latest
   script:
+    - export
     - cd doc
     - latexmk -pdf Manual.tex
     - mv Manual.pdf ../
