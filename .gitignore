@@ -9,6 +9,7 @@
 *.fdb_latexmk
 *.fls
 *.log
+*.mk 
 *.o
 *.out
 *.pdf
