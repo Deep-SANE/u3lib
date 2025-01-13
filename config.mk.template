@@ -1,16 +1,14 @@
 # Copy this file to 'config.mk' and update it according to your system.
 
 # set if needed:
-#BOOST_ROOT=
 #EIGEN_DIR=
 #WIGXJPF_DIR=
 
 CXX = g++
 
 # include (if needed):
-INC += -I$(WIGXJPF_DIR)/inc
-INC += -I$(BOOST_ROOT)/include
 INC += -I$(EIGEN_DIR)
+INC += -I$(WIGXJPF_DIR)/inc
 
 CXXFLAGS += -std=c++17
 CXXFLAGS += $(INC)
