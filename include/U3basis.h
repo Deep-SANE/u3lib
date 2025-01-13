@@ -1,4 +1,3 @@
-// protection against multiple header file inclusion
 #ifndef U3BASIS_H
 #define U3BASIS_H
 

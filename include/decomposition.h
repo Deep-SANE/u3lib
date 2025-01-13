@@ -1,4 +1,3 @@
-// protection against multiple header file inclusion
 #ifndef DECOMPOSITION_H
 #define DECOMPOSITION_H
 

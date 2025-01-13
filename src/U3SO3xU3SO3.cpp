@@ -25,7 +25,7 @@ int main()
   std::vector<int> rhomaxs;
   std::vector<u3::irrep> u3cs = u3::decomposition(u3a, u3b, rhomaxs);
 
-  std::cout << "The normalzied coupled irreps (lambda,mu) are" << std::endl;
+  std::cout << "The coupled irreps (lambda,mu) are" << std::endl;
   for (int i = 0; i < u3cs.size(); i++)
   {
     std::cout << "(" << i << "): (" << u3cs[i].lam() << "," << u3cs[i].mu()

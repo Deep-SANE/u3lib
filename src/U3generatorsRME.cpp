@@ -19,7 +19,7 @@ int main()
   std::cout << "The physical basis states are: " << std::endl;
   for (int i = 0; i < physbasis.size(); i++)
   {
-    std::cout << "(" << i << "): |" << "(" << physbasis[i].toprow.lam() << ","
+    std::cout << "(" << i << "): |(" << physbasis[i].toprow.lam() << ","
               << physbasis[i].toprow.mu()
               << "), kappa_max=" << physbasis[i].kappa
               << ", L=" << physbasis[i].L << ">" << std::endl;
