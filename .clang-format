@@ -30,7 +30,7 @@ BraceWrapping:
   SplitEmptyRecord: false
   SplitEmptyNamespace: true
 
-ColumnLimit: 100
+ColumnLimit: 80
 LineEnding: LF
 NamespaceIndentation: All
 PackConstructorInitializers: NextLine
