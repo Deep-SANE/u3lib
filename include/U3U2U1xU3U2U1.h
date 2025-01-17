@@ -2,6 +2,7 @@
 #ifndef U3U2U1XU3U2U1_H
 #define U3U2U1XU3U2U1_H
 
+#include <cassert>
 #include <cmath>
 #include <Eigen/Dense>
 #include <iostream>
@@ -334,6 +335,11 @@ namespace u3
                 {
                   for (int l = k; l < coeffs.rows(); l++)
                   {
+                    assert(k < gArr3.size());
+                    assert(l < gArr3.size());
+                    assert(j < gArr2_temp.size());
+                    assert(l < gArr2.size());
+
                     if (u3::compare(gArr3[k], gArr3[l]) &&
                         u3::compare(gArr2_temp[j], gArr2[l]) &&
                         gArr1_temp[j].n12 == gArr1[l].n12 &&
