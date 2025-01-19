@@ -22,6 +22,7 @@ int main()
     u3a.normalize();
     std::cout << "Your irrep is normalized to " << u3a << std::endl;
   }
+  std::vector<u3::gelfand> gArr1 = gelfandBasis(u3a);
 
   int n13b, n23b, n33b;
   std::cout << "Please enter the second irrep [n13b,n23b,n33b]: ";
@@ -32,6 +33,7 @@ int main()
     u3b.normalize();
     std::cout << "Your irrep is normalized to " << u3b << std::endl;
   }
+  std::vector<u3::gelfand> gArr2 = gelfandBasis(u3b);
 
   std::vector<int> rhomaxs;
   std::vector<u3::irrep> u3cs = decomposition(u3a, u3b, rhomaxs);
@@ -49,14 +51,16 @@ int main()
       << "Please enter the index of the coupled irrep you are interested: ";
   std::cin >> index;
 
+  std::vector<u3::gelfand> gArr3 = gelfandBasis(u3cs[index]);
+
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs(
+      u3a.dim() * u3b.dim() * u3cs[index].dim(), rhomaxs[index]);
+  for (int i = 0; i < coeffs.rows(); i++)
+    for (int j = 0; j < coeffs.cols(); j++)
+      coeffs(i, j) = 0.0;
+
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
-
-  std::vector<u3::gelfand> gArr1;
-  std::vector<u3::gelfand> gArr2;
-  std::vector<u3::gelfand> gArr3;
-
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs;
 
   for (int w3 = u3cs[index].n33; w3 <= u3cs[index].n13; w3++)
   {
@@ -64,30 +68,34 @@ int main()
     {
       if (w3 == u3cs[index].n33 && w1 == u3cs[index].n13)
       {
-        u3::gelfand HWc(u3cs[index].n13, u3cs[index].n23, u3cs[index].n33,
-                        u3cs[index].n13, u3cs[index].n23, u3cs[index].n13);
-        u3::HighestWeightCoeffs(u3a, u3b, HWc, gArr1, gArr2, gArr3, coeffs);
+      u3:
+        HighestWeightCoeffs(gArr1, gArr2, gArr3, coeffs);
       }
       else
       {
-        u3::LowerWeightCoeffs(u3a, u3b, u3cs[index], w3, w1, gArr1, gArr2,
-                              gArr3, coeffs);
+        u3::LowerWeightCoeffs(w3, w1, gArr1, gArr2, gArr3, coeffs);
       }
     }
   }
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();
-
-  std::cout << "< Ga; Gb | Gc > \t\t rho = 1 ... " << rhomaxs[index]
-            << std::endl;
-  for (int j = 0; j < gArr1.size(); j++)
-  {
-    gArr3[j].normalize();
-    std::cout << "< " << gArr1[j] << " ; " << gArr2[j] << " | " << gArr3[j]
-              << " >" << "\t" << coeffs.row(j) << std::endl;
-  }
-
+  /*
+    for (int i=0; i<gArr1.size(); i++)
+    {
+      for (int j=0; j<gArr2.size(); j++)
+      {
+        for (int k=0; k<gArr3.size(); k++)
+        {
+          if (i==0 && j==0) { gArr3[k].normalize(); }
+          std::cout << "< " << gArr1[i] << " ; " << gArr2[j] << " | " <<
+    gArr3[k]
+                << " >" << "\t" << coeffs.row( (i*gArr2.size()+j)*gArr3.size()+k
+    ) << std::endl;
+        }
+      }
+    }
+  */
   // Calculate the duration
   std::chrono::duration<double> duration = t1 - t0;
 

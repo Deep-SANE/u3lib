@@ -16,8 +16,11 @@ int main()
 
   u3::irrep u3top(lambda, mu);
 
+  // building the gelfand basis
+  std::vector<u3::gelfand> gArr = u3::gelfandBasis(u3top);
+
   // building the physical basis excluding those which have zero multiplicity
-  std::vector<u3::physicalvector> physbasis = u3::physicalbasis(u3top);
+  std::vector<u3::physicalvector> physbasis = u3::physicalBasis(u3top);
 
   std::cout << "The physical basis states are: " << std::endl;
   for (int i = 0; i < physbasis.size(); i++)
@@ -32,22 +35,23 @@ int main()
   std::cout << "Please enter the index of the state that you are interested: ";
   std::cin >> index;
 
+  // find Gelfand states associated with the interested physical state
+  std::vector<int> indices = u3::expand_to_gelfand(physbasis[index], gArr);
+
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
 
-  // Construct the canonical basis associated with the physical basis state that
-  // we are looking at
-  std::vector<u3::gelfand> canobasis = u3::canonicalbasis(physbasis[index]);
-
   // Building the projection matrix
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Lproj =
-      Lprojection(physbasis[index], canobasis);
+      Lprojection(physbasis[index], gArr, indices);
   // and solving its null space
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> nullspace =
       phys_to_cano(physbasis[index], Lproj);
   // after solving the nullspace, the dimension of the nullspace is the
   // multiplicity of L, and the multiplicity within the physical basis state
   // labeling is modified
+
+  std::cout << Lproj << std::endl;
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();
@@ -56,8 +60,9 @@ int main()
       << "The Gelfand states and the expansion coefficients for kappa = 1,...,"
       << physbasis[index].kappa << " are:" << std::endl;
 
-  for (int i = 0; i < canobasis.size(); i++)
-    std::cout << "|" << canobasis[i] << "> \t" << nullspace.row(i) << std::endl;
+  for (int i = 0; i < indices.size(); i++)
+    std::cout << "|" << gArr[indices[i]] << "> \t" << nullspace.row(i)
+              << std::endl;
 
   // Calculate the duration
   std::chrono::duration<double> duration = t1 - t0;

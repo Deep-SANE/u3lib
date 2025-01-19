@@ -173,7 +173,7 @@ namespace u3
 
       std::vector<double> gamma_coefficients; // to store sqrt((2L-gamma)!
                                               // 2^gamma / (2L)! / gamma!)
-      gamma_coefficients.push_back(1.0); // for gamma=0, i.e., L=M
+      gamma_coefficients.push_back(1.0);      // for gamma=0, i.e., L=M
 
       // now going lower from the HW state, remember that gamma = L-M
       for (int gamma = 1; gamma <= 2 * pbA[i].L; gamma++)
@@ -346,6 +346,7 @@ namespace u3
                                 u3::compare(cb3[l], gArrC[p]))
                             {
                               canocoupling = canoCoupleCoeffs(p, rho - 1);
+                              break;
                             }
                           }
                           coeffs(old_row, rho - 1) += canocoeffs1(m, k_A - 1) *

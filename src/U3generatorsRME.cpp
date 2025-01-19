@@ -14,7 +14,7 @@ int main()
   u3::irrep u3top(lambda, mu);
 
   // building the physical basis excluding those which have zero multiplicity
-  std::vector<u3::physicalvector> physbasis = u3::physicalbasis(u3top);
+  std::vector<u3::physicalvector> physbasis = u3::physicalBasis(u3top);
 
   std::cout << "The physical basis states are: " << std::endl;
   for (int i = 0; i < physbasis.size(); i++)
