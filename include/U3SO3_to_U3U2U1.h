@@ -15,13 +15,13 @@ namespace u3
 {
 
   /*------------------------------------------------------
-  The gelfand (canonical) basis state for each L can be expressed by two
+  The gelfand (canonical) basis states for each M >= 0 can be expressed by two
   parameters q,t
   |  n13,n23,0 \
-  |  L+2*q-t,t  >
-  |     L+q    /
+  |  M+2*q-t,t  >
+  |     M+q    /
   where
-  0 <= L <= n13
+  0 <= M <= n13
   0 <= t <= n23
   max(t,round((t-L+n23)/2)) <= q <= Int((n13-L+t)/2)
   */
@@ -38,21 +38,20 @@ namespace u3
   // construction of the canonical basis: the canonical basis vectors will be
   // stored in an array
 
-  std::vector<int> expand_to_gelfand(physicalvector& physvec,
-                                     std::vector<u3::gelfand>& gArr)
+  std::vector<int> expand_to_gelfand(int M, std::vector<u3::gelfand>& gArr)
   {
     std::vector<int> indices;
 
     for (int i = 0; i < gArr.size(); i++)
     {
-      int q = gArr[i].n11 - physvec.L;
+      int q = gArr[i].n11 - M;
       int qmin = std::max(
           gArr[i].n22,
-          IntM((gArr[i].n22 - physvec.L + gArr[i].n23 - gArr[i].n33) / 2));
+          IntM((gArr[i].n22 - M + gArr[i].n23) / 2));
       int qmax = (int)std::floor(
-          (gArr[i].n13 - gArr[i].n33 - physvec.L + gArr[i].n22) / 2);
+          (gArr[i].n13 - M + gArr[i].n22) / 2);
 
-      if ((physvec.L + 2 * q) == (gArr[i].n12 + gArr[i].n22) && q <= qmax &&
+      if ((M + 2 * q) == (gArr[i].n12 + gArr[i].n22) && q <= qmax &&
           q >= qmin)
         indices.push_back(i);
     }

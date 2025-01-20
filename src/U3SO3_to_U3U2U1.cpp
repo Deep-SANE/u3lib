@@ -36,7 +36,7 @@ int main()
   std::cin >> index;
 
   // find Gelfand states associated with the interested physical state
-  std::vector<int> indices = u3::expand_to_gelfand(physbasis[index], gArr);
+  std::vector<int> indices = u3::expand_to_gelfand(physbasis[index].L, gArr);
 
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
@@ -50,8 +50,6 @@ int main()
   // after solving the nullspace, the dimension of the nullspace is the
   // multiplicity of L, and the multiplicity within the physical basis state
   // labeling is modified
-
-  std::cout << Lproj << std::endl;
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();
