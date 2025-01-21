@@ -44,6 +44,9 @@ namespace u3
 
     for (int i = 0; i < gArr.size(); i++)
     {
+      if (M == gArr[i].e11() - gArr[i].e22())
+        indices.push_back(i);
+      /*
       int q = gArr[i].n11 - M;
       int qmin = std::max(
           gArr[i].n22,
@@ -54,6 +57,7 @@ namespace u3
       if ((M + 2 * q) == (gArr[i].n12 + gArr[i].n22) && q <= qmax &&
           q >= qmin)
         indices.push_back(i);
+      */
     }
     return indices;
   }
@@ -63,7 +67,7 @@ namespace u3
   from acting L+ = sqrt(2)*(E13+E32)
   */
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-  Lprojection(physicalvector& physvec, std::vector<u3::gelfand>& gArr,
+  Lprojection(u3::physicalvector& physvec, std::vector<u3::gelfand>& gArr,
               std::vector<int>& indices)
   {
 
@@ -127,15 +131,21 @@ namespace u3
     return projector;
   }
 
-  // Solving the null space of the projection matrix
+  // get the transformation
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-  phys_to_cano(physicalvector& physvec,
-               Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& Lproj)
+  phys_to_cano(u3::physicalvector& physvec, std::vector<int>& indices,std::vector<u3::gelfand>& gArr)
   {
+    indices = u3::expand_to_gelfand(physvec.L, gArr);
 
-    // Create a matrix to store the null space
+    // Building the projection matrix
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Lproj =
+        u3::Lprojection(physvec, gArr, indices);
+    // and solving its null space
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> nullSpace =
         null_space(Lproj);
+    // after solving the nullspace, the dimension of the nullspace is the
+    // multiplicity of L, and the multiplicity within the physical basis state
+    // labeling is modified
 
     // return the multipplicity
     physvec.kappa = nullSpace.cols();
