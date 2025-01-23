@@ -76,18 +76,14 @@ namespace u3
     {
       // Expanding in canonical basis
       std::vector<u3::gelfand> bra_gArr = u3::gelfandBasis(bra.toprow);
-      std::vector<int> bra_indices = u3::expand_to_gelfand(bra, bra_gArr);
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> bra_Lproj =
-          Lprojection(bra, bra_gArr, bra_indices);
+      std::vector<int> bra_indices;
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> bra_coeffs =
-          phys_to_cano(bra, bra_Lproj);
+      u3::phys_to_cano(bra, bra_indices, bra_gArr);
 
       std::vector<u3::gelfand> ket_gArr = u3::gelfandBasis(ket.toprow);
-      std::vector<int> ket_indices = u3::expand_to_gelfand(ket, ket_gArr);
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> ket_Lproj =
-          Lprojection(ket, ket_gArr, ket_indices);
+      std::vector<int> ket_indices;
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> ket_coeffs =
-          phys_to_cano(ket, ket_Lproj);
+          u3::phys_to_cano(ket, ket_indices, ket_gArr);
 
       // running through the gelfand states
       for (int k = 0; k < ket_indices.size(); k++)
@@ -109,18 +105,14 @@ namespace u3
     {
       // Expanding in canonical basis
       std::vector<u3::gelfand> bra_gArr = u3::gelfandBasis(bra.toprow);
-      std::vector<int> bra_indices = u3::expand_to_gelfand(bra, bra_gArr);
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> bra_Lproj =
-          Lprojection(bra, bra_gArr, bra_indices);
+      std::vector<int> bra_indices;
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> bra_coeffs =
-          phys_to_cano(bra, bra_Lproj);
+      u3::phys_to_cano(bra, bra_indices, bra_gArr);
 
       std::vector<u3::gelfand> ket_gArr = u3::gelfandBasis(ket.toprow);
-      std::vector<int> ket_indices = u3::expand_to_gelfand(ket, ket_gArr);
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> ket_Lproj =
-          Lprojection(ket, ket_gArr, ket_indices);
+      std::vector<int> ket_indices;
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> ket_coeffs =
-          phys_to_cano(ket, ket_Lproj);
+          u3::phys_to_cano(ket, ket_indices, ket_gArr);
 
       // running through the gelfand states
       for (int k = 0; k < ket_indices.size(); k++)
@@ -177,11 +169,9 @@ namespace u3
     {
       // Expanding in canonical basis
       std::vector<u3::gelfand> ket_gArr = u3::gelfandBasis(ket.toprow);
-      std::vector<int> ket_indices = u3::expand_to_gelfand(ket, ket_gArr);
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> ket_Lproj =
-          Lprojection(ket, ket_gArr, ket_indices);
+      std::vector<int> ket_indices;
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> ket_coeffs =
-          phys_to_cano(ket, ket_Lproj);
+          u3::phys_to_cano(ket, ket_indices, ket_gArr);
 
       // bra and ket have the same kappa_max
       for (int i = 0; i < bra.kappa; i++)
@@ -218,7 +208,7 @@ namespace u3
       for (int i = 0; i < RME.rows(); i++)
         for (int j = 0; j < RME.cols(); j++)
           RME(i, j) *= phase;
-      RME.transpose();
+      RME = RME.transpose();
       bra_kappa = new_bra_kappa;
       ket_kappa = new_ket_kappa;
     }
@@ -227,7 +217,7 @@ namespace u3
       std::vector<int> new_bra_kappa, new_ket_kappa;
 
       RME = RME_Q(ket, bra, new_ket_kappa, new_bra_kappa);
-      RME.transpose();
+      RME = RME.transpose();
       bra_kappa = new_bra_kappa;
       ket_kappa = new_ket_kappa;
     }
