@@ -73,7 +73,7 @@ int main()
               << rhomaxsac[i] << std::endl;
   }
 
-  int i_ab, i_ac, i_abc;
+  int i_ab, i_ac, i_ab_c;
   std::cout << "Please enter the index of the I-II coupled irrep you are "
                "interested: ";
   std::cin >> i_ab;
@@ -96,19 +96,19 @@ int main()
   }
   std::cout << "Please enter the indices of the I-II-III coupled irrep you are "
                "interested: ";
-  std::cin >> i_abc;
+  std::cin >> i_ab_c;
 
   // couple the three irreps in scheme (I-III)-II
   std::vector<int> rhomaxsac_b;
   std::vector<u3::irrep> u3ac_b =
       u3::decomposition(u3ac[i_ac], u3b, rhomaxsac_b);
 
-  int flag = 0;
-  for (int j = 0; j < u3ac_b.size(); j++)
+  int flag = 0, i_ac_b;
+  for (i_ac_b = 0; i_ac_b < u3ac_b.size(); i_ac_b++)
   {
-    if (u3ab_c[i_abc].n13 == u3ac_b[j].n13 &&
-        u3ab_c[i_abc].n23 == u3ac_b[j].n23 &&
-        u3ab_c[i_abc].n33 == u3ac_b[j].n33)
+    if (u3ab_c[i_ab_c].n13 == u3ac_b[i_ac_b].n13 &&
+        u3ab_c[i_ab_c].n23 == u3ac_b[i_ac_b].n23 &&
+        u3ab_c[i_ab_c].n33 == u3ac_b[i_ac_b].n33)
     {
       flag++;
       break;
@@ -117,32 +117,40 @@ int main()
 
   if (flag > 0)
   {
-    std::vector<int> rhoab, rhoab_c, rhoac, rhoac_b;
-
     // Start time measurement
     auto t0 = std::chrono::high_resolution_clock::now();
 
     std::vector<double> coeffs =
-        u3::Z6(u3b, u3a, u3ab_c[i_abc], u3c, u3ab[i_ab], rhoab, rhoab_c,
-               u3ac[i_ac], rhoac, rhoac_b);
+        u3::Z6(u3b, u3a, u3ab_c[i_ab_c], u3c, u3ab[i_ab], rhomaxsab[i_ab], rhomaxsab_c[i_ab_c],
+               u3ac[i_ac], rhomaxsac[i_ac], rhomaxsac_b[i_ac_b]);
 
     // End time measurement
     auto t1 = std::chrono::high_resolution_clock::now();
 
     u3ab[i_ab].normalize();
     u3ac[i_ac].normalize();
-    u3ab_c[i_abc].normalize();
+    u3ab_c[i_ab_c].normalize();
 
     std::cout << "Z([ni3b], [ni3a], [ni3],  [ni3c] "
-                 ";[ni3ab],rab,rab_c,[ni3ac],rac,rac_b)"
+                 ";[ni3ab],rab,rab_c,[ni3ac],rac,rac_b)" 
               << std::endl;
-    std::cout << "  " << u3b << "," << u3a << "," << u3ab_c[i_abc] << "," << u3c
+    std::cout << "  " << u3b << "," << u3a << "," << u3ab_c[i_ab_c] << "," << u3c
               << ";" << u3ab[i_ab] << ",\t    " << u3ac[i_ac] << std::endl;
-    for (int i = 0; i < coeffs.size(); i++)
+
+    for (int rab = 0; rab < rhomaxsab[i_ab]; rab++)
     {
-      std::cout << "\t\t\t\t\t  " << rhoab[i] << "   " << rhoab_c[i]
-                << "\t\t     " << rhoac[i] << "  " << rhoac_b[i] << "\t -> "
-                << coeffs[i] << std::endl;
+      for (int rab_c = 0; rab_c < rhomaxsab_c[i_ab_c]; rab_c++)
+      {
+        for (int rac = 0; rac < rhomaxsac[i_ac]; rac++)
+        {
+          for (int rac_b = 0; rac_b < rhomaxsac_b[i_ac_b]; rac_b++)
+          {
+            std::cout << "\t\t\t\t\t  " << rab+1 << "   " << rab_c+1
+                << "\t\t     " << rac+1 << "  " << rac_b+1 << "\t -> "
+                << coeffs[ ((rab*rhomaxsab_c[i_ab_c] + rab_c)*rhomaxsac[i_ac] + rac)*rhomaxsac_b[i_ac_b] + rac_b] << std::endl;  
+          }
+        }
+      }
     }
 
     // Calculate the duration
