@@ -65,10 +65,10 @@ int main()
   // Print error
   // std::cout << "Error: " << error(Lproj,nullspace) << std::endl;
 
-  /*  uncomment if you want to obtain the transformation 
+  /*  uncomment if you want to obtain the transformation
   // for lower weight state M = L-1, L-2, ..., -L
   // remember that gamma = L - M = 0,1,...,2L
-  
+
   // store transformation, each column corresponds to one kappa
   std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>
       allCanoCoeffs(2 * pArr[index].L + 1);

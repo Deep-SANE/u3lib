@@ -117,13 +117,13 @@ int main()
 
   if (flag > 0)
   {
-    
+
     // Start time measurement
     auto t0 = std::chrono::high_resolution_clock::now();
 
-    std::vector<double> coeffs =
-        u3::U6(u3a, u3b, u3ab_c[i_ab_c], u3c, u3ab[i_ab], rhomaxsab[i_ab], rhomaxsab_c[i_ab_c],
-               u3bc[i_bc], rhomaxsbc[i_bc], rhomaxsa_bc[i_a_bc]);
+    std::vector<double> coeffs = u3::U6(
+        u3a, u3b, u3ab_c[i_ab_c], u3c, u3ab[i_ab], rhomaxsab[i_ab],
+        rhomaxsab_c[i_ab_c], u3bc[i_bc], rhomaxsbc[i_bc], rhomaxsa_bc[i_a_bc]);
 
     // End time measurement
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -133,10 +133,11 @@ int main()
     u3ab_c[i_ab_c].normalize();
 
     std::cout << "U([ni3a], [ni3b], [ni3],  [ni3c] "
-                 ";[ni3ab],rab,rab_c,[ni3bc],rbc,ra_bc)" 
+                 ";[ni3ab],rab,rab_c,[ni3bc],rbc,ra_bc)"
               << std::endl;
-    std::cout << "  " << u3a << "," << u3b << "," << u3ab_c[i_ab_c] << "," << u3c
-              << ";" << u3ab[i_ab] << ",\t    " << u3bc[i_bc] << std::endl;
+    std::cout << "  " << u3a << "," << u3b << "," << u3ab_c[i_ab_c] << ","
+              << u3c << ";" << u3ab[i_ab] << ",\t    " << u3bc[i_bc]
+              << std::endl;
 
     for (int rab = 0; rab < rhomaxsab[i_ab]; rab++)
     {
@@ -146,9 +147,14 @@ int main()
         {
           for (int ra_bc = 0; ra_bc < rhomaxsa_bc[i_a_bc]; ra_bc++)
           {
-            std::cout << "\t\t\t\t\t  " << rab+1 << "   " << rab_c+1
-                << "\t\t     " << rbc+1 << "  " << ra_bc+1 << "\t -> "
-                << coeffs[ ((rab*rhomaxsab_c[i_ab_c] + rab_c)*rhomaxsbc[i_bc] + rbc)*rhomaxsa_bc[i_a_bc] + ra_bc] << std::endl;  
+            std::cout << "\t\t\t\t\t  " << rab + 1 << "   " << rab_c + 1
+                      << "\t\t     " << rbc + 1 << "  " << ra_bc + 1 << "\t -> "
+                      << coeffs[((rab * rhomaxsab_c[i_ab_c] + rab_c) *
+                                     rhomaxsbc[i_bc] +
+                                 rbc) *
+                                    rhomaxsa_bc[i_a_bc] +
+                                ra_bc]
+                      << std::endl;
           }
         }
       }
@@ -161,7 +167,7 @@ int main()
     std::cout << "Elapsed time: " << duration.count() << " seconds or "
               << duration.count() / 60.0 << " minutes" << std::endl;
   }
-  else 
+  else
   {
     std::cout << "Recoupling does not exist" << std::endl;
   }

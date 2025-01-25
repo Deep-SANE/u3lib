@@ -120,9 +120,9 @@ int main()
     // Start time measurement
     auto t0 = std::chrono::high_resolution_clock::now();
 
-    std::vector<double> coeffs =
-        u3::Z6(u3b, u3a, u3ab_c[i_ab_c], u3c, u3ab[i_ab], rhomaxsab[i_ab], rhomaxsab_c[i_ab_c],
-               u3ac[i_ac], rhomaxsac[i_ac], rhomaxsac_b[i_ac_b]);
+    std::vector<double> coeffs = u3::Z6(
+        u3b, u3a, u3ab_c[i_ab_c], u3c, u3ab[i_ab], rhomaxsab[i_ab],
+        rhomaxsab_c[i_ab_c], u3ac[i_ac], rhomaxsac[i_ac], rhomaxsac_b[i_ac_b]);
 
     // End time measurement
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -132,10 +132,11 @@ int main()
     u3ab_c[i_ab_c].normalize();
 
     std::cout << "Z([ni3b], [ni3a], [ni3],  [ni3c] "
-                 ";[ni3ab],rab,rab_c,[ni3ac],rac,rac_b)" 
+                 ";[ni3ab],rab,rab_c,[ni3ac],rac,rac_b)"
               << std::endl;
-    std::cout << "  " << u3b << "," << u3a << "," << u3ab_c[i_ab_c] << "," << u3c
-              << ";" << u3ab[i_ab] << ",\t    " << u3ac[i_ac] << std::endl;
+    std::cout << "  " << u3b << "," << u3a << "," << u3ab_c[i_ab_c] << ","
+              << u3c << ";" << u3ab[i_ab] << ",\t    " << u3ac[i_ac]
+              << std::endl;
 
     for (int rab = 0; rab < rhomaxsab[i_ab]; rab++)
     {
@@ -145,9 +146,14 @@ int main()
         {
           for (int rac_b = 0; rac_b < rhomaxsac_b[i_ac_b]; rac_b++)
           {
-            std::cout << "\t\t\t\t\t  " << rab+1 << "   " << rab_c+1
-                << "\t\t     " << rac+1 << "  " << rac_b+1 << "\t -> "
-                << coeffs[ ((rab*rhomaxsab_c[i_ab_c] + rab_c)*rhomaxsac[i_ac] + rac)*rhomaxsac_b[i_ac_b] + rac_b] << std::endl;  
+            std::cout << "\t\t\t\t\t  " << rab + 1 << "   " << rab_c + 1
+                      << "\t\t     " << rac + 1 << "  " << rac_b + 1 << "\t -> "
+                      << coeffs[((rab * rhomaxsab_c[i_ab_c] + rab_c) *
+                                     rhomaxsac[i_ac] +
+                                 rac) *
+                                    rhomaxsac_b[i_ac_b] +
+                                rac_b]
+                      << std::endl;
           }
         }
       }

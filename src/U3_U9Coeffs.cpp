@@ -158,14 +158,15 @@ int main()
 
   if (flag > 0)
   {
-    
+
     // Start time measurement
     auto t0 = std::chrono::high_resolution_clock::now();
 
-    std::vector<double> coeffs = u3::U9(u3a, u3b, u3c, u3d,
-     u3ab[i_ab], u3cd[i_cd], u3ac[i_ac], u3bd[i_bd],
-     u3ab_cd[i_ab_cd], rhomaxsab[i_ab], rhomaxscd[i_cd], rhomaxsab_cd[i_ab_cd], 
-     rhomaxsac[i_ac], rhomaxsbd[i_bd], rhomaxsac_bd[i_ac_bd]);
+    std::vector<double> coeffs =
+        u3::U9(u3a, u3b, u3c, u3d, u3ab[i_ab], u3cd[i_cd], u3ac[i_ac],
+               u3bd[i_bd], u3ab_cd[i_ab_cd], rhomaxsab[i_ab], rhomaxscd[i_cd],
+               rhomaxsab_cd[i_ab_cd], rhomaxsac[i_ac], rhomaxsbd[i_bd],
+               rhomaxsac_bd[i_ac_bd]);
 
     // End time measurement
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -176,8 +177,10 @@ int main()
     u3bd[i_bd].normalize();
     u3ab_cd[i_ab_cd].normalize();
 
-    std::cout << u3a << "\t" << u3b << "\t" << u3ab[i_ab] << "\trhoab" << std::endl;
-    std::cout << u3c << "\t" << u3d << "\t" << u3cd[i_cd] << "\trhocd" << std::endl;
+    std::cout << u3a << "\t" << u3b << "\t" << u3ab[i_ab] << "\trhoab"
+              << std::endl;
+    std::cout << u3c << "\t" << u3d << "\t" << u3cd[i_cd] << "\trhocd"
+              << std::endl;
     std::cout << u3ac[i_ac] << "\t" << u3bd[i_bd] << "\t" << u3ab_cd[i_ab_cd]
               << "\trhoac_bd" << std::endl;
     std::cout << "rhoac\trhobd\trhoab_cd\t" << std::endl;
@@ -195,12 +198,20 @@ int main()
           for (int rab = 0; rab < rhomaxsab[i_ab]; rab++)
           {
             for (int rcd = 0; rcd < rhomaxscd[i_cd]; rcd++)
-            {
-              for (int rac_bd = 0; rac_bd < rhomaxsac_bd[i_ac_bd]; rac_bd++)  
-                std::cout << "  " << rac+1 << "\t  " << rbd+1 << "\t  " << rab_cd+1 << "\t\t  " << rab+1 << "\t  " << rcd+1 << "\t  " << rac_bd+1
-                  << "\t\t  ->  " << coeffs[ ((((rac*rhomaxsbd[i_bd] + rbd)*rhomaxsab_cd[i_ab_cd] + rab_cd)*rhomaxsab[i_ab]
-                   + rab)*rhomaxscd[i_cd] + rcd)*rhomaxsac_bd[i_ac_bd] + rac_bd ] << std::endl;
-            }
+              for (int rac_bd = 0; rac_bd < rhomaxsac_bd[i_ac_bd]; rac_bd++)
+                std::cout << "  " << rac + 1 << "\t  " << rbd + 1 << "\t  "
+                          << rab_cd + 1 << "\t\t  " << rab + 1 << "\t  "
+                          << rcd + 1 << "\t  " << rac_bd + 1 << "\t\t  ->  "
+                          << coeffs[((((rac * rhomaxsbd[i_bd] + rbd) *
+                                           rhomaxsab_cd[i_ab_cd] +
+                                       rab_cd) *
+                                          rhomaxsab[i_ab] +
+                                      rab) *
+                                         rhomaxscd[i_cd] +
+                                     rcd) *
+                                        rhomaxsac_bd[i_ac_bd] +
+                                    rac_bd]
+                          << std::endl;
           }
         }
       }

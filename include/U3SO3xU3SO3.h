@@ -39,8 +39,8 @@ namespace u3
 
   // generate all Wigner U3->SO(3) coefficients
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-  WigU3SO3(u3::irrep& u3A, u3::irrep& u3B, u3::irrep& u3C, int &rhomax,
-           int& dimA, int& dimB, int& dimC, 
+  WigU3SO3(u3::irrep& u3A, u3::irrep& u3B, u3::irrep& u3C, int& rhomax,
+           int& dimA, int& dimB, int& dimC,
            std::vector<u3::physicalvector>& pArrA, std::vector<int>& iA,
            std::vector<u3::physicalvector>& pArrB, std::vector<int>& iB,
            std::vector<u3::physicalvector>& pArrC, std::vector<int>& iC)
@@ -51,19 +51,18 @@ namespace u3
     std::vector<u3::gelfand> gArrB;
     std::vector<u3::gelfand> gArrC;
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> canoCoupleCoeffs 
-        = u3::WigU3U2U1(u3A, u3B, u3C, rhomax, gArrA, gArrB, gArrC); 
-        //note that u3C and all gelfand states are already normalized here
-
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> canoCoupleCoeffs =
+        u3::WigU3U2U1(u3A, u3B, u3C, rhomax, gArrA, gArrB, gArrC);
+    // note that u3C and all gelfand states are already normalized here
 
     // find physical states for the second irrep
     pArrB = u3::physicalBasis(u3B);
     dimB = 0;
     // store transformation, each column corresponds to one kappa
-    std::vector< Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> >
-        allCanoCoeffsB(pArrB.size()); 
-    // store expansion 
-    std::vector< std::vector<int> > allCanoBasisB(pArrB.size());
+    std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>
+        allCanoCoeffsB(pArrB.size());
+    // store expansion
+    std::vector<std::vector<int>> allCanoBasisB(pArrB.size());
     // get the transformation
     for (int i = 0; i < pArrB.size(); i++)
     {
@@ -72,13 +71,12 @@ namespace u3
       dimB += pArrB[i].kappa;
     }
 
-
     // find expansion for the third irrep
     pArrC = u3::physicalBasis(u3C);
     dimC = 0;
     // store transformation, each column corresponds to one kappa
     std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>
-        allCanoCoeffsC(pArrC.size()); 
+        allCanoCoeffsC(pArrC.size());
     // store expansion
     std::vector<std::vector<int>> allCanoBasisC(pArrC.size());
     for (int i = 0; i < pArrC.size(); i++)
@@ -97,27 +95,27 @@ namespace u3
       dimA += pArrA[i].kappa;
     }
 
-
     // compute Wigner coefficients: < (lamda1,mu1),kappa1,L1 ;
     // (lamda2,mu2),kappa2,L2 | (lamda3,mu3),kappa3,L3 >
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs(dimA*dimB*dimC,rhomax);
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs(
+        dimA * dimB * dimC, rhomax);
     coeffs.setZero();
 
-    
     for (int i = 0; i < pArrA.size(); i++)
     {
 
-      //std::cout << pArrA[i] << std::endl;
-      
+      // std::cout << pArrA[i] << std::endl;
+
       // store transformation, each column corresponds to one kappa
       std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>
-          allCanoCoeffsA(2*pArrA[i].L+1);
+          allCanoCoeffsA(2 * pArrA[i].L + 1);
       // store expansion
-      std::vector<std::vector<int>> allCanoBasisA(2*pArrA[i].L+1); 
+      std::vector<std::vector<int>> allCanoBasisA(2 * pArrA[i].L + 1);
 
       allCanoCoeffsA[0] = u3::phys_to_cano(pArrA[i], allCanoBasisA[0], gArrA);
 
-      // now going lower from the HW state, remember that gamma = L - M = 0,1,...,2L
+      // now going lower from the HW state, remember that gamma = L - M =
+      // 0,1,...,2L
       for (int gamma = 1; gamma <= 2 * pArrA[i].L; gamma++)
       {
 
@@ -127,45 +125,67 @@ namespace u3
         // normalize coefficient
         double n = std::sqrt(2.0 / (gamma * (2 * pArrA[i].L - gamma + 1.0)));
 
-        allCanoCoeffsA[gamma] = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>(allCanoBasisA[gamma].size(), pArrA[i].kappa);
+        allCanoCoeffsA[gamma] =
+            Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>(
+                allCanoBasisA[gamma].size(), pArrA[i].kappa);
         allCanoCoeffsA[gamma].setZero();
 
         // basis states are obtained by acting with two generators E31 and E23
         for (int m = 0; m < allCanoBasisA[gamma].size(); m++)
         {
-          for (int j=0; j<allCanoBasisA[gamma-1].size(); j++)
+          for (int j = 0; j < allCanoBasisA[gamma - 1].size(); j++)
           {
-            if ( u3::E13_12(gArrA[allCanoBasisA[gamma][m]],gArrA[allCanoBasisA[gamma-1][j]]) ){
+            if (u3::E13_12(gArrA[allCanoBasisA[gamma][m]],
+                           gArrA[allCanoBasisA[gamma - 1][j]]))
+            {
               for (int k = 0; k < pArrA[i].kappa; k++)
-                allCanoCoeffsA[gamma](m,k) += n*allCanoCoeffsA[gamma-1](j,k)*gArrA[allCanoBasisA[gamma-1][j]].e31_12();
+                allCanoCoeffsA[gamma](m, k) +=
+                    n * allCanoCoeffsA[gamma - 1](j, k) *
+                    gArrA[allCanoBasisA[gamma - 1][j]].e31_12();
             }
-            else if ( u3::E13_22(gArrA[allCanoBasisA[gamma][m]],gArrA[allCanoBasisA[gamma-1][j]]) ){
+            else if (u3::E13_22(gArrA[allCanoBasisA[gamma][m]],
+                                gArrA[allCanoBasisA[gamma - 1][j]]))
+            {
               for (int k = 0; k < pArrA[i].kappa; k++)
-                allCanoCoeffsA[gamma](m,k) += n*allCanoCoeffsA[gamma-1](j,k)*gArrA[allCanoBasisA[gamma-1][j]].e31_22();
+                allCanoCoeffsA[gamma](m, k) +=
+                    n * allCanoCoeffsA[gamma - 1](j, k) *
+                    gArrA[allCanoBasisA[gamma - 1][j]].e31_22();
             }
-            else if ( u3::E23_12(gArrA[allCanoBasisA[gamma-1][j]],gArrA[allCanoBasisA[gamma][m]]) ){
+            else if (u3::E23_12(gArrA[allCanoBasisA[gamma - 1][j]],
+                                gArrA[allCanoBasisA[gamma][m]]))
+            {
               for (int k = 0; k < pArrA[i].kappa; k++)
-                allCanoCoeffsA[gamma](m,k) += n*allCanoCoeffsA[gamma-1](j,k)*gArrA[allCanoBasisA[gamma-1][j]].e23_12();
+                allCanoCoeffsA[gamma](m, k) +=
+                    n * allCanoCoeffsA[gamma - 1](j, k) *
+                    gArrA[allCanoBasisA[gamma - 1][j]].e23_12();
             }
-            else if ( u3::E23_22(gArrA[allCanoBasisA[gamma-1][j]],gArrA[allCanoBasisA[gamma][m]]) ){
+            else if (u3::E23_22(gArrA[allCanoBasisA[gamma - 1][j]],
+                                gArrA[allCanoBasisA[gamma][m]]))
+            {
               for (int k = 0; k < pArrA[i].kappa; k++)
-                allCanoCoeffsA[gamma](m,k) += n*allCanoCoeffsA[gamma-1](j,k)*gArrA[allCanoBasisA[gamma-1][j]].e23_22();
+                allCanoCoeffsA[gamma](m, k) +=
+                    n * allCanoCoeffsA[gamma - 1](j, k) *
+                    gArrA[allCanoBasisA[gamma - 1][j]].e23_22();
             }
           }
         }
 
-        //std::cout << gamma << " ... " << allCanoCoeffsA[gamma] << std::endl;
+        // std::cout << gamma << " ... " << allCanoCoeffsA[gamma] << std::endl;
       }
 
-      // last step is to compute Wigner coefficients 
-      // < (lamda1,mu1)kappa1 L1; (lamda2,mu2)kappa2 L2 | (lamda3,mu3)kappa3 L3 >
+      // last step is to compute Wigner coefficients
+      // < (lamda1,mu1)kappa1 L1; (lamda2,mu2)kappa2 L2 | (lamda3,mu3)kappa3 L3
+      // >
       for (int m = 0; m < pArrB.size(); m++)
       {
         for (int n = 0; n < pArrC.size(); n++)
         {
-          if ( abs(pArrA[i].L - pArrB[m].L) <= pArrC[n].L && (pArrA[i].L + pArrB[m].L) >= pArrC[n].L )
+          if (abs(pArrA[i].L - pArrB[m].L) <= pArrC[n].L &&
+              (pArrA[i].L + pArrB[m].L) >= pArrC[n].L)
           {
-            double so3cgc = CGC_SO3(pArrA[i].L, pArrB[m].L, pArrC[n].L, pArrC[n].L - pArrB[m].L, pArrB[m].L, pArrC[n].L);
+            double so3cgc =
+                CGC_SO3(pArrA[i].L, pArrB[m].L, pArrC[n].L,
+                        pArrC[n].L - pArrB[m].L, pArrB[m].L, pArrC[n].L);
 
             int gamma = pArrA[i].L + pArrB[m].L - pArrC[n].L;
 
@@ -181,13 +201,22 @@ namespace u3
                     {
                       for (int k3 = 0; k3 < pArrC[n].kappa; k3++)
                       {
-                        double x = allCanoCoeffsA[gamma](c1,k1) * allCanoCoeffsB[m](c2,k2) * allCanoCoeffsC[n](c3,k3) / so3cgc; 
+                        double x = allCanoCoeffsA[gamma](c1, k1) *
+                                   allCanoCoeffsB[m](c2, k2) *
+                                   allCanoCoeffsC[n](c3, k3) / so3cgc;
                         for (int r = 0; r < rhomax; r++)
                         {
-                          //std::cout << ((i+k1)*dimB + m+k2 )*dimC + n+k3 << std::endl;
-                          coeffs( ((iA[i]+k1)*dimB + iB[m]+k2 )*dimC + iC[n]+k3,  r) += 
-                              x * canoCoupleCoeffs( ( allCanoBasisA[gamma][c1] * gArrB.size() 
-                              +  allCanoBasisB[m][c2] ) * gArrC.size() + allCanoBasisC[n][c3], r);
+                          // std::cout << ((i+k1)*dimB + m+k2 )*dimC + n+k3 <<
+                          // std::endl;
+                          coeffs(((iA[i] + k1) * dimB + iB[m] + k2) * dimC +
+                                     iC[n] + k3,
+                                 r) +=
+                              x * canoCoupleCoeffs(
+                                      (allCanoBasisA[gamma][c1] * gArrB.size() +
+                                       allCanoBasisB[m][c2]) *
+                                              gArrC.size() +
+                                          allCanoBasisC[n][c3],
+                                      r);
                         }
                       }
                     }
@@ -200,7 +229,7 @@ namespace u3
       }
     }
 
-    //std::cout << coeffs << std::endl;
+    // std::cout << coeffs << std::endl;
 
     return coeffs;
   }

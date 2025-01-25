@@ -44,7 +44,8 @@ int main()
   int dimA, dimB, dimC;
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs =
-      u3::WigU3SO3(u3a, u3b, u3cs[index], rhomaxs[index], dimA, dimB, dimC, pArrA, iA, pArrB, iB, pArrC, iC);
+      u3::WigU3SO3(u3a, u3b, u3cs[index], rhomaxs[index], dimA, dimB, dimC,
+                   pArrA, iA, pArrB, iB, pArrC, iC);
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();
@@ -55,7 +56,8 @@ int main()
     {
       for (int k = 0; k < pArrC.size(); k++)
       {
-        if ( abs(pArrA[i].L - pArrB[j].L) <= pArrC[k].L && (pArrA[i].L + pArrB[j].L) >= pArrC[k].L )
+        if (abs(pArrA[i].L - pArrB[j].L) <= pArrC[k].L &&
+            (pArrA[i].L + pArrB[j].L) >= pArrC[k].L)
         {
           for (int k1 = 0; k1 < pArrA[i].kappa; k1++)
           {
@@ -67,8 +69,12 @@ int main()
                 pA.kappa = k1 + 1;
                 pB.kappa = k2 + 1;
                 pC.kappa = k3 + 1;
-                std::cout << "< " << pA << " ; " << pB << " || " << pC << " >" << "\t" 
-                        << coeffs.row(((iA[i]+k1)*dimB + iB[j]+k2 )*dimC + iC[k]+k3) << std::endl;
+                std::cout << "< " << pA << " ; " << pB << " || " << pC << " >"
+                          << "\t"
+                          << coeffs.row(((iA[i] + k1) * dimB + iB[j] + k2) *
+                                            dimC +
+                                        iC[k] + k3)
+                          << std::endl;
               }
             }
           }

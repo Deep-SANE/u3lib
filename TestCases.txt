@@ -40,14 +40,3 @@ Program U3generatorsRME.cpp (compute RME's of Q, i.e., option==1)
 
 ------------------------------------------------------------------------------------------------
 
-Recommended improvements:
-
-1. utils/inverseSolver.h: I set the sparsity boundary based on my experience with the nullspace solver. I have not actually tested what a good sparsity should be to switch from dense-matrix solver to sparse-matrix solver.
-
-2. utils/nullspaceSolver.h: I set the sparsity boundary based on my experience. However, I remember from our conversation during last summer that sparsity should be much higher for a matrix to be consider as sparse. 
-
-3. The scheme for searching Gelfand states (u3::gelfand) is currently done by going through arrays and using "if" statement to check. It would be great to have a faster searching method. Perhaps fast lookup table will be useful here.
-
-4. Similarly for searching canonical coupling coefficients (U3U2U1xU3U2U1).
-
-5. Recommendations 3 and 4 are particularly important for the algorithm implemented in U3SO3xU3SO3.h, which is pretty slow at the moment going to high (lambda,mu) values. 

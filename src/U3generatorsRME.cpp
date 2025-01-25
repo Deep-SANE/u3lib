@@ -42,7 +42,7 @@ int main()
   std::cin >> i_ket;
 
   std::vector<int> bra_kappa, ket_kappa;
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> RME; 
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> RME;
 
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();

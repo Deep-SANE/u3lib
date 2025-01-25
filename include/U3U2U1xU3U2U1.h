@@ -461,32 +461,26 @@ namespace u3
   }
 
   // all coupling coefficients
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> WigU3U2U1(u3::irrep& u3A, u3::irrep& u3B, u3::irrep& u3C, int &rhomax,
-           std::vector<u3::gelfand>& gArrA,
-           std::vector<u3::gelfand>& gArrB,
-           std::vector<u3::gelfand>& gArrC)
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
+  WigU3U2U1(u3::irrep& u3A, u3::irrep& u3B, u3::irrep& u3C, int& rhomax,
+            std::vector<u3::gelfand>& gArrA, std::vector<u3::gelfand>& gArrB,
+            std::vector<u3::gelfand>& gArrC)
   {
     gArrA = u3::gelfandBasis(u3A);
     gArrB = u3::gelfandBasis(u3B);
     gArrC = u3::gelfandBasis(u3C);
 
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs(
-      gArrA.size() * gArrB.size() * gArrC.size(), rhomax);
+        gArrA.size() * gArrB.size() * gArrC.size(), rhomax);
     coeffs.setZero();
 
     for (int w3 = u3C.n33; w3 <= u3C.n13; w3++)
     {
       for (int w1 = u3C.n13; w1 >= u3C.n33; w1--)
-      {
         if (w3 == u3C.n33 && w1 == u3C.n13)
-        {
           u3::HighestWeightCoeffs(gArrA, gArrB, gArrC, coeffs);
-        }
         else
-        {
           u3::LowerWeightCoeffs(w3, w1, gArrA, gArrB, gArrC, coeffs);
-        }
-      }
     }
 
     u3C.normalize();

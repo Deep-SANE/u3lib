@@ -78,7 +78,7 @@ namespace u3
       std::vector<u3::gelfand> bra_gArr = u3::gelfandBasis(bra.toprow);
       std::vector<int> bra_indices;
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> bra_coeffs =
-      u3::phys_to_cano(bra, bra_indices, bra_gArr);
+          u3::phys_to_cano(bra, bra_indices, bra_gArr);
 
       std::vector<u3::gelfand> ket_gArr = u3::gelfandBasis(ket.toprow);
       std::vector<int> ket_indices;
@@ -107,7 +107,7 @@ namespace u3
       std::vector<u3::gelfand> bra_gArr = u3::gelfandBasis(bra.toprow);
       std::vector<int> bra_indices;
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> bra_coeffs =
-      u3::phys_to_cano(bra, bra_indices, bra_gArr);
+          u3::phys_to_cano(bra, bra_indices, bra_gArr);
 
       std::vector<u3::gelfand> ket_gArr = u3::gelfandBasis(ket.toprow);
       std::vector<int> ket_indices;

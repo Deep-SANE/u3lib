@@ -133,7 +133,8 @@ namespace u3
 
   // get the transformation
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-  phys_to_cano(u3::physicalvector& physvec, std::vector<int>& indices,std::vector<u3::gelfand>& gArr)
+  phys_to_cano(u3::physicalvector& physvec, std::vector<int>& indices,
+               std::vector<u3::gelfand>& gArr)
   {
     indices = u3::expand_to_gelfand(physvec.L, gArr);
 
