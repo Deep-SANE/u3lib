@@ -31,7 +31,7 @@ namespace u3
   // the same for those other coupled states that have the same weight with the
   // state being expanded. Here indices of the uncoupled states are stored.
   std::vector<std::pair<int, int>>
-  expand_to_uncoupled(u3::gelfand& u3c, std::vector<u3::gelfand>& gArr1,
+  expand_to_uncoupled(u3::gelfand& g3, std::vector<u3::gelfand>& gArr1,
                       std::vector<u3::gelfand>& gArr2)
   {
     std::vector<std::pair<int, int>> indices;
@@ -39,8 +39,8 @@ namespace u3
     {
       for (int j = 0; j < gArr2.size(); j++)
       {
-        if ((gArr1[i].e22() + gArr2[j].e22()) == u3c.e22() &&
-            (gArr1[i].e11() + gArr2[j].e11()) == u3c.e11())
+        if ((gArr1[i].e22() + gArr2[j].e22()) == g3.e22() &&
+            (gArr1[i].e11() + gArr2[j].e11()) == g3.e11())
         {
           std::pair<int, int> p(i, j);
           indices.push_back(p);
