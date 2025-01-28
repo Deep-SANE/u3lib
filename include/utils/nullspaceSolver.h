@@ -25,7 +25,7 @@ double error(Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& mat,
   double error = 0.0;
   for (int i = 0; i < zeros.rows(); i++)
     for (int j = 0; j < zeros.cols(); j++)
-      error += abs(zeros(i, j));
+      error += std::fabs(zeros(i, j));
   error /= zeros.size();
 
   return error;
@@ -125,13 +125,13 @@ null_space(Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& mat)
     {
       int j;
       for (j = 0; j < ornorNullSpace.rows(); j++)
-        if (std::abs(ornorNullSpace(j, i)) > 1e-15)
+        if (std::fabs(ornorNullSpace(j, i)) > 1e-15)
           break;
       if (ornorNullSpace(j, i) < 0)
         ornorNullSpace.col(i) = -ornorNullSpace.col(i);
 
       for (j = 0; j < ornorNullSpace.rows(); j++)
-        if (abs(ornorNullSpace(j, i)) <= 1e-15)
+        if (std::fabs(ornorNullSpace(j, i)) <= 1e-15)
           ornorNullSpace(j, i) = 0.0;
     }
 

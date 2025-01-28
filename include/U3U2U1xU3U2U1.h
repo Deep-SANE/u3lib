@@ -446,7 +446,7 @@ namespace u3
         {
           for (int j = 0; j < uncoupled_same_weight_gArr3.size(); j++)
           {
-            if (abs(coeffs_temp(i, j)) < 1e-10)
+            if (std::fabs(coeffs_temp(i, j)) < 1e-10)
               coeffs_temp(i, j) = 0.0;
             coeffs((uncoupled_same_weight_gArr3[j].first * gArr2.size() +
                     uncoupled_same_weight_gArr3[j].second) *
