@@ -45,7 +45,7 @@ backwardSubstitution(Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& mat,
       for (int k = j + 1; k < row_num; k++)
         sum += mat(j, k) * result(k, i);
 
-      if (abs(mat(j, j)) < epsilon)
+      if (std::fabs(mat(j, j)) < epsilon)
         result(j, i) = 0.0;
 
       else
