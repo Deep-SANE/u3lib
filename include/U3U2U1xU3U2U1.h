@@ -1,10 +1,13 @@
-// protection against multiple header file inclusion
 #ifndef U3U2U1XU3U2U1_H
 #define U3U2U1XU3U2U1_H
 
+#include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <Eigen/Dense>
 #include <iostream>
+#include <limits>
+#include <utility>
 #include <vector>
 
 #include "decomposition.h"
@@ -12,46 +15,444 @@
 #include "utils/inverseSolver.h"
 #include "utils/nullspaceSolver.h"
 
+// formula for mapping states to coupling coefficients
+// there are three irreps u3a, u3b, u3c
+// the coupling coefficients are stored in a matrix whose number of columns is
+// the outer multiplicity rho and number of rows is dim(u3a)*dim(u3b)*dim(u3c)
+// for matching the Gelfand states associated with each irrep to the row in the
+// coefficient matrix, use the following formula: row = (ia*dim(u3b) +
+// ib)*dim(u3c) + ic provided that the loops are nested in this order: ia -> ib
+// -> ic
+
 namespace u3
 {
-
-  // expansion of a coupled gelfand basis state in terms of those uncoupled ones
-  // based on the weight selection rule; hence, this expansion is the same for
-  // those other coupled states that have the same weight with the state being
-  // expanded
-  void expansion(u3::irrep& u3a, u3::irrep& u3b, u3::gelfand& u3c,
-                 std::vector<u3::gelfand>& gArr1,
-                 std::vector<u3::gelfand>& gArr2)
+  // expansion of a coupled gelfand basis state (u3c) in terms of those
+  // uncoupled ones based on the weight selection rule; hence, this expansion is
+  // the same for those other coupled states that have the same weight with the
+  // state being expanded. Here indices of the uncoupled states are stored.
+  std::vector<std::pair<int, int>>
+  expand_to_uncoupled(u3::gelfand& g3, std::vector<u3::gelfand>& gArr1,
+                      std::vector<u3::gelfand>& gArr2)
   {
-    for (int n12a = u3a.n13; n12a >= u3a.n23; n12a--)
+    std::vector<std::pair<int, int>> indices;
+    for (int i = 0; i < gArr1.size(); i++)
     {
-      for (int n22a = u3a.n23; n22a >= u3a.n33; n22a--)
+      for (int j = 0; j < gArr2.size(); j++)
       {
-        for (int n11a = n12a; n11a >= n22a; n11a--)
+        if ((gArr1[i].e22() + gArr2[j].e22()) == g3.e22() &&
+            (gArr1[i].e11() + gArr2[j].e11()) == g3.e11())
         {
-          for (int n12b = u3b.n13; n12b >= u3b.n23; n12b--)
-          {
-            for (int n22b = u3b.n23; n22b >= u3b.n33; n22b--)
-            {
-              for (int n11b = n12b; n11b >= n22b; n11b--)
-              {
-                if ((n12a + n22a - n11a + n12b + n22b - n11b) == u3c.e22() &&
-                    (n11a + n11b) == u3c.e11())
-                {
-                  u3::gelfand g1(u3a.n13, u3a.n23, u3a.n33, n12a, n22a, n11a);
-                  u3::gelfand g2(u3b.n13, u3b.n23, u3b.n33, n12b, n22b, n11b);
+          std::pair<int, int> p(i, j);
+          indices.push_back(p);
+          // std::cout << "-" << i << "," << j << std::endl;
+        }
+      }
+    }
+    return indices;
+  }
 
-                  // if(g1.check() && g2.check()){
-                  gArr1.push_back(g1);
-                  gArr2.push_back(g2);
-                  //}
-                }
-                else
-                {
-                  continue;
-                }
+  // build the matrix representating a system of linear equations resulting from
+  // the action two generators E23 and E12 that annihiliate the highest weight
+  // state
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
+  E23E12(std::vector<u3::gelfand>& gArr1, std::vector<u3::gelfand>& gArr2,
+         std::vector<std::pair<int, int>>& indices)
+  {
+
+    int col_num = indices.size();
+
+    std::vector<std::pair<int, int>> new_indices; // store the parent states
+
+    // Initialize max values
+    int maxFirst = indices.back().first;
+    int maxSecond = std::numeric_limits<int>::min();
+
+    // Iterate through the vector to find the maximum
+    for (const auto& p : indices)
+      maxSecond = std::max(maxSecond, p.second); // Update maxSecond
+
+    for (int i = 0; i < maxFirst; i++)
+    {
+      for (int j = 0; j < maxSecond; j++)
+      {
+        for (int k = 0; k < indices.size(); k++)
+        {
+          int g1 = indices[k].first, g2 = indices[k].second;
+
+          // E23 and E12 act on the first state
+          if (u3::E23_12(gArr1[g1], gArr1[i]) && g2 == j)
+          {
+            std::pair<int, int> p(i, g2);
+            new_indices.push_back(p);
+            break;
+          }
+          else if (u3::E23_22(gArr1[g1], gArr1[i]) && g2 == j)
+          {
+            std::pair<int, int> p(i, g2);
+            new_indices.push_back(p);
+            break;
+          }
+          else if (u3::E12(gArr1[g1], gArr1[i]) && g2 == j)
+          {
+            std::pair<int, int> p(i, g2);
+            new_indices.push_back(p);
+            break;
+          }
+
+          // E23 and E12 act on the second state
+          else if (u3::E23_12(gArr2[g2], gArr2[j]) && g1 == i)
+          {
+            std::pair<int, int> p(g1, j);
+            new_indices.push_back(p);
+            break;
+          }
+          else if (u3::E23_22(gArr2[g2], gArr2[j]) && g1 == i)
+          {
+            std::pair<int, int> p(g1, j);
+            new_indices.push_back(p);
+            break;
+          }
+          else if (u3::E12(gArr2[g2], gArr2[j]) && g1 == i)
+          {
+            std::pair<int, int> p(g1, j);
+            new_indices.push_back(p);
+            break;
+          }
+        }
+      }
+    }
+
+    int row_num = new_indices.size();
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> mat(row_num, col_num);
+
+    for (int i = 0; i < row_num; i++)
+    {
+      // std::cout << new_indices[i].first << "," << new_indices[i].second <<
+      // std::endl;
+
+      int new_g1 = new_indices[i].first, new_g2 = new_indices[i].second;
+      for (int j = 0; j < col_num; j++)
+      {
+        int g1 = indices[j].first, g2 = indices[j].second;
+        // action of E23
+        if (u3::E23_12(gArr1[g1], gArr1[new_g1]) && new_g2 == g2)
+          mat(i, j) = gArr1[g1].e23_12();
+        else if (u3::E23_22(gArr1[g1], gArr1[new_g1]) && new_g2 == g2)
+          mat(i, j) = gArr1[g1].e23_22();
+        else if (new_g1 == g1 && u3::E23_12(gArr2[g2], gArr2[new_g2]))
+          mat(i, j) = gArr2[g2].e23_12();
+        else if (new_g1 == g1 && u3::E23_22(gArr2[g2], gArr2[new_g2]))
+          mat(i, j) = gArr2[g2].e23_22();
+
+        // action of E12
+        else if (u3::E12(gArr1[g1], gArr1[new_g1]) && new_g2 == g2)
+          mat(i, j) = gArr1[g1].e12();
+        else if (new_g1 == g1 && u3::E12(gArr2[g2], gArr2[new_g2]))
+          mat(i, j) = gArr2[g2].e12();
+
+        else
+          mat(i, j) = 0.0;
+      }
+    }
+
+    return mat;
+  }
+
+  // highest-weight coefficients < G1; G2| HW3 >
+  void HighestWeightCoeffs(
+      std::vector<u3::gelfand>& gArr1, std::vector<u3::gelfand>& gArr2,
+      std::vector<u3::gelfand>& gArr3,
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& coeffs)
+  {
+
+    std::vector<std::pair<int, int>> indices =
+        expand_to_uncoupled(gArr3[0], gArr1, gArr2);
+
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> mat =
+        E23E12(gArr1, gArr2, indices);
+
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> nullspace =
+        null_space(mat);
+
+    for (int i = 0; i < indices.size(); i++)
+    {
+      coeffs.row((indices[i].first * gArr2.size() + indices[i].second) *
+                 gArr3.size()) = nullspace.row(i);
+    }
+
+    return;
+  }
+
+  // lower-weight coefficients < G1; G2 | G3 >
+
+  void LowerWeightCoeffs(
+      int w3, int w1, std::vector<u3::gelfand>& gArr1,
+      std::vector<u3::gelfand>& gArr2, std::vector<u3::gelfand>& gArr3,
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& coeffs)
+  {
+
+    /// record indices of all coupled states that have the same weight
+    std::vector<int> same_weight_gArr3;
+    for (int i = 0; i < gArr3.size(); i++)
+      if (gArr3[i].e11() == w1 && gArr3[i].e33() == w3)
+        same_weight_gArr3.push_back(i);
+
+    if (same_weight_gArr3.size() != 0)
+    {
+
+      // the coupled states having the same weight have the same expansion of
+      // uncoupled states, whose indices are recorded
+      std::vector<std::pair<int, int>> uncoupled_same_weight_gArr3 =
+          expand_to_uncoupled(gArr3[same_weight_gArr3[0]], gArr1, gArr2);
+
+      // matrix b is independent of outer multiplicity
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> b(
+          same_weight_gArr3.size(), same_weight_gArr3.size());
+
+      // the lowering matrix from the action of E21 and E32, which depends on
+      // outer multiplicity
+      int rmax = coeffs.cols();
+      std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> E21E32(
+          rmax);
+      // set matrix elements to zero
+      for (int r = 0; r < rmax; r++)
+      {
+        E21E32[r] = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>(
+            same_weight_gArr3.size(), uncoupled_same_weight_gArr3.size());
+        E21E32[r].setZero();
+      }
+
+      for (int i = 0; i < same_weight_gArr3.size(); i++)
+      {
+        int flag = 0;
+
+        // build with generator E21
+        u3::gelfand g3_n11p1 = gArr3[same_weight_gArr3[i]];
+        g3_n11p1.n11++; // this is a parent state
+        if (g3_n11p1.check())
+        {
+          std::vector<std::pair<int, int>> uncoupled_g3n11p1 =
+              expand_to_uncoupled(g3_n11p1, gArr1, gArr2);
+          for (int j = 0; j < same_weight_gArr3.size(); j++)
+            if (u3::E12(gArr3[same_weight_gArr3[j]], g3_n11p1))
+              b(i, j) = g3_n11p1.e21();
+            else
+              b(i, j) = 0.0;
+
+          int k = u3::findGelfand(g3_n11p1, gArr3);
+          for (int j = 0; j < uncoupled_same_weight_gArr3.size(); j++)
+          {
+            int g1 = uncoupled_same_weight_gArr3[j].first,
+                g2 = uncoupled_same_weight_gArr3[j].second;
+            for (int l = 0; l < uncoupled_g3n11p1.size(); l++)
+            {
+              int parent_g1 = uncoupled_g3n11p1[l].first,
+                  parent_g2 = uncoupled_g3n11p1[l].second;
+              if (u3::E12(gArr1[g1], gArr1[parent_g1]) && g2 == parent_g2)
+              {
+                for (int r = 0; r < rmax; r++)
+                  E21E32[r](i, j) +=
+                      coeffs((parent_g1 * gArr2.size() + parent_g2) *
+                                     gArr3.size() +
+                                 k,
+                             r) *
+                      gArr1[parent_g1].e21();
+                flag++;
+              }
+              else if (u3::E12(gArr2[g2], gArr2[parent_g2]) && g1 == parent_g1)
+              {
+                for (int r = 0; r < rmax; r++)
+                  E21E32[r](i, j) +=
+                      coeffs((parent_g1 * gArr2.size() + parent_g2) *
+                                     gArr3.size() +
+                                 k,
+                             r) *
+                      gArr2[parent_g2].e21();
+                flag++;
               }
             }
+          }
+        }
+
+        if (flag > 0)
+          continue;
+
+        // build with generator E32
+
+        u3::gelfand g3_n12p1 = gArr3[same_weight_gArr3[i]];
+        g3_n12p1.n12++; // this is a parent state
+        if (g3_n12p1.check())
+        {
+          std::vector<std::pair<int, int>> uncoupled_g3n12p1 =
+              expand_to_uncoupled(g3_n12p1, gArr1, gArr2);
+          for (int j = 0; j < same_weight_gArr3.size(); j++)
+            if (u3::E23_12(gArr3[same_weight_gArr3[j]], g3_n12p1))
+              b(i, j) = g3_n12p1.e32_12();
+            else if (u3::E23_22(gArr3[same_weight_gArr3[j]], g3_n12p1))
+              b(i, j) = g3_n12p1.e32_22();
+            else
+              b(i, j) = 0.0;
+
+          int k = u3::findGelfand(g3_n12p1, gArr3);
+          for (int j = 0; j < uncoupled_same_weight_gArr3.size(); j++)
+          {
+            int g1 = uncoupled_same_weight_gArr3[j].first,
+                g2 = uncoupled_same_weight_gArr3[j].second;
+            for (int l = 0; l < uncoupled_g3n12p1.size(); l++)
+            {
+              int parent_g1 = uncoupled_g3n12p1[l].first,
+                  parent_g2 = uncoupled_g3n12p1[l].second;
+              if (u3::E23_12(gArr1[g1], gArr1[parent_g1]) && g2 == parent_g2)
+              {
+                for (int r = 0; r < rmax; r++)
+                  E21E32[r](i, j) +=
+                      coeffs((parent_g1 * gArr2.size() + parent_g2) *
+                                     gArr3.size() +
+                                 k,
+                             r) *
+                      gArr1[parent_g1].e32_12();
+                flag++;
+              }
+              else if (u3::E23_22(gArr1[g1], gArr1[parent_g1]) &&
+                       g2 == parent_g2)
+              {
+                for (int r = 0; r < rmax; r++)
+                  E21E32[r](i, j) +=
+                      coeffs((parent_g1 * gArr2.size() + parent_g2) *
+                                     gArr3.size() +
+                                 k,
+                             r) *
+                      gArr1[parent_g1].e32_22();
+                flag++;
+              }
+              else if (u3::E23_12(gArr2[g2], gArr2[parent_g2]) &&
+                       g1 == parent_g1)
+              {
+                for (int r = 0; r < rmax; r++)
+                  E21E32[r](i, j) +=
+                      coeffs((parent_g1 * gArr2.size() + parent_g2) *
+                                     gArr3.size() +
+                                 k,
+                             r) *
+                      gArr2[parent_g2].e32_12();
+                flag++;
+              }
+              else if (u3::E23_22(gArr2[g2], gArr2[parent_g2]) &&
+                       g1 == parent_g1)
+              {
+                for (int r = 0; r < rmax; r++)
+                  E21E32[r](i, j) +=
+                      coeffs((parent_g1 * gArr2.size() + parent_g2) *
+                                     gArr3.size() +
+                                 k,
+                             r) *
+                      gArr2[parent_g2].e32_22();
+                flag++;
+              }
+            }
+          }
+        }
+
+        if (flag > 0)
+          continue;
+
+        u3::gelfand g3_n22p1 = gArr3[same_weight_gArr3[i]];
+        g3_n22p1.n22++; // this is a parent state
+        if (g3_n22p1.check())
+        {
+          std::vector<std::pair<int, int>> uncoupled_g3n22p1 =
+              expand_to_uncoupled(g3_n22p1, gArr1, gArr2);
+          for (int j = 0; j < same_weight_gArr3.size(); j++)
+            if (u3::E23_12(gArr3[same_weight_gArr3[j]], g3_n22p1))
+              b(i, j) = g3_n22p1.e32_12();
+            else if (u3::E23_22(gArr3[same_weight_gArr3[j]], g3_n22p1))
+              b(i, j) = g3_n22p1.e32_22();
+            else
+              b(i, j) = 0.0;
+
+          int k = u3::findGelfand(g3_n22p1, gArr3);
+          for (int j = 0; j < uncoupled_same_weight_gArr3.size(); j++)
+          {
+            int g1 = uncoupled_same_weight_gArr3[j].first,
+                g2 = uncoupled_same_weight_gArr3[j].second;
+            for (int l = 0; l < uncoupled_g3n22p1.size(); l++)
+            {
+              int parent_g1 = uncoupled_g3n22p1[l].first,
+                  parent_g2 = uncoupled_g3n22p1[l].second;
+              if (u3::E23_12(gArr1[g1], gArr1[parent_g1]) && g2 == parent_g2)
+              {
+                for (int r = 0; r < rmax; r++)
+                  E21E32[r](i, j) +=
+                      coeffs((parent_g1 * gArr2.size() + parent_g2) *
+                                     gArr3.size() +
+                                 k,
+                             r) *
+                      gArr1[parent_g1].e32_12();
+                flag++;
+              }
+              else if (u3::E23_22(gArr1[g1], gArr1[parent_g1]) &&
+                       g2 == parent_g2)
+              {
+                for (int r = 0; r < rmax; r++)
+                  E21E32[r](i, j) +=
+                      coeffs((parent_g1 * gArr2.size() + parent_g2) *
+                                     gArr3.size() +
+                                 k,
+                             r) *
+                      gArr1[parent_g1].e32_22();
+                flag++;
+              }
+              else if (u3::E23_12(gArr2[g2], gArr2[parent_g2]) &&
+                       g1 == parent_g1)
+              {
+                for (int r = 0; r < rmax; r++)
+                  E21E32[r](i, j) +=
+                      coeffs((parent_g1 * gArr2.size() + parent_g2) *
+                                     gArr3.size() +
+                                 k,
+                             r) *
+                      gArr2[parent_g2].e32_12();
+                flag++;
+              }
+              else if (u3::E23_22(gArr2[g2], gArr2[parent_g2]) &&
+                       g1 == parent_g1)
+              {
+                for (int r = 0; r < rmax; r++)
+                  E21E32[r](i, j) +=
+                      coeffs((parent_g1 * gArr2.size() + parent_g2) *
+                                     gArr3.size() +
+                                 k,
+                             r) *
+                      gArr2[parent_g2].e32_22();
+                flag++;
+              }
+            }
+          }
+        }
+      }
+
+      // inverse b
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> b_inverse =
+          inverse(b);
+
+      // std::cout << "b = " << b << std::endl;
+
+      for (int r = 0; r < rmax; r++)
+      {
+        // std::cout << "E21E32 = " << E21E32[r] << std::endl;
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs_temp =
+            b_inverse * E21E32[r];
+        for (int i = 0; i < same_weight_gArr3.size(); i++)
+        {
+          for (int j = 0; j < uncoupled_same_weight_gArr3.size(); j++)
+          {
+            if (abs(coeffs_temp(i, j)) < 1e-10)
+              coeffs_temp(i, j) = 0.0;
+            coeffs((uncoupled_same_weight_gArr3[j].first * gArr2.size() +
+                    uncoupled_same_weight_gArr3[j].second) *
+                           gArr3.size() +
+                       same_weight_gArr3[i],
+                   r) = coeffs_temp(i, j);
           }
         }
       }
@@ -59,70 +460,99 @@ namespace u3
     return;
   }
 
-  void newstates(u3::gelfand& temp_gelfand, std::vector<u3::gelfand>& gArr1,
-                 std::vector<u3::gelfand>& gArr2,
-                 std::vector<u3::gelfand>& newgArr1,
-                 std::vector<u3::gelfand>& newgArr2, int index)
+  // all coupling coefficients
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
+  WigU3U2U1(u3::irrep& u3A, u3::irrep& u3B, u3::irrep& u3C, int& rhomax,
+            std::vector<u3::gelfand>& gArrA, std::vector<u3::gelfand>& gArrB,
+            std::vector<u3::gelfand>& gArrC)
   {
-    if (newgArr1.size() == 0)
+    gArrA = u3::gelfandBasis(u3A);
+    gArrB = u3::gelfandBasis(u3B);
+    gArrC = u3::gelfandBasis(u3C);
+
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs(
+        gArrA.size() * gArrB.size() * gArrC.size(), rhomax);
+    coeffs.setZero();
+
+    for (int w3 = u3C.n33; w3 <= u3C.n13; w3++)
     {
-      newgArr1.push_back(temp_gelfand);
-      newgArr2.push_back(gArr2[index]);
+      for (int w1 = u3C.n13; w1 >= u3C.n33; w1--)
+        if (w3 == u3C.n33 && w1 == u3C.n13)
+          u3::HighestWeightCoeffs(gArrA, gArrB, gArrC, coeffs);
+        else
+          u3::LowerWeightCoeffs(w3, w1, gArrA, gArrB, gArrC, coeffs);
+    }
+
+    u3C.normalize();
+    for (int i = 0; i < gArrC.size(); i++)
+      gArrC[i].normalize();
+
+    return coeffs;
+  }
+
+} // namespace u3
+
+#endif
+
+/*
+  void newPair(std::pair<int, int>& temp_pair, std::vector< std::pair<int, int>
+  >& new_indices)
+  {
+    if (new_indices.size() == 0)
+    {
+      new_indices.push_back(temp_pair);
     }
     else
     {
-      int flag = 0;
-      for (int j = 0; j < newgArr1.size(); j++)
+      // Find the pair in the vector
+      auto flag = std::find(new_indices.begin(), new_indices.end(), temp_pair);
+
+      if (flag == new_indices.end())
       {
-        if (u3::compare(temp_gelfand, newgArr1[j]) &&
-            u3::compare(gArr2[index], newgArr2[j]))
-        {
-          flag = 1;
-          break;
-        }
-      }
-      if (flag == 0)
-      {
-        newgArr1.push_back(temp_gelfand);
-        newgArr2.push_back(gArr2[index]);
+        new_indices.push_back(temp_pair);
       }
     }
     return;
   }
 
-  // build the matrix representating a system of linear equations resulting from
-  // the action two generators E23 and E12 that annihiliate the highest weight
-  // state
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-  E23E12(std::vector<u3::gelfand>& gArr1, std::vector<u3::gelfand>& gArr2)
+  E23E12(std::vector<u3::gelfand>& gArr1, std::vector<u3::gelfand>& gArr2,
+  std::vector< std::pair<int, int> >& indices)
   {
 
-    int col_num = gArr1.size();
+    int col_num = indices.size();
 
-    std::vector<u3::gelfand> newgArr1;
-    std::vector<u3::gelfand> newgArr2;
+    std::vector< std::pair<int, int> > new_indices;
 
+    //going through the product states |G1;G2> which are stored via indices
     for (int i = 0; i < col_num; i++)
     {
+      int g1 = indices[i].first, g2 = indices[i].second;
 
       // E23 and E12 act on the first state
-      if ((gArr1[i].n12 + 1) <= gArr1[i].n13)
+      if ((gArr1[g1].n12 + 1) <= gArr1[i].n13)
       {
         u3::gelfand temp_gelfand = gArr1[i];
         temp_gelfand.n12++;
-        newstates(temp_gelfand, gArr1, gArr2, newgArr1, newgArr2, i);
+        int new_g1 = findGelfand(temp_gelfand,gArr1);
+        std::pair<int, int> new_pair(new_g1,g2);
+        newPair(new_pair,new_indices);
       }
       if ((gArr1[i].n22 + 1) <= gArr1[i].n23)
       {
         u3::gelfand temp_gelfand = gArr1[i];
         temp_gelfand.n22++;
-        newstates(temp_gelfand, gArr1, gArr2, newgArr1, newgArr2, i);
+        int new_g1 = findGelfand(temp_gelfand,gArr1);
+        std::pair<int, int> new_pair(new_g1,g2);
+        newPair(new_pair,new_indices);
       }
       if ((gArr1[i].n11 + 1) <= gArr1[i].n12)
       {
         u3::gelfand temp_gelfand = gArr1[i];
         temp_gelfand.n11++;
-        newstates(temp_gelfand, gArr1, gArr2, newgArr1, newgArr2, i);
+        int new_g1 = findGelfand(temp_gelfand,gArr1);
+        std::pair<int, int> new_pair(new_g1,g2);
+        newPair(new_pair,new_indices);
       }
 
       // E23 and E12 act on the second state
@@ -130,74 +560,72 @@ namespace u3
       {
         u3::gelfand temp_gelfand = gArr2[i];
         temp_gelfand.n12++;
-        newstates(temp_gelfand, gArr2, gArr1, newgArr2, newgArr1, i);
+        int new_g2 = findGelfand(temp_gelfand,gArr2);
+        std::pair<int, int> new_pair(g1,new_g2);
+        newPair(new_pair,new_indices);
       }
       if ((gArr2[i].n22 + 1) <= gArr2[i].n23)
       {
         u3::gelfand temp_gelfand = gArr2[i];
         temp_gelfand.n22++;
-        newstates(temp_gelfand, gArr2, gArr1, newgArr2, newgArr1, i);
+        int new_g2 = findGelfand(temp_gelfand,gArr2);
+        std::pair<int, int> new_pair(g1,new_g2);
+        newPair(new_pair,new_indices);
       }
       if ((gArr2[i].n11 + 1) <= gArr2[i].n12)
       {
         u3::gelfand temp_gelfand = gArr2[i];
         temp_gelfand.n11++;
-        newstates(temp_gelfand, gArr2, gArr1, newgArr2, newgArr1, i);
+        int new_g2 = findGelfand(temp_gelfand,gArr2);
+        std::pair<int, int> new_pair(g1,new_g2);
+        newPair(new_pair,new_indices);
       }
     }
 
-    int row_num = newgArr1.size();
+    int row_num = new_indices.size();
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> mat(row_num, col_num);
 
     for (int i = 0; i < row_num; i++)
     {
+      std::cout << new_indices[i].first << "," << new_indices[i].second <<
+  std::endl;
+
+      int new_g1 = new_indices[i].first, new_g2 = new_indices[i].second;
       for (int j = 0; j < col_num; j++)
       {
-
+        int g1 = indices[j].first, g2 = indices[j].second;
         // action of E23
-        if (newgArr1[i].n12 == (gArr1[j].n12 + 1) &&
-            newgArr1[i].n22 == gArr1[j].n22 &&
-            newgArr1[i].n11 == gArr1[j].n11 &&
-            u3::compare(newgArr2[i], gArr2[j]))
+        if (u3::E23_12(gArr1[g1],gArr1[new_g1]) && u3::E11(gArr2[new_g2],
+  gArr2[g2]))
         {
-          mat(i, j) = gArr1[j].e23_12();
+          mat(i, j) = gArr1[g1].e23_12();
         }
-        else if (newgArr1[i].n12 == gArr1[j].n12 &&
-                 newgArr1[i].n22 == (gArr1[j].n22 + 1) &&
-                 newgArr1[i].n11 == gArr1[j].n11 &&
-                 u3::compare(newgArr2[i], gArr2[j]))
+        else if (u3::E23_22(gArr1[g1],gArr1[new_g1]) && u3::E11(gArr2[new_g2],
+  gArr2[g2]))
         {
-          mat(i, j) = gArr1[j].e23_22();
+          mat(i, j) = gArr1[g1].e23_22();
         }
-        else if (u3::compare(newgArr1[i], gArr1[j]) &&
-                 newgArr2[i].n12 == (gArr2[j].n12 + 1) &&
-                 newgArr2[i].n22 == gArr2[j].n22 &&
-                 newgArr2[i].n11 == gArr2[j].n11)
+        else if (u3::E11(gArr1[new_g1], gArr1[g1]) &&
+  u3::E23_12(gArr2[g2],gArr2[new_g2]))
         {
-          mat(i, j) = gArr2[j].e23_12();
+          mat(i, j) = gArr2[g2].e23_12();
         }
-        else if (u3::compare(newgArr1[i], gArr1[j]) &&
-                 newgArr2[i].n12 == gArr2[j].n12 &&
-                 newgArr2[i].n22 == (gArr2[j].n22 + 1) &&
-                 newgArr2[i].n11 == gArr2[j].n11)
+        else if (u3::E11(gArr1[new_g1], gArr1[g1]) &&
+  u3::E23_22(gArr2[g2],gArr2[new_g2]))
         {
-          mat(i, j) = gArr2[j].e23_22();
+          mat(i, j) = gArr2[g2].e23_22();
         }
 
         // action of E12
-        else if (newgArr1[i].n12 == gArr1[j].n12 &&
-                 newgArr1[i].n22 == gArr1[j].n22 &&
-                 newgArr1[i].n11 == (gArr1[j].n11 + 1) &&
-                 u3::compare(newgArr2[i], gArr2[j]))
+        else if (u3::E12(gArr1[g1],gArr1[new_g1]) && u3::E11(gArr2[new_g2],
+  gArr2[g2]))
         {
-          mat(i, j) = gArr1[j].e12();
+          mat(i, j) = gArr1[g1].e12();
         }
-        else if (u3::compare(newgArr1[i], gArr1[j]) &&
-                 newgArr2[i].n12 == gArr2[j].n12 &&
-                 newgArr2[i].n22 == gArr2[j].n22 &&
-                 newgArr2[i].n11 == (gArr2[j].n11 + 1))
+        else if (u3::E11(gArr1[new_g1], gArr1[g1]) &&
+  u3::E12(gArr2[g2],gArr2[new_g2]))
         {
-          mat(i, j) = gArr2[j].e12();
+          mat(i, j) = gArr2[g2].e12();
         }
 
         else
@@ -209,339 +637,4 @@ namespace u3
 
     return mat;
   }
-
-  // highest-weight coefficients < G1; G2| HW3 >
-  void HighestWeightCoeffs(
-      u3::irrep& u3a, u3::irrep& u3b, u3::gelfand& HWc,
-      std::vector<u3::gelfand>& gArr1, std::vector<u3::gelfand>& gArr2,
-      std::vector<u3::gelfand>& gArr3,
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& coeffs)
-  {
-
-    expansion(u3a, u3b, HWc, gArr1, gArr2);
-
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> mat =
-        E23E12(gArr1, gArr2);
-
-    coeffs = null_space(mat);
-
-    for (int i = 0; i < coeffs.rows(); i++)
-      gArr3.push_back(HWc);
-
-    return;
-  }
-
-  // build gelfand basis states from a given weight
-  std::vector<u3::gelfand> SameWeight(u3::irrep& u3, int w3, int w1)
-  {
-    std::vector<u3::gelfand> sameweight;
-
-    for (int n12 = u3.n13; n12 >= u3.n23; n12--)
-    {
-      for (int n22 = u3.n23; n22 >= u3.n33; n22--)
-      {
-        for (int n11 = n12; n11 >= n22; n11--)
-        {
-          if (n11 == w1 && (u3.n13 + u3.n23 + u3.n33 - n12 - n22) == w3)
-          {
-            u3::gelfand g(u3.n13, u3.n23, u3.n33, n12, n22, n11);
-            sameweight.push_back(g);
-          }
-          else
-          {
-            continue;
-          }
-        }
-      }
-    }
-
-    return sameweight;
-  }
-
-  // lower-weight coefficients < G1; G2 | G3 >
-  void LowerWeightCoeffs(
-      u3::irrep& u3a, u3::irrep& u3b, u3::irrep& u3c, int w3, int w1,
-      std::vector<u3::gelfand>& gArr1, std::vector<u3::gelfand>& gArr2,
-      std::vector<u3::gelfand>& gArr3,
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& coeffs)
-  {
-
-    // build all coupled states that have the same weight
-    std::vector<u3::gelfand> gArr3_temp = SameWeight(u3c, w3, w1);
-
-    if (gArr3_temp.size() != 0)
-    {
-
-      // std::cout << gArr3_temp.size() << std::endl;
-      std::vector<u3::gelfand> gArr1_temp;
-      std::vector<u3::gelfand> gArr2_temp;
-
-      // the coupled states having the same weight have the same expansion of
-      // uncoupled states
-      expansion(u3a, u3b, gArr3_temp[0], gArr1_temp, gArr2_temp);
-      // std::cout << gArr1_temp.size() << std::endl;
-
-      coeffs.conservativeResize(
-          coeffs.rows() + gArr3_temp.size() * gArr1_temp.size(), coeffs.cols());
-
-      std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>
-          coeffs_temp;
-
-      for (int outer_multi = 0; outer_multi < coeffs.cols(); outer_multi++)
-      {
-
-        // build the b-matrix
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> b(
-            gArr3_temp.size(), gArr3_temp.size());
-
-        // build the lowering matrix from the action of E21 and E32
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> E21E32(
-            gArr3_temp.size(), gArr1_temp.size());
-
-        // set matrix elements to zero
-        for (int i = 0; i < gArr3_temp.size(); i++)
-        {
-          for (int j = 0; j < gArr3_temp.size(); j++)
-            b(i, j) = 0.0;
-          for (int j = 0; j < gArr1_temp.size(); j++)
-            E21E32(i, j) = 0.0;
-        }
-
-        for (int i = 0; i < gArr3_temp.size(); i++)
-        {
-
-          int flag = 0;
-
-          // build with generator E21
-          u3::gelfand g3_n11p1 = gArr3_temp[i];
-          g3_n11p1.n11++; // this is a parent state
-          if (g3_n11p1.check())
-          {
-            for (int k = 0; k < coeffs.rows(); k++)
-            {
-              if (u3::compare(g3_n11p1, gArr3[k]))
-              {
-                for (int j = 0; j < gArr3_temp.size(); j++)
-                {
-                  if (gArr3[k].n12 == gArr3_temp[j].n12 &&
-                      gArr3[k].n22 == gArr3_temp[j].n22 &&
-                      (gArr3[k].n11 - 1) == gArr3_temp[j].n11)
-                  {
-                    b(i, j) = gArr3[k].e21();
-                  }
-                }
-                for (int j = 0; j < gArr1_temp.size(); j++)
-                {
-                  for (int l = k; l < coeffs.rows(); l++)
-                  {
-                    if (u3::compare(gArr3[k], gArr3[l]) &&
-                        u3::compare(gArr2_temp[j], gArr2[l]) &&
-                        gArr1_temp[j].n12 == gArr1[l].n12 &&
-                        gArr1_temp[j].n22 == gArr1[l].n22 &&
-                        gArr1_temp[j].n11 == (gArr1[l].n11 - 1))
-                    {
-                      E21E32(i, j) += coeffs(l, outer_multi) * gArr1[l].e21();
-                      flag++;
-                    }
-                    else if (u3::compare(gArr3[k], gArr3[l]) &&
-                             u3::compare(gArr1_temp[j], gArr1[l]) &&
-                             gArr2_temp[j].n12 == gArr2[l].n12 &&
-                             gArr2_temp[j].n22 == gArr2[l].n22 &&
-                             gArr2_temp[j].n11 == (gArr2[l].n11 - 1))
-                    {
-                      E21E32(i, j) += coeffs(l, outer_multi) * gArr2[l].e21();
-                      flag++;
-                    }
-                  }
-                }
-                break;
-              }
-            }
-          }
-
-          if (flag > 0)
-            continue;
-
-          // build with generator E32
-
-          u3::gelfand g3_n12p1 = gArr3_temp[i];
-          g3_n12p1.n12++; // this is a parent state
-          if (g3_n12p1.check())
-          {
-            for (int k = 0; k < coeffs.rows(); k++)
-            {
-              if (u3::compare(g3_n12p1, gArr3[k]))
-              {
-                for (int j = 0; j < gArr3_temp.size(); j++)
-                {
-                  if ((gArr3[k].n12 - 1) == gArr3_temp[j].n12 &&
-                      gArr3[k].n22 == gArr3_temp[j].n22 &&
-                      gArr3[k].n11 == gArr3_temp[j].n11)
-                  {
-                    b(i, j) = gArr3[k].e32_12();
-                  }
-                  else if (gArr3[k].n12 == gArr3_temp[j].n12 &&
-                           (gArr3[k].n22 - 1) == gArr3_temp[j].n22 &&
-                           gArr3[k].n11 == gArr3_temp[j].n11)
-                  {
-                    b(i, j) = gArr3[k].e32_22();
-                  }
-                }
-                for (int j = 0; j < gArr1_temp.size(); j++)
-                {
-                  for (int l = k; l < coeffs.rows(); l++)
-                  {
-                    if (u3::compare(gArr3[k], gArr3[l]) &&
-                        u3::compare(gArr2_temp[j], gArr2[l]) &&
-                        gArr1_temp[j].n12 == (gArr1[l].n12 - 1) &&
-                        gArr1_temp[j].n22 == gArr1[l].n22 &&
-                        gArr1_temp[j].n11 == gArr1[l].n11)
-                    {
-                      E21E32(i, j) +=
-                          coeffs(l, outer_multi) * gArr1[l].e32_12();
-                      flag++;
-                    }
-                    else if (u3::compare(gArr3[k], gArr3[l]) &&
-                             u3::compare(gArr2_temp[j], gArr2[l]) &&
-                             gArr1_temp[j].n12 == gArr1[l].n12 &&
-                             gArr1_temp[j].n22 == (gArr1[l].n22 - 1) &&
-                             gArr1_temp[j].n11 == gArr1[l].n11)
-                    {
-                      E21E32(i, j) +=
-                          coeffs(l, outer_multi) * gArr1[l].e32_22();
-                      flag++;
-                    }
-                    else if (u3::compare(gArr3[k], gArr3[l]) &&
-                             u3::compare(gArr1_temp[j], gArr1[l]) &&
-                             gArr2_temp[j].n12 == (gArr2[l].n12 - 1) &&
-                             gArr2_temp[j].n22 == gArr2[l].n22 &&
-                             gArr2_temp[j].n11 == gArr2[l].n11)
-                    {
-                      E21E32(i, j) +=
-                          coeffs(l, outer_multi) * gArr2[l].e32_12();
-                      flag++;
-                    }
-                    else if (u3::compare(gArr3[k], gArr3[l]) &&
-                             u3::compare(gArr1_temp[j], gArr1[l]) &&
-                             gArr2_temp[j].n12 == gArr2[l].n12 &&
-                             gArr2_temp[j].n22 == (gArr2[l].n22 - 1) &&
-                             gArr2_temp[j].n11 == gArr2[l].n11)
-                    {
-                      E21E32(i, j) +=
-                          coeffs(l, outer_multi) * gArr2[l].e32_22();
-                      flag++;
-                    }
-                  }
-                }
-                break;
-              }
-            }
-          }
-
-          if (flag > 0)
-            continue;
-
-          u3::gelfand g3_n22p1 = gArr3_temp[i];
-          g3_n22p1.n22++; // this is a parent state
-          if (g3_n22p1.check())
-          {
-            for (int k = 0; k < coeffs.rows(); k++)
-            {
-              if (u3::compare(g3_n22p1, gArr3[k]))
-              {
-                for (int j = 0; j < gArr3_temp.size(); j++)
-                {
-                  if ((gArr3[k].n12 - 1) == gArr3_temp[j].n12 &&
-                      gArr3[k].n22 == gArr3_temp[j].n22 &&
-                      gArr3[k].n11 == gArr3_temp[j].n11)
-                  {
-                    b(i, j) = gArr3[k].e32_12();
-                  }
-                  else if (gArr3[k].n12 == gArr3_temp[j].n12 &&
-                           (gArr3[k].n22 - 1) == gArr3_temp[j].n22 &&
-                           gArr3[k].n11 == gArr3_temp[j].n11)
-                  {
-                    b(i, j) = gArr3[k].e32_22();
-                  }
-                }
-                for (int j = 0; j < gArr1_temp.size(); j++)
-                {
-                  for (int l = k; l < coeffs.rows(); l++)
-                  {
-                    if (u3::compare(gArr3[k], gArr3[l]) &&
-                        u3::compare(gArr2_temp[j], gArr2[l]) &&
-                        gArr1_temp[j].n12 == (gArr1[l].n12 - 1) &&
-                        gArr1_temp[j].n22 == gArr1[l].n22 &&
-                        gArr1_temp[j].n11 == gArr1[l].n11)
-                    {
-                      E21E32(i, j) +=
-                          coeffs(l, outer_multi) * gArr1[l].e32_12();
-                      flag++;
-                    }
-                    else if (u3::compare(gArr3[k], gArr3[l]) &&
-                             u3::compare(gArr2_temp[j], gArr2[l]) &&
-                             gArr1_temp[j].n12 == gArr1[l].n12 &&
-                             gArr1_temp[j].n22 == (gArr1[l].n22 - 1) &&
-                             gArr1_temp[j].n11 == gArr1[l].n11)
-                    {
-                      E21E32(i, j) +=
-                          coeffs(l, outer_multi) * gArr1[l].e32_22();
-                      flag++;
-                    }
-                    else if (u3::compare(gArr3[k], gArr3[l]) &&
-                             u3::compare(gArr1_temp[j], gArr1[l]) &&
-                             gArr2_temp[j].n12 == (gArr2[l].n12 - 1) &&
-                             gArr2_temp[j].n22 == gArr2[l].n22 &&
-                             gArr2_temp[j].n11 == gArr2[l].n11)
-                    {
-                      E21E32(i, j) +=
-                          coeffs(l, outer_multi) * gArr2[l].e32_12();
-                      flag++;
-                    }
-                    else if (u3::compare(gArr3[k], gArr3[l]) &&
-                             u3::compare(gArr1_temp[j], gArr1[l]) &&
-                             gArr2_temp[j].n12 == gArr2[l].n12 &&
-                             gArr2_temp[j].n22 == (gArr2[l].n22 - 1) &&
-                             gArr2_temp[j].n11 == gArr2[l].n11)
-                    {
-                      E21E32(i, j) +=
-                          coeffs(l, outer_multi) * gArr2[l].e32_22();
-                      flag++;
-                    }
-                  }
-                }
-                break;
-              }
-            }
-          }
-        }
-
-        coeffs_temp.push_back(inverse(b) * E21E32);
-        // std::cout << b.inverse() << std::endl << E21E32 << std::endl <<
-        // coeffs_temp << std::endl << std::endl;
-      }
-
-      for (int i = 0; i < gArr3_temp.size(); i++)
-      {
-        for (int j = 0; j < gArr1_temp.size(); j++)
-        {
-          gArr1.push_back(gArr1_temp[j]);
-          gArr2.push_back(gArr2_temp[j]);
-          gArr3.push_back(gArr3_temp[i]);
-          for (int outer_multi = 0; outer_multi < coeffs.cols(); outer_multi++)
-          {
-            Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> mat =
-                coeffs_temp[outer_multi];
-            if (abs(mat(i, j)) < 1e-10)
-              mat(i, j) = 0.0;
-            coeffs(gArr1.size() - 1, outer_multi) = mat(i, j);
-          }
-        }
-      }
-    }
-    return;
-  }
-
-} // namespace u3
-
-#endif
+  */

@@ -39,10 +39,11 @@ namespace u3
 
   // generate all Wigner U3->SO(3) coefficients
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-  WigU3SO3(u3::irrep& u3A, u3::irrep& u3B, u3::irrep& u3C,
-           std::vector<u3::physicalvector>& physvecA,
-           std::vector<u3::physicalvector>& physvecB,
-           std::vector<u3::physicalvector>& physvecC)
+  WigU3SO3(u3::irrep& u3A, u3::irrep& u3B, u3::irrep& u3C, int& rhomax,
+           int& dimA, int& dimB, int& dimC,
+           std::vector<u3::physicalvector>& pArrA, std::vector<int>& iA,
+           std::vector<u3::physicalvector>& pArrB, std::vector<int>& iB,
+           std::vector<u3::physicalvector>& pArrC, std::vector<int>& iC)
   {
 
     // find all the canonical coupling coefficients
@@ -50,319 +51,176 @@ namespace u3
     std::vector<u3::gelfand> gArrB;
     std::vector<u3::gelfand> gArrC;
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-        canoCoupleCoeffs; // each column corresponds to one rho
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> canoCoupleCoeffs =
+        u3::WigU3U2U1(u3A, u3B, u3C, rhomax, gArrA, gArrB, gArrC);
+    // note that u3C and all gelfand states are already normalized here
 
-    for (int w3 = u3C.n33; w3 <= u3C.n13; w3++)
-    {
-      for (int w1 = u3C.n13; w1 >= u3C.n33; w1--)
-      {
-        if (w3 == u3C.n33 && w1 == u3C.n13)
-        {
-          u3::gelfand HW3(u3C.n13, u3C.n23, u3C.n33, u3C.n13, u3C.n23, u3C.n13);
-          u3::HighestWeightCoeffs(u3A, u3B, HW3, gArrA, gArrB, gArrC,
-                                  canoCoupleCoeffs);
-        }
-        else
-        {
-          u3::LowerWeightCoeffs(u3A, u3B, u3C, w3, w1, gArrA, gArrB, gArrC,
-                                canoCoupleCoeffs);
-        }
-      }
-    }
-
-    // find expansion for the second irrep
-    std::vector<u3::physicalvector> pbB = u3::physicalbasis(u3B);
-    std::vector<int> kappaB;
+    // find physical states for the second irrep
+    pArrB = u3::physicalBasis(u3B);
+    dimB = 0;
+    // store transformation, each column corresponds to one kappa
     std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>
-        allCanoCoeffsB; // each column corresponds to one kappa
-    std::vector<std::vector<u3::gelfand>> allCanoBasisB;
-    for (int i = 0; i < pbB.size(); i++)
+        allCanoCoeffsB(pArrB.size());
+    // store expansion
+    std::vector<std::vector<int>> allCanoBasisB(pArrB.size());
+    // get the transformation
+    for (int i = 0; i < pArrB.size(); i++)
     {
-
-      // Construct the canonical basis associated with the physical basis state
-      // that we are looking at
-      std::vector<u3::gelfand> canobasis = u3::canonicalbasis(pbB[i]);
-
-      // Building the projection matrix
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Lproj =
-          Lprojection(pbB[i], canobasis);
-      // and solving its null space
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> nullspace =
-          phys_to_cano(pbB[i],
-                       Lproj); // after solving the nullspace, the dimension of
-                               // the nullspace is the inner multiplicity of L
-
-      kappaB.push_back(pbB[i].kappa); // this multiplicity was computed after
-                                      // solving the nullspace
-      allCanoCoeffsB.push_back(nullspace);
-      allCanoBasisB.push_back(canobasis);
+      iB.push_back(dimB);
+      allCanoCoeffsB[i] = u3::phys_to_cano(pArrB[i], allCanoBasisB[i], gArrB);
+      dimB += pArrB[i].kappa;
     }
 
     // find expansion for the third irrep
-    // first normalize the irrep to obtain physical basis states
-    // |(lamda,mu),kappa,L>
-    int n33 = u3C.n33, lam3 = u3C.n13 - u3C.n23, mu3 = u3C.n23 - u3C.n33;
-    u3::irrep u3c(lam3, mu3);
-    std::vector<u3::physicalvector> pbC = u3::physicalbasis(u3c);
-    std::vector<int> kappaC;
+    pArrC = u3::physicalBasis(u3C);
+    dimC = 0;
+    // store transformation, each column corresponds to one kappa
     std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>
-        allCanoCoeffsC; // each column corresponds to one kappa
-    std::vector<std::vector<u3::gelfand>> allCanoBasisC;
-    for (int i = 0; i < pbC.size(); i++)
+        allCanoCoeffsC(pArrC.size());
+    // store expansion
+    std::vector<std::vector<int>> allCanoBasisC(pArrC.size());
+    for (int i = 0; i < pArrC.size(); i++)
     {
+      iC.push_back(dimC);
+      allCanoCoeffsC[i] = u3::phys_to_cano(pArrC[i], allCanoBasisC[i], gArrC);
+      dimC += pArrC[i].kappa;
+    }
 
-      // Construct the canonical basis associated with the physical basis state
-      // that we are looking at
-      std::vector<u3::gelfand> canobasis = u3::canonicalbasis(pbC[i]);
-
-      // Building the projection matrix
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Lproj =
-          Lprojection(pbC[i], canobasis);
-      // and solving its null space
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> nullspace =
-          phys_to_cano(pbC[i],
-                       Lproj); // after solving the nullspace, the dimension of
-                               // the nullspace is the inner multiplicity of L
-
-      kappaC.push_back(pbC[i].kappa); // this multiplicity was computed after
-                                      // solving the nullspace
-      allCanoCoeffsC.push_back(nullspace);
-
-      // std::cout << pbC[i] << std::endl;
-      // add back n33 to the canonical basis
-      for (int j = 0; j < canobasis.size(); j++)
-      {
-        canobasis[j].n13 += n33;
-        canobasis[j].n23 += n33;
-        canobasis[j].n33 += n33;
-        canobasis[j].n12 += n33;
-        canobasis[j].n22 += n33;
-        canobasis[j].n11 += n33;
-
-        // std::cout << canobasis[j] << std::endl;
-      }
-      allCanoBasisC.push_back(canobasis);
+    // find expansion for the first irrep
+    pArrA = u3::physicalBasis(u3A);
+    dimA = 0;
+    for (int i = 0; i < pArrA.size(); i++)
+    {
+      iA.push_back(dimA);
+      dimA += pArrA[i].kappa;
     }
 
     // compute Wigner coefficients: < (lamda1,mu1),kappa1,L1 ;
     // (lamda2,mu2),kappa2,L2 | (lamda3,mu3),kappa3,L3 >
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs;
-    int rhomax = canoCoupleCoeffs.cols();
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs(
+        dimA * dimB * dimC, rhomax);
+    coeffs.setZero();
 
-    // find expansion for the first irrep
-    std::vector<u3::physicalvector> pbA = u3::physicalbasis(u3A);
-    for (int i = 0; i < pbA.size(); i++)
+    for (int i = 0; i < pArrA.size(); i++)
     {
 
+      // std::cout << pArrA[i] << std::endl;
+
+      // store transformation, each column corresponds to one kappa
       std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>
-          allCanoCoeffsA; // each column corresponds to one kappa -- the inner
-                          // multiplicity
-      std::vector<std::vector<u3::gelfand>>
-          allCanoBasisA; // to store all canonical basis states associated with
-                         // all physical basis states (L,M) with a given L
+          allCanoCoeffsA(2 * pArrA[i].L + 1);
+      // store expansion
+      std::vector<std::vector<int>> allCanoBasisA(2 * pArrA[i].L + 1);
 
-      // Construct the canonical basis associated with the heighest weight
-      // physical basis state (L=M)
-      allCanoBasisA.push_back(u3::canonicalbasis(pbA[i]));
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Lproj =
-          Lprojection(pbA[i], allCanoBasisA[0]);
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> nullspace =
-          phys_to_cano(pbA[i], Lproj);
-      allCanoCoeffsA.push_back(nullspace);
+      allCanoCoeffsA[0] = u3::phys_to_cano(pArrA[i], allCanoBasisA[0], gArrA);
 
-      std::vector<double> gamma_coefficients; // to store sqrt((2L-gamma)!
-                                              // 2^gamma / (2L)! / gamma!)
-      gamma_coefficients.push_back(1.0); // for gamma=0, i.e., L=M
-
-      // now going lower from the HW state, remember that gamma = L-M
-      for (int gamma = 1; gamma <= 2 * pbA[i].L; gamma++)
+      // now going lower from the HW state, remember that gamma = L - M =
+      // 0,1,...,2L
+      for (int gamma = 1; gamma <= 2 * pArrA[i].L; gamma++)
       {
-        // extract the expansion of the previous state
-        std::vector<u3::gelfand> cano_previous = allCanoBasisA[gamma - 1];
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> canocoeffs_prev =
-            allCanoCoeffsA[gamma - 1];
 
-        // define a new array to store new expansion, in which all canonical
+        // store new expansion
+        allCanoBasisA[gamma] = u3::expand_to_gelfand(pArrA[i].L - gamma, gArrA);
+
+        // normalize coefficient
+        double n = std::sqrt(2.0 / (gamma * (2 * pArrA[i].L - gamma + 1.0)));
+
+        allCanoCoeffsA[gamma] =
+            Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>(
+                allCanoBasisA[gamma].size(), pArrA[i].kappa);
+        allCanoCoeffsA[gamma].setZero();
+
         // basis states are obtained by acting with two generators E31 and E23
-        std::vector<u3::gelfand> cano_now;
-
-        for (int j = 0; j < cano_previous.size(); j++)
+        for (int m = 0; m < allCanoBasisA[gamma].size(); m++)
         {
-          // action of E31
-          u3::gelfand g1 = cano_previous[j];
-          g1.n12--;
-          g1.n11--;
-          if (g1.check())
-            u3::newstate(g1, cano_now);
-
-          u3::gelfand g2 = cano_previous[j];
-          g2.n22--;
-          g2.n11--;
-          if (g2.check())
-            u3::newstate(g2, cano_now);
-
-          // determine the action of E23
-          u3::gelfand g3 = cano_previous[j];
-          g3.n12++;
-          if (g3.check())
-            u3::newstate(g3, cano_now);
-          u3::gelfand g4 = cano_previous[j];
-          g4.n22++;
-          if (g4.check())
-            u3::newstate(g4, cano_now);
-        }
-
-        // calculate expansion coefficients for the new state
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> canocoeffs_now(
-            cano_now.size(), pbA[i].kappa);
-        for (int j = 0; j < canocoeffs_now.rows(); j++)
-          for (int k = 0; k < canocoeffs_now.cols(); k++)
-            canocoeffs_now(j, k) = 0.0;
-
-        for (int j = 0; j < cano_now.size(); j++)
-        {
-          for (int m = 0; m < cano_previous.size(); m++)
+          for (int j = 0; j < allCanoBasisA[gamma - 1].size(); j++)
           {
-            // action of E31
-            if (cano_now[j].n12 == (cano_previous[m].n12 - 1) &&
-                cano_now[j].n22 == cano_previous[m].n22 &&
-                cano_now[j].n11 == (cano_previous[m].n11 - 1))
+            if (u3::E13_12(gArrA[allCanoBasisA[gamma][m]],
+                           gArrA[allCanoBasisA[gamma - 1][j]]))
             {
-              for (int k = 0; k < pbA[i].kappa; k++)
-              {
-                canocoeffs_now(j, k) +=
-                    canocoeffs_prev(m, k) * cano_previous[m].e31_12();
-              }
+              for (int k = 0; k < pArrA[i].kappa; k++)
+                allCanoCoeffsA[gamma](m, k) +=
+                    n * allCanoCoeffsA[gamma - 1](j, k) *
+                    gArrA[allCanoBasisA[gamma - 1][j]].e31_12();
             }
-            else if (cano_now[j].n12 == cano_previous[m].n12 &&
-                     cano_now[j].n22 == (cano_previous[m].n22 - 1) &&
-                     cano_now[j].n11 == (cano_previous[m].n11 - 1))
+            else if (u3::E13_22(gArrA[allCanoBasisA[gamma][m]],
+                                gArrA[allCanoBasisA[gamma - 1][j]]))
             {
-              for (int k = 0; k < pbA[i].kappa; k++)
-              {
-                canocoeffs_now(j, k) +=
-                    canocoeffs_prev(m, k) * cano_previous[m].e31_22();
-              }
+              for (int k = 0; k < pArrA[i].kappa; k++)
+                allCanoCoeffsA[gamma](m, k) +=
+                    n * allCanoCoeffsA[gamma - 1](j, k) *
+                    gArrA[allCanoBasisA[gamma - 1][j]].e31_22();
             }
-
-            // action of E23
-            else if (cano_now[j].n12 == (cano_previous[m].n12 + 1) &&
-                     cano_now[j].n22 == cano_previous[m].n22 &&
-                     cano_now[j].n11 == cano_previous[m].n11)
+            else if (u3::E23_12(gArrA[allCanoBasisA[gamma - 1][j]],
+                                gArrA[allCanoBasisA[gamma][m]]))
             {
-              for (int k = 0; k < pbA[i].kappa; k++)
-              {
-                canocoeffs_now(j, k) +=
-                    canocoeffs_prev(m, k) * cano_previous[m].e23_12();
-              }
+              for (int k = 0; k < pArrA[i].kappa; k++)
+                allCanoCoeffsA[gamma](m, k) +=
+                    n * allCanoCoeffsA[gamma - 1](j, k) *
+                    gArrA[allCanoBasisA[gamma - 1][j]].e23_12();
             }
-            else if (cano_now[j].n12 == cano_previous[m].n12 &&
-                     cano_now[j].n22 == (cano_previous[m].n22 + 1) &&
-                     cano_now[j].n11 == cano_previous[m].n11)
+            else if (u3::E23_22(gArrA[allCanoBasisA[gamma - 1][j]],
+                                gArrA[allCanoBasisA[gamma][m]]))
             {
-              for (int k = 0; k < pbA[i].kappa; k++)
-              {
-                canocoeffs_now(j, k) +=
-                    canocoeffs_prev(m, k) * cano_previous[m].e23_22();
-              }
+              for (int k = 0; k < pArrA[i].kappa; k++)
+                allCanoCoeffsA[gamma](m, k) +=
+                    n * allCanoCoeffsA[gamma - 1](j, k) *
+                    gArrA[allCanoBasisA[gamma - 1][j]].e23_22();
             }
           }
         }
 
-        allCanoBasisA.push_back(cano_now);
-        allCanoCoeffsA.push_back(canocoeffs_now);
-
-        // compute gamma coefficients
-        double LL = 1.0, LLgamma, gammaFac;
-        for (int j = 1; j <= 2 * pbA[i].L; j++)
-        {
-          LL *= j;
-          if (j == gamma)
-            gammaFac = LL;
-          if (j == (2 * pbA[i].L - gamma))
-            LLgamma = LL;
-        }
-        gamma_coefficients.push_back(
-            std::sqrt(LLgamma * std::pow(2, gamma) / LL / gammaFac));
+        // std::cout << gamma << " ... " << allCanoCoeffsA[gamma] << std::endl;
       }
 
-      // last step is to compute Wigner coefficients < (lamda1,mu1)kappa1 L1;
-      // (lamda2,mu2)kappa2 L2 | (lamda3,mu3)kappa3 L3 >
-      for (int k_A = 1; k_A <= pbA[i].kappa; k_A++)
+      // last step is to compute Wigner coefficients
+      // < (lamda1,mu1)kappa1 L1; (lamda2,mu2)kappa2 L2 | (lamda3,mu3)kappa3 L3
+      // >
+      for (int m = 0; m < pArrB.size(); m++)
       {
-        for (int j = 0; j < pbB.size(); j++)
+        for (int n = 0; n < pArrC.size(); n++)
         {
-          for (int k_B = 1; k_B <= pbB[j].kappa; k_B++)
+          if (abs(pArrA[i].L - pArrB[m].L) <= pArrC[n].L &&
+              (pArrA[i].L + pArrB[m].L) >= pArrC[n].L)
           {
-            for (int k = 0; k < pbC.size(); k++)
+            double so3cgc =
+                CGC_SO3(pArrA[i].L, pArrB[m].L, pArrC[n].L,
+                        pArrC[n].L - pArrB[m].L, pArrB[m].L, pArrC[n].L);
+
+            int gamma = pArrA[i].L + pArrB[m].L - pArrC[n].L;
+
+            for (int c1 = 0; c1 < allCanoBasisA[gamma].size(); c1++)
             {
-              for (int k_C = 1; k_C <= pbC[k].kappa; k_C++)
+              for (int c2 = 0; c2 < allCanoBasisB[m].size(); c2++)
               {
-
-                double so3cgc =
-                    CGC_SO3(pbA[i].L, pbB[j].L, pbC[k].L, pbC[k].L - pbB[j].L,
-                            pbB[j].L, pbC[k].L);
-
-                if (so3cgc != 0.0)
+                for (int c3 = 0; c3 < allCanoBasisC[n].size(); c3++)
                 {
-                  int gamma = pbA[i].L + pbB[j].L - pbC[k].L;
-
-                  u3::physicalvector pb1 = pbA[i], pb2 = pbB[j], pb3 = pbC[k];
-                  pb1.kappa = k_A;
-                  physvecA.push_back(pb1);
-                  pb2.kappa = k_B;
-                  physvecB.push_back(pb2);
-                  pb3.kappa = k_C;
-                  physvecC.push_back(pb3);
-
-                  std::vector<u3::gelfand> cb1 = allCanoBasisA[gamma],
-                                           cb2 = allCanoBasisB[j],
-                                           cb3 = allCanoBasisC[k];
-                  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-                      canocoeffs1 = allCanoCoeffsA[gamma],
-                      canocoeffs2 = allCanoCoeffsB[j],
-                      canocoeffs3 = allCanoCoeffsC[k];
-
-                  int old_row = coeffs.rows();
-
-                  coeffs.conservativeResize(old_row + 1, rhomax);
-
-                  for (int rho = 1; rho <= rhomax; rho++)
+                  for (int k1 = 0; k1 < pArrA[i].kappa; k1++)
                   {
-                    coeffs(old_row, rho - 1) = 0.0;
-
-                    for (int m = 0; m < cb1.size(); m++)
+                    for (int k2 = 0; k2 < pArrB[m].kappa; k2++)
                     {
-                      for (int n = 0; n < cb2.size(); n++)
+                      for (int k3 = 0; k3 < pArrC[n].kappa; k3++)
                       {
-                        for (int l = 0; l < cb3.size(); l++)
+                        double x = allCanoCoeffsA[gamma](c1, k1) *
+                                   allCanoCoeffsB[m](c2, k2) *
+                                   allCanoCoeffsC[n](c3, k3) / so3cgc;
+                        for (int r = 0; r < rhomax; r++)
                         {
-                          double canocoupling = 0.0;
-                          for (int p = 0; p < canoCoupleCoeffs.rows(); p++)
-                          {
-                            if (u3::compare(cb1[m], gArrA[p]) &&
-                                u3::compare(cb2[n], gArrB[p]) &&
-                                u3::compare(cb3[l], gArrC[p]))
-                            {
-                              canocoupling = canoCoupleCoeffs(p, rho - 1);
-                            }
-                          }
-                          coeffs(old_row, rho - 1) += canocoeffs1(m, k_A - 1) *
-                                                      canocoeffs2(n, k_B - 1) *
-                                                      canocoeffs3(l, k_C - 1) *
-                                                      canocoupling;
+                          // std::cout << ((i+k1)*dimB + m+k2 )*dimC + n+k3 <<
+                          // std::endl;
+                          coeffs(((iA[i] + k1) * dimB + iB[m] + k2) * dimC +
+                                     iC[n] + k3,
+                                 r) +=
+                              x * canoCoupleCoeffs(
+                                      (allCanoBasisA[gamma][c1] * gArrB.size() +
+                                       allCanoBasisB[m][c2]) *
+                                              gArrC.size() +
+                                          allCanoBasisC[n][c3],
+                                      r);
                         }
                       }
                     }
-
-                    coeffs(old_row, rho - 1) *=
-                        (1 / so3cgc) * gamma_coefficients[gamma];
                   }
-                }
-                else
-                {
-                  continue;
                 }
               }
             }
@@ -370,6 +228,8 @@ namespace u3
         }
       }
     }
+
+    // std::cout << coeffs << std::endl;
 
     return coeffs;
   }

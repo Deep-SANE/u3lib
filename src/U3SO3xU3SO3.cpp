@@ -39,20 +39,48 @@ int main()
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
 
-  std::vector<u3::physicalvector> physvecA;
-  std::vector<u3::physicalvector> physvecB;
-  std::vector<u3::physicalvector> physvecC;
+  std::vector<u3::physicalvector> pArrA, pArrB, pArrC;
+  std::vector<int> iA, iB, iC;
+  int dimA, dimB, dimC;
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs =
-      u3::WigU3SO3(u3a, u3b, u3cs[index], physvecA, physvecB, physvecC);
+      u3::WigU3SO3(u3a, u3b, u3cs[index], rhomaxs[index], dimA, dimB, dimC,
+                   pArrA, iA, pArrB, iB, pArrC, iC);
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();
 
-  for (int j = 0; j < physvecA.size(); j++)
+  for (int i = 0; i < pArrA.size(); i++)
   {
-    std::cout << "< " << physvecA[j] << " ; " << physvecB[j] << " || "
-              << physvecC[j] << " >" << "\t" << coeffs.row(j) << std::endl;
+    for (int j = 0; j < pArrB.size(); j++)
+    {
+      for (int k = 0; k < pArrC.size(); k++)
+      {
+        if (abs(pArrA[i].L - pArrB[j].L) <= pArrC[k].L &&
+            (pArrA[i].L + pArrB[j].L) >= pArrC[k].L)
+        {
+          for (int k1 = 0; k1 < pArrA[i].kappa; k1++)
+          {
+            for (int k2 = 0; k2 < pArrB[j].kappa; k2++)
+            {
+              for (int k3 = 0; k3 < pArrC[k].kappa; k3++)
+              {
+                u3::physicalvector pA = pArrA[i], pB = pArrB[j], pC = pArrC[k];
+                pA.kappa = k1 + 1;
+                pB.kappa = k2 + 1;
+                pC.kappa = k3 + 1;
+                std::cout << "< " << pA << " ; " << pB << " || " << pC << " >"
+                          << "\t"
+                          << coeffs.row(((iA[i] + k1) * dimB + iB[j] + k2) *
+                                            dimC +
+                                        iC[k] + k3)
+                          << std::endl;
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   // Calculate the duration

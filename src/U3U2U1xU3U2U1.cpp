@@ -34,7 +34,7 @@ int main()
   }
 
   std::vector<int> rhomaxs;
-  std::vector<u3::irrep> u3cs = decomposition(u3a, u3b, rhomaxs);
+  std::vector<u3::irrep> u3cs = u3::decomposition(u3a, u3b, rhomaxs);
 
   std::cout << "The normalized coupled irreps are: " << std::endl;
   for (int i = 0; i < u3cs.size(); i++)
@@ -49,43 +49,36 @@ int main()
       << "Please enter the index of the coupled irrep you are interested: ";
   std::cin >> index;
 
+  int n33c = u3cs[index].n33;
+
+  std::vector<u3::gelfand> gArrA, gArrB, gArrC;
+
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
 
-  std::vector<u3::gelfand> gArr1;
-  std::vector<u3::gelfand> gArr2;
-  std::vector<u3::gelfand> gArr3;
-
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs;
-
-  for (int w3 = u3cs[index].n33; w3 <= u3cs[index].n13; w3++)
-  {
-    for (int w1 = u3cs[index].n13; w1 >= u3cs[index].n33; w1--)
-    {
-      if (w3 == u3cs[index].n33 && w1 == u3cs[index].n13)
-      {
-        u3::gelfand HWc(u3cs[index].n13, u3cs[index].n23, u3cs[index].n33,
-                        u3cs[index].n13, u3cs[index].n23, u3cs[index].n13);
-        u3::HighestWeightCoeffs(u3a, u3b, HWc, gArr1, gArr2, gArr3, coeffs);
-      }
-      else
-      {
-        u3::LowerWeightCoeffs(u3a, u3b, u3cs[index], w3, w1, gArr1, gArr2,
-                              gArr3, coeffs);
-      }
-    }
-  }
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs =
+      u3::WigU3U2U1(u3a, u3b, u3cs[index], rhomaxs[index], gArrA, gArrB, gArrC);
+  // after this, u3cs[index] is normalized, all gelfand states in gArrC are also
+  // normalized
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();
 
-  std::cout << "< Ga; Gb | Gc > \t\t rho = 1 ... " << rhomaxs[index]
-            << std::endl;
-  for (int j = 0; j < gArr1.size(); j++)
+  for (int i = 0; i < gArrA.size(); i++)
   {
-    gArr3[j].normalize();
-    std::cout << "< " << gArr1[j] << " ; " << gArr2[j] << " | " << gArr3[j]
-              << " >" << "\t" << coeffs.row(j) << std::endl;
+    for (int j = 0; j < gArrB.size(); j++)
+    {
+      for (int k = 0; k < gArrC.size(); k++)
+      {
+        // print out only coupling coefficients allowed by selection rule
+        if ((gArrA[i].e11() + gArrB[j].e11()) == (gArrC[k].e11() + n33c) &&
+            (gArrA[i].e22() + gArrB[j].e22()) == (gArrC[k].e22() + n33c))
+          std::cout << "< " << gArrA[i] << " ; " << gArrB[j] << " | "
+                    << gArrC[k] << " >" << "\t"
+                    << coeffs.row((i * gArrB.size() + j) * gArrC.size() + k)
+                    << std::endl;
+      }
+    }
   }
 
   // Calculate the duration

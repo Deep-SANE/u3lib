@@ -75,37 +75,28 @@ namespace u3
     if (m == 2)
     {
       // Expanding in canonical basis
-      std::vector<u3::gelfand> bra_canobasis = u3::canonicalbasis(bra);
-      std::vector<u3::gelfand> ket_canobasis = u3::canonicalbasis(ket);
-
-      // Building the projection matrix
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> bra_Lproj =
-          Lprojection(bra, bra_canobasis);
-
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> ket_Lproj =
-          Lprojection(ket, ket_canobasis);
-
-      // and solving its null space
+      std::vector<u3::gelfand> bra_gArr = u3::gelfandBasis(bra.toprow);
+      std::vector<int> bra_indices;
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> bra_coeffs =
-          phys_to_cano(bra, bra_Lproj);
+          u3::phys_to_cano(bra, bra_indices, bra_gArr);
 
+      std::vector<u3::gelfand> ket_gArr = u3::gelfandBasis(ket.toprow);
+      std::vector<int> ket_indices;
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> ket_coeffs =
-          phys_to_cano(ket, ket_Lproj);
+          u3::phys_to_cano(ket, ket_indices, ket_gArr);
 
       // running through the gelfand states
-      for (int k = 0; k < ket_canobasis.size(); k++)
+      for (int k = 0; k < ket_indices.size(); k++)
       {
-        for (int b = 0; b < bra_canobasis.size(); b++)
+        for (int b = 0; b < bra_indices.size(); b++)
         {
-          if (bra_canobasis[b].n12 == ket_canobasis[k].n12 &&
-              bra_canobasis[b].n22 == ket_canobasis[k].n22 &&
-              bra_canobasis[b].n11 == (ket_canobasis[k].n11 + 1))
+          if (u3::E12(ket_gArr[ket_indices[k]], bra_gArr[bra_indices[b]]))
           {
             // running through the multiplicity labels
             for (int i = 0; i < bra.kappa; i++)
               for (int j = 0; j < ket.kappa; j++)
                 RME(i, j) += std::sqrt(2.0 * bra.L + 1.0) * bra_coeffs(b, i) *
-                             ket_coeffs(k, j) * ket_canobasis[k].e12();
+                             ket_coeffs(k, j) * ket_gArr[ket_indices[k]].e12();
           }
         }
       }
@@ -113,31 +104,22 @@ namespace u3
     else if (m == 1)
     {
       // Expanding in canonical basis
-      std::vector<u3::gelfand> bra_canobasis = u3::canonicalbasis(bra);
-      std::vector<u3::gelfand> ket_canobasis = u3::canonicalbasis(ket);
-
-      // Building the projection matrix
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> bra_Lproj =
-          Lprojection(bra, bra_canobasis);
-
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> ket_Lproj =
-          Lprojection(ket, ket_canobasis);
-
-      // and solving its null space
+      std::vector<u3::gelfand> bra_gArr = u3::gelfandBasis(bra.toprow);
+      std::vector<int> bra_indices;
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> bra_coeffs =
-          phys_to_cano(bra, bra_Lproj);
+          u3::phys_to_cano(bra, bra_indices, bra_gArr);
 
+      std::vector<u3::gelfand> ket_gArr = u3::gelfandBasis(ket.toprow);
+      std::vector<int> ket_indices;
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> ket_coeffs =
-          phys_to_cano(ket, ket_Lproj);
+          u3::phys_to_cano(ket, ket_indices, ket_gArr);
 
       // running through the gelfand states
-      for (int k = 0; k < ket_canobasis.size(); k++)
+      for (int k = 0; k < ket_indices.size(); k++)
       {
-        for (int b = 0; b < bra_canobasis.size(); b++)
+        for (int b = 0; b < bra_indices.size(); b++)
         {
-          if (bra_canobasis[b].n12 == (ket_canobasis[k].n12 - 1) &&
-              bra_canobasis[b].n22 == ket_canobasis[k].n22 &&
-              bra_canobasis[b].n11 == ket_canobasis[k].n11)
+          if (u3::E23_12(bra_gArr[bra_indices[b]], ket_gArr[ket_indices[k]]))
           {
             // running through the multiplicity labels
             for (int i = 0; i < bra.kappa; i++)
@@ -145,11 +127,10 @@ namespace u3
                 RME(i, j) += std::sqrt((ket.L + 2.0) * (2.0 * bra.L + 1.0) /
                                        (2.0 * ket.L)) *
                              bra_coeffs(b, i) * ket_coeffs(k, j) *
-                             ket_canobasis[k].e32_12();
+                             ket_gArr[ket_indices[k]].e32_12();
           }
-          else if (bra_canobasis[b].n12 == ket_canobasis[k].n12 &&
-                   bra_canobasis[b].n22 == (ket_canobasis[k].n22 - 1) &&
-                   bra_canobasis[b].n11 == ket_canobasis[k].n11)
+          else if (u3::E23_22(bra_gArr[bra_indices[b]],
+                              ket_gArr[ket_indices[k]]))
           {
             // running through the multiplicity labels
             for (int i = 0; i < bra.kappa; i++)
@@ -157,23 +138,10 @@ namespace u3
                 RME(i, j) += std::sqrt((ket.L + 2.0) * (2.0 * bra.L + 1.0) /
                                        (2.0 * ket.L)) *
                              bra_coeffs(b, i) * ket_coeffs(k, j) *
-                             ket_canobasis[k].e32_22();
+                             ket_gArr[ket_indices[k]].e32_22();
           }
-          else if (bra_canobasis[b].n12 == ket_canobasis[k].n12 &&
-                   bra_canobasis[b].n22 == (ket_canobasis[k].n22 + 1) &&
-                   bra_canobasis[b].n11 == (ket_canobasis[k].n11 + 1))
-          {
-            // running through the multiplicity labels
-            for (int i = 0; i < bra.kappa; i++)
-              for (int j = 0; j < ket.kappa; j++)
-                RME(i, j) -= std::sqrt((ket.L + 2.0) * (2.0 * bra.L + 1.0) /
-                                       (2.0 * ket.L)) *
-                             bra_coeffs(b, i) * ket_coeffs(k, j) *
-                             ket_canobasis[k].e13_22();
-          }
-          else if (bra_canobasis[b].n12 == (ket_canobasis[k].n12 + 1) &&
-                   bra_canobasis[b].n22 == ket_canobasis[k].n22 &&
-                   bra_canobasis[b].n11 == (ket_canobasis[k].n11 + 1))
+          else if (u3::E13_12(ket_gArr[ket_indices[k]],
+                              bra_gArr[bra_indices[b]]))
           {
             // running through the multiplicity labels
             for (int i = 0; i < bra.kappa; i++)
@@ -181,7 +149,18 @@ namespace u3
                 RME(i, j) -= std::sqrt((ket.L + 2.0) * (2 * bra.L + 1.0) /
                                        (2.0 * ket.L)) *
                              bra_coeffs(b, i) * ket_coeffs(k, j) *
-                             ket_canobasis[k].e13_12();
+                             ket_gArr[ket_indices[k]].e13_12();
+          }
+          else if (u3::E13_22(ket_gArr[ket_indices[k]],
+                              bra_gArr[bra_indices[b]]))
+          {
+            // running through the multiplicity labels
+            for (int i = 0; i < bra.kappa; i++)
+              for (int j = 0; j < ket.kappa; j++)
+                RME(i, j) -= std::sqrt((ket.L + 2.0) * (2.0 * bra.L + 1.0) /
+                                       (2.0 * ket.L)) *
+                             bra_coeffs(b, i) * ket_coeffs(k, j) *
+                             ket_gArr[ket_indices[k]].e13_22();
           }
         }
       }
@@ -189,17 +168,10 @@ namespace u3
     else if (m == 0)
     {
       // Expanding in canonical basis
-      std::vector<u3::gelfand> ket_canobasis =
-          u3::canonicalbasis(ket); // only need to expand one state because
-                                   // bra and ket have the same L
-
-      // Building the projection matrix
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> ket_Lproj =
-          Lprojection(ket, ket_canobasis);
-
-      // and solving its null space
+      std::vector<u3::gelfand> ket_gArr = u3::gelfandBasis(ket.toprow);
+      std::vector<int> ket_indices;
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> ket_coeffs =
-          phys_to_cano(ket, ket_Lproj);
+          u3::phys_to_cano(ket, ket_indices, ket_gArr);
 
       // bra and ket have the same kappa_max
       for (int i = 0; i < bra.kappa; i++)
@@ -207,11 +179,11 @@ namespace u3
         for (int j = 0; j < ket.kappa; j++)
         {
           // Eq(53)
-          for (int k = 0; k < ket_canobasis.size(); k++)
+          for (int k = 0; k < ket_indices.size(); k++)
           {
             // std::cout << ket_canobasis[k] << std::endl;
-            RME(i, j) += (ket_canobasis[k].n11 - ket.L) * ket_coeffs(k, i) *
-                         ket_coeffs(k, j);
+            RME(i, j) += (ket_gArr[ket_indices[k]].n11 - ket.L) *
+                         ket_coeffs(k, i) * ket_coeffs(k, j);
           }
           RME(i, j) *= 6.0;
 
@@ -225,18 +197,27 @@ namespace u3
         }
       }
     }
-    else if (m == -1 || m == -2)
+    else if (m == -1)
     {
       std::vector<int> new_bra_kappa, new_ket_kappa;
 
       RME = RME_Q(ket, bra, new_ket_kappa, new_bra_kappa);
-      int phase = (m % 2 == 0) ? 1 : -1;
+      int phase = -1;
 
       // running through the multiplicity labels
       for (int i = 0; i < RME.rows(); i++)
         for (int j = 0; j < RME.cols(); j++)
           RME(i, j) *= phase;
-      RME.transpose();
+      RME = RME.transpose();
+      bra_kappa = new_bra_kappa;
+      ket_kappa = new_ket_kappa;
+    }
+    else if (m == -2)
+    {
+      std::vector<int> new_bra_kappa, new_ket_kappa;
+
+      RME = RME_Q(ket, bra, new_ket_kappa, new_bra_kappa);
+      RME = RME.transpose();
       bra_kappa = new_bra_kappa;
       ket_kappa = new_ket_kappa;
     }

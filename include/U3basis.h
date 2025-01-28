@@ -199,18 +199,79 @@ namespace u3
              << g.n22 << ";" << g.n11;
   }
 
-  // compare two gelfand patterns
-  bool compare(gelfand& g1, gelfand& g2)
+  // compare two gelfand patterns of the same irrep
+  bool E11(u3::gelfand& i, u3::gelfand& f)
   {
-    if (g1.n13 == g2.n13 && g1.n23 == g2.n23 && g1.n33 == g2.n33 &&
-        g1.n12 == g2.n12 && g1.n22 == g2.n22 && g1.n11 == g2.n11)
-    {
+    if (i.n12 == f.n12 && i.n22 == f.n22 && i.n11 == f.n11)
       return true;
-    }
     else
-    {
       return false;
+  }
+
+  // define action of the raising generators, that of the lowering generators
+  // is simply swapping the initial and final states
+  bool E12(u3::gelfand& i, u3::gelfand& f)
+  {
+    if (i.n12 == f.n12 && i.n22 == f.n22 && (i.n11 + 1) == f.n11)
+      return true;
+    else
+      return false;
+  }
+  bool E23_12(u3::gelfand& i, u3::gelfand& f)
+  {
+    if ((i.n12 + 1) == f.n12 && i.n22 == f.n22 && i.n11 == f.n11)
+      return true;
+    else
+      return false;
+  }
+  bool E23_22(u3::gelfand& i, u3::gelfand& f)
+  {
+    if (i.n12 == f.n12 && (i.n22 + 1) == f.n22 && i.n11 == f.n11)
+      return true;
+    else
+      return false;
+  }
+  bool E13_12(u3::gelfand& i, u3::gelfand& f)
+  {
+    if ((i.n12 + 1) == f.n12 && i.n22 == f.n22 && (i.n11 + 1) == f.n11)
+      return true;
+    else
+      return false;
+  }
+  bool E13_22(u3::gelfand& i, u3::gelfand& f)
+  {
+    if (i.n12 == f.n12 && (i.n22 + 1) == f.n22 && (i.n11 + 1) == f.n11)
+      return true;
+    else
+      return false;
+  }
+
+  // find all Gelfand states associated with an irrep
+  std::vector<u3::gelfand> gelfandBasis(u3::irrep& x)
+  {
+    std::vector<u3::gelfand> gArr;
+    for (int n12 = x.n13; n12 >= x.n23; n12--)
+    {
+      for (int n22 = x.n23; n22 >= x.n33; n22--)
+      {
+        for (int n11 = n12; n11 >= n22; n11--)
+        {
+          u3::gelfand g(x.n13, x.n23, x.n33, n12, n22, n11);
+          gArr.push_back(g);
+        }
+      }
     }
+    return gArr;
+  }
+
+  // find the location (index) of a Gelfand state within the Gelfand basis above
+  int findGelfand(u3::gelfand& g, std::vector<u3::gelfand>& gArr)
+  {
+    int i;
+    for (i = 0; i < gArr.size(); i++)
+      if (u3::E11(g, gArr[i]))
+        break;
+    return i;
   }
 
   /*------------------------------------------------------
@@ -268,6 +329,24 @@ namespace u3
   {
     return s << "(" << physvec.toprow.lam() << "," << physvec.toprow.mu()
              << "), kappa=" << physvec.kappa << ", L=" << physvec.L;
+  }
+
+  // find all physical states associated with an irrep
+  std::vector<u3::physicalvector> physicalBasis(u3::irrep& u3)
+  {
+    std::vector<u3::physicalvector> basis;
+    int l;
+
+    for (l = u3.n13 - u3.n33; l >= 0; l--)
+    {
+      u3::physicalvector physvec(u3, l);
+      if (physvec.kappa == 0)
+        continue;
+      else
+        basis.push_back(physvec);
+    }
+
+    return basis;
   }
 
 } // namespace u3
