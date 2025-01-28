@@ -1,12 +1,12 @@
-// protection against multiple header file inclusion
-#ifndef NULLSPACESOLVER_H
-#define NULLSPACESOLVER_H
+#ifndef U3LIB_UTILS_NULLSPACESOLVER_H
+#define U3LIB_UTILS_NULLSPACESOLVER_H
 
 #include <cmath>
-#include <Eigen/Dense>
-#include <Eigen/Sparse>
 #include <iostream>
 #include <vector>
+
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
 
 #include "basics.h"
 

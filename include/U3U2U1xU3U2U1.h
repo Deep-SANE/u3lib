@@ -1,14 +1,15 @@
-#ifndef U3U2U1XU3U2U1_H
-#define U3U2U1XU3U2U1_H
+#ifndef U3LIB_U3U2U1XU3U2U1_H
+#define U3LIB_U3U2U1XU3U2U1_H
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <Eigen/Dense>
 #include <iostream>
 #include <limits>
 #include <utility>
 #include <vector>
+
+#include <Eigen/Dense>
 
 #include "decomposition.h"
 #include "U3basis.h"

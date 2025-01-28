@@ -1,11 +1,11 @@
-// protection against multiple header file inclusion
-#ifndef U3_U6Z6COEFFS_H
-#define U3_U6Z6COEFFS_H
+#ifndef U3LIB_U3_U6Z6COEFFS_H
+#define U3LIB_U3_U6Z6COEFFS_H
 
 #include <cmath>
-#include <Eigen/Dense>
 #include <iostream>
 #include <vector>
+
+#include <Eigen/Dense>
 
 #include "decomposition.h"
 #include "U3basis.h"

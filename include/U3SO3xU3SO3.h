@@ -1,13 +1,13 @@
-// protection against multiple header file inclusion
-#ifndef U3SO3xU3SO3_H
-#define U3SO3xU3SO3_H
+#ifndef U3LIB_U3SO3xU3SO3_H
+#define U3LIB_U3SO3xU3SO3_H
 
 #include <algorithm>
 #include <cmath>
-#include <Eigen/Dense>
-#include <Eigen/Sparse>
 #include <iostream>
 #include <vector>
+
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
 
 #include "U3basis.h"
 #include "U3SO3_to_U3U2U1.h"

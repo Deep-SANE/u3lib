@@ -1,5 +1,5 @@
-#ifndef U3GENERATORSME_H
-#define U3GENERATORSME_H
+#ifndef U3LIB_U3GENERATORSME_H
+#define U3LIB_U3GENERATORSME_H
 
 #include <cmath>
 #include <iostream>

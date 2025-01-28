@@ -1,5 +1,5 @@
-#ifndef U3BASIS_H
-#define U3BASIS_H
+#ifndef U3LIB_U3BASIS_H
+#define U3LIB_U3BASIS_H
 
 #include <cmath>
 #include <iostream>
