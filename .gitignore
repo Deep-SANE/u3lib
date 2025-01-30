@@ -26,3 +26,7 @@
 # all built executable binary files:
 
 bin/
+
+# GDB history file:
+
+.gdb_history
