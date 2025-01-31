@@ -10,7 +10,7 @@
 int main()
 {
   // default constructor:
-  u3::gelfand_t g1;
+  u3::gelfand g1;
 
   assert(g1.n13() == 0);
   assert(g1.n23() == 0);
@@ -20,7 +20,7 @@ int main()
   assert(g1.n11() == 0);
 
   // converting constructor:
-  u3::gelfand_t g2(0, 0, 0, 0, 0, 0);
+  u3::gelfand g2(0, 0, 0, 0, 0, 0);
 
   assert(g2.n13() == 0);
   assert(g2.n23() == 0);
@@ -33,7 +33,7 @@ int main()
   assert(g2 == g1);
   assert(!(g2 != g1));
 
-  u3::gelfand_t g3(8, 4, 0, 6, 2, 3);
+  u3::gelfand g3(8, 4, 0, 6, 2, 3);
 
   assert(g3.n13() == 8);
   assert(g3.n23() == 4);
@@ -47,7 +47,7 @@ int main()
   assert(!(g3 == g1));
 
   // normalization:
-  u3::gelfand_t g4(9, 5, 1, 7, 3, 4);
+  u3::gelfand g4(9, 5, 1, 7, 3, 4);
   g4.normalize();
 
   assert(g4.n13() == 8);
@@ -60,7 +60,7 @@ int main()
   assert(g4 == g3);
 
   // setters:
-  u3::gelfand_t g5;
+  u3::gelfand g5;
 
   g5.n13(8);
   g5.n23(4);
@@ -79,7 +79,7 @@ int main()
   assert(g5 == g4);
 
   // copy constructor:
-  u3::gelfand_t g6 = g5;
+  u3::gelfand g6 = g5;
 
   assert(g6.n13() == 8);
   assert(g6.n23() == 4);
@@ -91,7 +91,7 @@ int main()
   assert(g6 == g5);
 
   // copy assignment:
-  u3::gelfand_t g7;
+  u3::gelfand g7;
   g7 = g6;
 
   assert(g7.n13() == 8);

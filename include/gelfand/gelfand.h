@@ -9,6 +9,15 @@ namespace u3
 {
   namespace internal
   {
+    /*
+     * A class for Gelfand basis state
+     *
+     *  | n13, n23, n33 \
+     *  |   n12, n22    >
+     *  |      n11      /
+     *
+     * The template argument specifies the internal representation.
+     */
     template <typename Rep>
     class gelfand : Rep
     {

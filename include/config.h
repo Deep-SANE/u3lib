@@ -5,7 +5,7 @@
 
 namespace u3
 {
-  using gelfand_t = internal::gelfand_int_rep_t;
+  using gelfand = internal::gelfand_int_rep_t;
 }
 
 #endif
