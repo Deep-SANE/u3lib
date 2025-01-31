@@ -1,5 +1,5 @@
-#ifndef DECOMPOSITION_H
-#define DECOMPOSITION_H
+#ifndef U3LIB_DECOMPOSITION_H
+#define U3LIB_DECOMPOSITION_H
 
 #include <cmath>
 #include <iostream>
