@@ -5,6 +5,8 @@
 #include <iostream>
 #include <vector>
 
+#include "config.h"
+
 namespace u3
 {
 
