@@ -1,5 +1,5 @@
-#ifndef U3_U9COEFFS_H
-#define U3_U9COEFFS_H
+#ifndef U3_U3LIB_U9COEFFS_H
+#define U3_U3LIB_U9COEFFS_H
 
 #include <cmath>
 #include <iostream>
