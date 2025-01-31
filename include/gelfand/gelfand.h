@@ -75,79 +75,89 @@ namespace u3
 
       double e23_12() const
       {
-        int n1 =
-            (n13 - n12) * (n12 - n23 + 1) * (n12 - n33 + 2) * (n12 - n11 + 1);
+        int num = (n13() - n12()) * (n12() - n23() + 1) * (n12() - n33() + 2) *
+                  (n12() - n11() + 1);
 
-        int n2 = (n12 - n22 + 2) * (n12 - n22 + 1);
+        int den = (n12() - n22() + 2) * (n12() - n22() + 1);
 
-        double d = static_cast<double>(n1) / static_cast<double>(n2);
+        double d = static_cast<double>(num) / static_cast<double>(den);
         return std::sqrt(d);
       }
 
       double e23_22() const
       {
-        int n1 = (n13 - n22 + 1) * (n23 - n22) * (n22 - n33 + 1) * (n11 - n22);
-        int n2 = (n12 - n22 + 1) * (n12 - n22);
+        int num = (n13() - n22() + 1) * (n23() - n22()) * (n22() - n33() + 1) *
+                  (n11() - n22());
 
-        double d = static_cast<double>(n1) / static_cast<double>(n2);
+        int den = (n12() - n22() + 1) * (n12() - n22());
+
+        double d = static_cast<double>(num) / static_cast<double>(den);
         return std::sqrt(d);
       }
 
       double e32_12() const
       {
-        int n1 = (n13 - n12 + 1) * (n12 - n23) * (n12 - n33 + 1) * (n12 - n11);
-        int n2 = (n12 - n22 + 1) * (n12 - n22);
+        int num = (n13() - n12() + 1) * (n12() - n23()) * (n12() - n33() + 1) *
+                  (n12() - n11());
 
-        double d = static_cast<double>(n1) / static_cast<double>(n2);
+        int den = (n12() - n22() + 1) * (n12() - n22());
+
+        double d = static_cast<double>(num) / static_cast<double>(den);
         return std::sqrt(d);
       }
 
       double e32_22() const
       {
-        int n1 =
-            (n13 - n22 + 2) * (n23 - n22 + 1) * (n22 - n33) * (n11 - n22 + 1);
+        int num = (n13() - n22() + 2) * (n23() - n22() + 1) * (n22() - n33()) *
+                  (n11() - n22() + 1);
 
-        int n2 = (n12 - n22 + 2) * (n12 - n22 + 1);
+        int den = (n12() - n22() + 2) * (n12() - n22() + 1);
 
-        double d = static_cast<double>(n1) / static_cast<double>(n2);
+        double d = static_cast<double>(num) / static_cast<double>(den);
         return std::sqrt(d);
       }
 
       double e13_12() const
       {
-        int n1 =
-            (n13 - n12) * (n12 - n23 + 1) * (n12 - n33 + 2) * (n11 - n22 + 1);
+        int num = (n13() - n12()) * (n12() - n23() + 1) * (n12() - n33() + 2) *
+                  (n11() - n22() + 1);
 
-        int n2 = (n12 - n22 + 2) * (n12 - n22 + 1);
+        int den = (n12() - n22() + 2) * (n12() - n22() + 1);
 
-        double d = static_cast<double>(n1) / static_cast<double>(n2);
+        double d = static_cast<double>(num) / static_cast<double>(den);
         return std::sqrt(d);
       }
 
       double e13_22() const
       {
-        int n1 = (n13 - n22 + 1) * (n23 - n22) * (n22 - n33 + 1) * (n12 - n11);
-        int n2 = (n12 - n22 + 1) * (n12 - n22);
-        double d = static_cast<double>(n1) / static_cast<double>(n2);
+        int num = (n13() - n22() + 1) * (n23() - n22()) * (n22() - n33() + 1) *
+                  (n12() - n11());
+
+        int den = (n12() - n22() + 1) * (n12() - n22());
+
+        double d = static_cast<double>(num) / static_cast<double>(den);
         return -std::sqrt(d);
       }
 
       double e31_12() const
       {
-        int n1 = (n13 - n12 + 1) * (n12 - n23) * (n12 - n33 + 1) * (n11 - n22);
-        int n2 = (n12 - n22 + 1) * (n12 - n22);
-        double d = static_cast<double>(n1) / static_cast<double>(n2);
+        int num = (n13() - n12() + 1) * (n12() - n23()) * (n12() - n33() + 1) *
+                  (n11() - n22());
+
+        int den = (n12() - n22() + 1) * (n12() - n22());
+
+        double d = static_cast<double>(num) / static_cast<double>(den);
         return std::sqrt(d);
       }
 
       double e31_22() const
       {
-        int n1 =
-            (n13 - n22 + 2) * (n23 - n22 + 1) * (n22 - n33) * (n12 - n11 + 1);
+        int num = (n13() - n22() + 2) * (n23() - n22() + 1) * (n22() - n33()) *
+                  (n12() - n11() + 1);
 
-        int n2 = (n12 - n22 + 2) * (n12 - n22 + 1);
+        int den = (n12() - n22() + 2) * (n12() - n22() + 1);
 
-        double d = static_cast<double>(n1) / static_cast<double>(n2);
+        double d = static_cast<double>(num) / static_cast<double>(den);
         return -std::sqrt(d);
       }
 
