@@ -75,16 +75,9 @@ namespace u3
   };
 
   // print u3irrep
-  inline std::ostream& operator<<(std::ostream& s, irrep& u3)
+  inline std::ostream& operator<<(std::ostream& s, const irrep& u3)
   {
     return s << "[" << u3.n13 << "," << u3.n23 << "," << u3.n33 << "]";
-  }
-
-  // print gelfand state
-  inline std::ostream& operator<<(std::ostream& s, gelfand& g)
-  {
-    return s << g.n13() << "," << g.n23() << "," << g.n33() << ";" << g.n12()
-             << "," << g.n22() << ";" << g.n11();
   }
 
   // compare two gelfand patterns of the same irrep

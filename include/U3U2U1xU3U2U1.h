@@ -229,7 +229,7 @@ namespace u3
 
         // build with generator E21
         u3::gelfand g3_n11p1 = gArr3[same_weight_gArr3[i]];
-        g3_n11p1.n11++; // this is a parent state
+        g3_n11p1.n11(g3_n11p1.n11() + 1); // this is a parent state
         if (g3_n11p1.check())
         {
           std::vector<std::pair<int, int>> uncoupled_g3n11p1 =
@@ -281,7 +281,7 @@ namespace u3
         // build with generator E32
 
         u3::gelfand g3_n12p1 = gArr3[same_weight_gArr3[i]];
-        g3_n12p1.n12++; // this is a parent state
+        g3_n12p1.n12(g3_n12p1.n12() + 1); // this is a parent state
         if (g3_n12p1.check())
         {
           std::vector<std::pair<int, int>> uncoupled_g3n12p1 =
@@ -358,7 +358,7 @@ namespace u3
           continue;
 
         u3::gelfand g3_n22p1 = gArr3[same_weight_gArr3[i]];
-        g3_n22p1.n22++; // this is a parent state
+        g3_n22p1.n22(g3_n22p1.n22() + 1); // this is a parent state
         if (g3_n22p1.check())
         {
           std::vector<std::pair<int, int>> uncoupled_g3n22p1 =

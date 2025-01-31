@@ -2,6 +2,7 @@
 #define U3LIB_GELFAND_GELFAND_H
 
 #include <cmath>
+#include <ostream>
 
 #include "int_rep.h"
 
@@ -183,8 +184,15 @@ namespace u3
       }
     };
 
-    // type aliases:
+    // print gelfand state
+    template <typename Rep>
+    inline std::ostream& operator<<(std::ostream& s, const gelfand<Rep>& g)
+    {
+      return s << g.n13() << "," << g.n23() << "," << g.n33() << ";" << g.n12()
+               << "," << g.n22() << ";" << g.n11();
+    }
 
+    // type aliases:
     using gelfand_int_rep_t = gelfand<gelfand_int_rep>;
 
   } // namespace internal
