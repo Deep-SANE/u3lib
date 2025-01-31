@@ -30,6 +30,17 @@ namespace u3
       void n12(int n12) { n12_ = n12; }
       void n22(int n22) { n22_ = n22; }
       void n11(int n11) { n11_ = n11; }
+
+      friend bool operator==(const gelfand_int_rep& l, const gelfand_int_rep& r)
+      {
+        return l.n13_ == r.n13_ && l.n23_ == r.n23_ && l.n33_ == r.n33_ &&
+               l.n12_ == r.n12_ && l.n22_ == r.n22_ && l.n11_ == r.n11_;
+      }
+
+      friend bool operator!=(const gelfand_int_rep& l, const gelfand_int_rep& r)
+      {
+        return !(l == r);
+      }
     };
 
   } // namespace internal
