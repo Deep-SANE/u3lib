@@ -1,8 +1,6 @@
 #ifndef U3LIB_DECOMPOSITION_H
 #define U3LIB_DECOMPOSITION_H
 
-#include <cmath>
-#include <iostream>
 #include <vector>
 
 #include "config.h"
@@ -14,7 +12,6 @@ namespace u3
   std::vector<u3::irrep> decomposition(u3::irrep& u31, u3::irrep& u32,
                                        std::vector<int>& rhomaxs)
   {
-
     std::vector<u3::irrep> u3cs;
 
     u3::irrep u3a, u3b;
