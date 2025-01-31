@@ -5,11 +5,14 @@
 
 namespace u3
 {
-  namespace gelfand
+  namespace internal
   {
     template <typename Rep>
     class gelfand : Rep
     {
+      using Rep::n13, Rep::n23, Rep::n33, Rep::n12, Rep::n22, Rep::n11;
+
+    public:
       gelfand() = default;
 
       gelfand(int n13, int n23, int n33, int n12, int n22, int n11)
@@ -25,19 +28,19 @@ namespace u3
 
       void normalize()
       {
-         n13(n13() - n33());
-         n23(n23() - n33());
-         n33(n33() - n33());
-         n12(n12() - n33());
-         n22(n22() - n33());
-         n11(n11() - n33());
-         n33(0);
+        n13(n13() - n33());
+        n23(n23() - n33());
+        n33(n33() - n33());
+        n12(n12() - n33());
+        n22(n22() - n33());
+        n11(n11() - n33());
+        n33(0);
       }
     };
 
-    using gelfand_int_rep = gelfand<int_rep>;
+    using gelfand_int_rep_t = gelfand<gelfand_int_rep>;
 
-  } // namespace gelfand
+  } // namespace internal
 } // namespace u3
 
 #endif
