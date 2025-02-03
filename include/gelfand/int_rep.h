@@ -1,6 +1,8 @@
 #ifndef U3LIB_GELFAND_INT_REP_H
 #define U3LIB_GELFAND_INT_REP_H
 
+#include <tuple>
+
 namespace u3
 {
   namespace internal
@@ -8,6 +10,9 @@ namespace u3
     class gelfand_int_rep
     {
       int n13_, n23_, n33_, n12_, n22_, n11_;
+
+      // helper function for comparison operators:
+      auto tie() const { return std::tie(n13_, n23_, n33_, n12_, n22_, n11_); }
 
     public:
       gelfand_int_rep() : n13_(0), n23_(0), n33_(0), n12_(0), n22_(0), n11_(0)
@@ -31,15 +36,14 @@ namespace u3
       void n22(int n22) { n22_ = n22; }
       void n11(int n11) { n11_ = n11; }
 
-      friend bool operator==(const gelfand_int_rep& l, const gelfand_int_rep& r)
+      bool operator==(const gelfand_int_rep& other) const
       {
-        return l.n13_ == r.n13_ && l.n23_ == r.n23_ && l.n33_ == r.n33_ &&
-               l.n12_ == r.n12_ && l.n22_ == r.n22_ && l.n11_ == r.n11_;
+        return tie() == other.tie();
       }
 
-      friend bool operator!=(const gelfand_int_rep& l, const gelfand_int_rep& r)
+      bool operator!=(const gelfand_int_rep& other) const
       {
-        return !(l == r);
+        return !(*this == other);
       }
     };
 
