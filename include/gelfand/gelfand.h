@@ -35,13 +35,10 @@ namespace u3
 
       bool operator==(const gelfand& other) const
       {
-         return static_cast<const Rep&>(*this) == static_cast<const Rep&>(other);
+        return static_cast<const Rep&>(*this) == static_cast<const Rep&>(other);
       }
 
-      bool operator!=(const gelfand& other) const
-      {
-         return !(*this == other);
-      }
+      bool operator!=(const gelfand& other) const { return !(*this == other); }
 
       // check betweenness condition:
       bool check() const
