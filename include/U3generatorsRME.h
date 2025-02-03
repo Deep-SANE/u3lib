@@ -189,7 +189,7 @@ namespace u3
 
           if (i == j)
             RME(i, j) +=
-                (3.0 * ket.L - 2.0 * ket.toprow.n13 - 2.0 * ket.toprow.n23);
+                (3.0 * ket.L - 2.0 * ket.toprow.n13() - 2.0 * ket.toprow.n23());
 
           RME(i, j) *= std::sqrt((ket.L + 1.0) * (2.0 * ket.L + 1.0) *
                                  (2.0 * ket.L + 3.0) /

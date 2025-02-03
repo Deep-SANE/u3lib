@@ -47,14 +47,14 @@ namespace u3
       }
 
       // check order of quantum numbers
-      bool check() { return (n13 >= n23 && n23 >= n33); }
+      bool check() { return (n13() >= n23() && n23() >= n33()); }
 
       // normalize the irrep
       void normalize()
       {
-         n13(n13() - n33());
-         n23(n23() - n33());
-         n33(0);
+        n13(n13() - n33());
+        n23(n23() - n33());
+        n33(0);
       }
     };
 

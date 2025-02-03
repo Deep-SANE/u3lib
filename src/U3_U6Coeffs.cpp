@@ -55,8 +55,8 @@ int main()
             << std::endl;
   for (int i = 0; i < u3ab.size(); i++)
   {
-    std::cout << "(" << i << "): [" << u3ab[i].n13 - u3ab[i].n33 << ","
-              << u3ab[i].n23 - u3ab[i].n33 << ",0] \t rho = 1 ... "
+    std::cout << "(" << i << "): [" << u3ab[i].n13() - u3ab[i].n33() << ","
+              << u3ab[i].n23() - u3ab[i].n33() << ",0] \t rho = 1 ... "
               << rhomaxsab[i] << std::endl;
   }
 
@@ -68,8 +68,8 @@ int main()
             << std::endl;
   for (int i = 0; i < u3bc.size(); i++)
   {
-    std::cout << "(" << i << "): [" << u3bc[i].n13 - u3bc[i].n33 << ","
-              << u3bc[i].n23 - u3bc[i].n33 << ",0] \t rho = 1 ... "
+    std::cout << "(" << i << "): [" << u3bc[i].n13() - u3bc[i].n33() << ","
+              << u3bc[i].n23() - u3bc[i].n33() << ",0] \t rho = 1 ... "
               << rhomaxsbc[i] << std::endl;
   }
 
@@ -90,8 +90,8 @@ int main()
             << std::endl;
   for (int i = 0; i < u3ab_c.size(); i++)
   {
-    std::cout << "(" << i << "): [" << u3ab_c[i].n13 - u3ab_c[i].n33 << ","
-              << u3ab_c[i].n23 - u3ab_c[i].n33 << ",0] \t rho = 1 ... "
+    std::cout << "(" << i << "): [" << u3ab_c[i].n13() - u3ab_c[i].n33() << ","
+              << u3ab_c[i].n23() - u3ab_c[i].n33() << ",0] \t rho = 1 ... "
               << rhomaxsab_c[i] << std::endl;
   }
   std::cout << "Please enter the index of the I-II-III coupled irrep you are "
@@ -106,9 +106,9 @@ int main()
   int flag = 0, i_a_bc;
   for (i_a_bc = 0; i_a_bc < u3a_bc.size(); i_a_bc++)
   {
-    if (u3ab_c[i_ab_c].n13 == u3a_bc[i_a_bc].n13 &&
-        u3ab_c[i_ab_c].n23 == u3a_bc[i_a_bc].n23 &&
-        u3ab_c[i_ab_c].n33 == u3a_bc[i_a_bc].n33)
+    if (u3ab_c[i_ab_c].n13() == u3a_bc[i_a_bc].n13() &&
+        u3ab_c[i_ab_c].n23() == u3a_bc[i_a_bc].n23() &&
+        u3ab_c[i_ab_c].n33() == u3a_bc[i_a_bc].n33())
     {
       flag++;
       break;

@@ -26,39 +26,39 @@ namespace u3
       u3b = u31;
     }
 
-    for (int n12 = u3a.n13; n12 >= u3a.n23; n12--)
+    for (int n12 = u3a.n13(); n12 >= u3a.n23(); n12--)
     {
-      for (int n22 = u3a.n23; n22 >= u3a.n33; n22--)
+      for (int n22 = u3a.n23(); n22 >= u3a.n33(); n22--)
       {
         for (int n11 = n12; n11 >= n22; n11--)
         {
 
-          int b13 = u3a.n13 - n12, b23 = u3a.n23 - n22, b33 = u3a.n33,
+          int b13 = u3a.n13() - n12, b23 = u3a.n23() - n22, b33 = u3a.n33(),
               b12 = n12 - n11, b22 = n22, b11 = n11;
 
           u3::irrep u3c = u3b;
 
-          u3c.n33 += b13;
+          u3c.n33(u3c.n33() + b13);
           if (!u3c.check())
             continue;
 
-          u3c.n23 += b12;
+          u3c.n23(u3c.n23() + b12);
           if (!u3c.check())
             continue;
 
-          u3c.n13 += b11;
+          u3c.n13(u3c.n13() + b11);
           if (!u3c.check())
             continue;
 
-          u3c.n33 += b23;
+          u3c.n33(u3c.n33() + b23);
           if (!u3c.check())
             continue;
 
-          u3c.n23 += b22;
+          u3c.n23(u3c.n23() + b22);
           if (!u3c.check())
             continue;
 
-          u3c.n33 += b33;
+          u3c.n33(u3c.n33() + b33);
           if (!u3c.check())
             continue;
 
@@ -72,8 +72,8 @@ namespace u3
             int flag = 0;
             for (int i = 0; i < u3cs.size(); i++)
             {
-              if (u3c.n13 == u3cs[i].n13 && u3c.n23 == u3cs[i].n23 &&
-                  u3c.n33 == u3cs[i].n33)
+              if (u3c.n13() == u3cs[i].n13() && u3c.n23() == u3cs[i].n23() &&
+                  u3c.n33() == u3cs[i].n33())
               {
                 rhomaxs[i]++;
                 flag = 1;
