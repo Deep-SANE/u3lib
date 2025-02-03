@@ -31,6 +31,18 @@ namespace u3
           : Rep(n13, n23, n33, n12, n22, n11)
       { }
 
+      // comparison operators:
+
+      bool operator==(const gelfand& other) const
+      {
+         return static_cast<const Rep&>(*this) == static_cast<const Rep&>(other);
+      }
+
+      bool operator!=(const gelfand& other) const
+      {
+         return !(*this == other);
+      }
+
       // check betweenness condition:
       bool check() const
       {
@@ -170,21 +182,9 @@ namespace u3
         double d = static_cast<double>(num) / static_cast<double>(den);
         return -std::sqrt(d);
       }
-
-      // comparison operators:
-
-      friend bool operator==(const gelfand& l, const gelfand& r)
-      {
-        return static_cast<const Rep&>(l) == static_cast<const Rep&>(r);
-      }
-
-      friend bool operator!=(const gelfand& l, const gelfand& r)
-      {
-        return static_cast<const Rep&>(l) != static_cast<const Rep&>(r);
-      }
     };
 
-    // print gelfand state
+    // print gelfand state:
     template <typename Rep>
     inline std::ostream& operator<<(std::ostream& s, const gelfand<Rep>& g)
     {
