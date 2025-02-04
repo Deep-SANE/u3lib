@@ -13,6 +13,7 @@
 *.o
 *.out
 *.pdf
+*.swp
 *.xlsx
 
 # '.DS_Store' file in all directories:

@@ -182,14 +182,14 @@ namespace u3
           for (int k = 0; k < ket_indices.size(); k++)
           {
             // std::cout << ket_canobasis[k] << std::endl;
-            RME(i, j) += (ket_gArr[ket_indices[k]].n11 - ket.L) *
+            RME(i, j) += (ket_gArr[ket_indices[k]].n11() - ket.L) *
                          ket_coeffs(k, i) * ket_coeffs(k, j);
           }
           RME(i, j) *= 6.0;
 
           if (i == j)
             RME(i, j) +=
-                (3.0 * ket.L - 2.0 * ket.toprow.n13 - 2.0 * ket.toprow.n23);
+                (3.0 * ket.L - 2.0 * ket.toprow.n13() - 2.0 * ket.toprow.n23());
 
           RME(i, j) *= std::sqrt((ket.L + 1.0) * (2.0 * ket.L + 1.0) *
                                  (2.0 * ket.L + 3.0) /

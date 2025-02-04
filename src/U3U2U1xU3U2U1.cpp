@@ -39,8 +39,8 @@ int main()
   std::cout << "The normalized coupled irreps are: " << std::endl;
   for (int i = 0; i < u3cs.size(); i++)
   {
-    std::cout << "(" << i << "): [" << u3cs[i].n13 - u3cs[i].n33 << ","
-              << u3cs[i].n23 - u3cs[i].n33 << ",0] \t rho = 1 ... "
+    std::cout << "(" << i << "): [" << u3cs[i].n13() - u3cs[i].n33() << ","
+              << u3cs[i].n23() - u3cs[i].n33() << ",0] \t rho = 1 ... "
               << rhomaxs[i] << std::endl;
   }
 
@@ -49,7 +49,7 @@ int main()
       << "Please enter the index of the coupled irrep you are interested: ";
   std::cin >> index;
 
-  int n33c = u3cs[index].n33;
+  int n33c = u3cs[index].n33();
 
   std::vector<u3::gelfand> gArrA, gArrB, gArrC;
 
