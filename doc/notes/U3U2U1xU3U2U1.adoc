@@ -1,0 +1,15 @@
+= Notes for U3U2U1xU3U2U1 procedure
+:stem: latexmath
+
+== Gelfand basis state labeling
+
+[stem]
+++++
+\left\lvert
+\begin{matrix}
+n_{13} & & n_{23} & & n_{33} \\
+& n_{12} & & n_{22} \\
+& & n_{11}
+\end{matrix}
+\right\rangle
+++++
