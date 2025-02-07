@@ -48,8 +48,7 @@ int main()
   }
 
   // couple the I. and II. irreps
-  std::vector<int> rhomaxsab;
-  std::vector<u3::irrep> u3ab = u3::decomposition(u3a, u3b, rhomaxsab);
+  auto [u3ab, rhomaxsab] = u3::decomposition(u3a, u3b);
 
   std::cout << "The normalized coupled irreps of the I and II are: "
             << std::endl;
@@ -61,8 +60,7 @@ int main()
   }
 
   // couple the II. and III. irreps
-  std::vector<int> rhomaxsbc;
-  std::vector<u3::irrep> u3bc = u3::decomposition(u3b, u3c, rhomaxsbc);
+  auto [u3bc, rhomaxsbc] = u3::decomposition(u3b, u3c);
 
   std::cout << "The normalized coupled irreps of the II and III are: "
             << std::endl;
@@ -82,9 +80,7 @@ int main()
   std::cin >> i_bc;
 
   // couple the three irreps in scheme (I-II)-III
-  std::vector<int> rhomaxsab_c;
-  std::vector<u3::irrep> u3ab_c =
-      u3::decomposition(u3ab[i_ab], u3c, rhomaxsab_c);
+  auto [u3ab_c, rhomaxsab_c] = u3::decomposition(u3ab[i_ab], u3c);
 
   std::cout << "The normalized coupled irreps of the I, II and III are: "
             << std::endl;
@@ -99,9 +95,7 @@ int main()
   std::cin >> i_ab_c;
 
   // couple the three irreps in scheme I-(II-III)
-  std::vector<int> rhomaxsa_bc;
-  std::vector<u3::irrep> u3a_bc =
-      u3::decomposition(u3a, u3bc[i_bc], rhomaxsa_bc);
+  auto [u3a_bc, rhomaxsa_bc] = u3::decomposition(u3a, u3bc[i_bc]);
 
   int flag = 0, i_a_bc;
   for (i_a_bc = 0; i_a_bc < u3a_bc.size(); i_a_bc++)

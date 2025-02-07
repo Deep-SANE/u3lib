@@ -33,8 +33,7 @@ int main()
     std::cout << "Your irrep is normalized to " << u3b << std::endl;
   }
 
-  std::vector<int> rhomaxs;
-  std::vector<u3::irrep> u3cs = u3::decomposition(u3a, u3b, rhomaxs);
+  auto [u3cs, rhomaxs] = u3::decomposition(u3a, u3b);
 
   std::cout << "The normalized coupled irreps are: " << std::endl;
   for (int i = 0; i < u3cs.size(); i++)

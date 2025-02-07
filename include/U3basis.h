@@ -46,7 +46,7 @@ namespace u3
   }
 
   // find all Gelfand states associated with an irrep
-  std::vector<u3::gelfand> gelfandBasis(u3::irrep& x)
+  std::vector<u3::gelfand> gelfandBasis(const u3::irrep& x)
   {
     std::vector<u3::gelfand> gArr;
 

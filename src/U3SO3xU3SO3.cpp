@@ -22,8 +22,7 @@ int main()
 
   u3::irrep u3a(lam1, mu1), u3b(lam2, mu2);
 
-  std::vector<int> rhomaxs;
-  std::vector<u3::irrep> u3cs = u3::decomposition(u3a, u3b, rhomaxs);
+  auto [u3cs, rhomaxs] = u3::decomposition(u3a, u3b);
 
   std::cout << "The coupled irreps (lambda,mu) are" << std::endl;
   for (int i = 0; i < u3cs.size(); i++)

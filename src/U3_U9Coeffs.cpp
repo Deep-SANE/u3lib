@@ -58,8 +58,7 @@ int main()
   }
 
   // couple the I. and II. irreps
-  std::vector<int> rhomaxsab;
-  std::vector<u3::irrep> u3ab = u3::decomposition(u3a, u3b, rhomaxsab);
+  auto [u3ab, rhomaxsab] = u3::decomposition(u3a, u3b);
 
   std::cout << "The normalized coupled irreps of the I and II are: "
             << std::endl;
@@ -71,8 +70,7 @@ int main()
   }
 
   // couple the I. and III. irreps
-  std::vector<int> rhomaxsac;
-  std::vector<u3::irrep> u3ac = u3::decomposition(u3a, u3c, rhomaxsac);
+  auto [u3ac, rhomaxsac] = u3::decomposition(u3a, u3c);
 
   std::cout << "The normalized coupled irreps of the I and III are: "
             << std::endl;
@@ -84,8 +82,7 @@ int main()
   }
 
   // couple the II. and IV. irreps
-  std::vector<int> rhomaxsbd;
-  std::vector<u3::irrep> u3bd = u3::decomposition(u3b, u3d, rhomaxsbd);
+  auto [u3bd, rhomaxsbd] = u3::decomposition(u3b, u3d);
 
   std::cout << "The normalized coupled irreps of the II and IV are: "
             << std::endl;
@@ -97,8 +94,7 @@ int main()
   }
 
   // couple the III. and IV. irreps
-  std::vector<int> rhomaxscd;
-  std::vector<u3::irrep> u3cd = u3::decomposition(u3c, u3d, rhomaxscd);
+  auto [u3cd, rhomaxscd] = u3::decomposition(u3c, u3d);
 
   std::cout << "The normalized coupled irreps of the III and IV are: "
             << std::endl;
@@ -124,9 +120,7 @@ int main()
   std::cin >> i_cd;
 
   // couple the 4 irreps in the scheme (I-II)-(III-IV)
-  std::vector<int> rhomaxsab_cd;
-  std::vector<u3::irrep> u3ab_cd =
-      u3::decomposition(u3ab[i_ab], u3cd[i_cd], rhomaxsab_cd);
+  auto [u3ab_cd, rhomaxsab_cd] = u3::decomposition(u3ab[i_ab], u3cd[i_cd]);
 
   std::cout << "The coupled irreps of the I, II, III and IV are: " << std::endl;
   for (int i = 0; i < u3ab_cd.size(); i++)
@@ -140,9 +134,7 @@ int main()
   std::cin >> i_ab_cd;
 
   // couple the 4 irreps in scheme (I-III)-(II-IV)
-  std::vector<int> rhomaxsac_bd;
-  std::vector<u3::irrep> u3ac_bd =
-      u3::decomposition(u3ac[i_ac], u3bd[i_bd], rhomaxsac_bd);
+  auto [u3ac_bd, rhomaxsac_bd] = u3::decomposition(u3ac[i_ac], u3bd[i_bd]);
 
   int flag = 0;
   for (i_ac_bd = 0; i_ac_bd < u3ac_bd.size(); i_ac_bd++)
