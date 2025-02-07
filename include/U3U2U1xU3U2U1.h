@@ -91,7 +91,7 @@ namespace u3
           else if ((u3::E23_12(gArr2[g2], gArr2[j]) && g1 == i) ||
                    (u3::E23_22(gArr2[g2], gArr2[j]) && g1 == i) ||
                    (u3::E12(gArr2[g2], gArr2[j]) && g1 == i))
-            new_indices.emplace_back(g, j);
+            new_indices.emplace_back(g1, j);
         }
       }
     }
