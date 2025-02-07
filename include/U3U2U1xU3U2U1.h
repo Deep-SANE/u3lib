@@ -32,8 +32,8 @@ namespace u3
   // the same for those other coupled states that have the same weight with the
   // state being expanded. Here indices of the uncoupled states are stored.
   std::vector<std::pair<int, int>>
-  expand_to_uncoupled(u3::gelfand& g3, std::vector<u3::gelfand>& gArr1,
-                      std::vector<u3::gelfand>& gArr2)
+  expand_to_uncoupled(const u3::gelfand& g3, const std::vector<u3::gelfand>& gArr1,
+                      const std::vector<u3::gelfand>& gArr2)
   {
     std::vector<std::pair<int, int>> indices;
     for (int i = 0; i < gArr1.size(); i++)
@@ -56,10 +56,10 @@ namespace u3
   // the action two generators E23 and E12 that annihiliate the highest weight
   // state
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-  E23E12(std::vector<u3::gelfand>& gArr1, std::vector<u3::gelfand>& gArr2,
+  E23E12(const std::vector<u3::gelfand>& gArr1,
+         const std::vector<u3::gelfand>& gArr2,
          std::vector<std::pair<int, int>>& indices)
   {
-
     int col_num = indices.size();
 
     std::vector<std::pair<int, int>> new_indices; // store the parent states
@@ -161,8 +161,9 @@ namespace u3
 
   // highest-weight coefficients < G1; G2| HW3 >
   void HighestWeightCoeffs(
-      std::vector<u3::gelfand>& gArr1, std::vector<u3::gelfand>& gArr2,
-      std::vector<u3::gelfand>& gArr3,
+      const std::vector<u3::gelfand>& gArr1,
+      const std::vector<u3::gelfand>& gArr2,
+      const std::vector<u3::gelfand>& gArr3,
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& coeffs)
   {
 
@@ -187,8 +188,9 @@ namespace u3
   // lower-weight coefficients < G1; G2 | G3 >
 
   void LowerWeightCoeffs(
-      int w3, int w1, std::vector<u3::gelfand>& gArr1,
-      std::vector<u3::gelfand>& gArr2, std::vector<u3::gelfand>& gArr3,
+      int w3, int w1, const std::vector<u3::gelfand>& gArr1,
+      const std::vector<u3::gelfand>& gArr2,
+      const std::vector<u3::gelfand>& gArr3,
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& coeffs)
   {
 
@@ -463,9 +465,9 @@ namespace u3
 
   // all coupling coefficients
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-  WigU3U2U1(u3::irrep& u3A, u3::irrep& u3B, u3::irrep& u3C, int& rhomax,
-            std::vector<u3::gelfand>& gArrA, std::vector<u3::gelfand>& gArrB,
-            std::vector<u3::gelfand>& gArrC)
+  WigU3U2U1(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C,
+            const int& rhomax, std::vector<u3::gelfand>& gArrA,
+            std::vector<u3::gelfand>& gArrB, std::vector<u3::gelfand>& gArrC)
   {
     gArrA = u3::gelfandBasis(u3A);
     gArrB = u3::gelfandBasis(u3B);
