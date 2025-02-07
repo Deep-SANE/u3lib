@@ -1,6 +1,8 @@
 #ifndef U3LIB_DECOMPOSITION_H
 #define U3LIB_DECOMPOSITION_H
 
+#include <algorithm>
+#include <utility>
 #include <vector>
 
 #include "U3basis.h"
@@ -8,10 +10,11 @@
 namespace u3
 {
 
-  std::vector<u3::irrep> decomposition(u3::irrep& u31, u3::irrep& u32,
-                                       std::vector<int>& rhomaxs)
+  std::pair<std::vector<u3::irrep>, std::vector<int>>
+  decomposition(const u3::irrep& u31, const u3::irrep& u32)
   {
     std::vector<u3::irrep> u3cs;
+    std::vector<int> rhomaxs;
 
     u3::irrep u3a, u3b;
 
@@ -32,7 +35,6 @@ namespace u3
       {
         for (int n11 = n12; n11 >= n22; n11--)
         {
-
           int b13 = u3a.n13() - n12, b23 = u3a.n23() - n22, b33 = u3a.n33(),
               b12 = n12 - n11, b22 = n22, b11 = n11;
 
@@ -62,35 +64,22 @@ namespace u3
           if (!u3c.check())
             continue;
 
-          if (u3cs.size() == 0)
+          auto iter = std::find(u3cs.begin(), u3cs.end(), u3c);
+          if (iter == u3cs.end())
           {
             u3cs.push_back(u3c);
             rhomaxs.push_back(1);
           }
           else
           {
-            int flag = 0;
-            for (int i = 0; i < u3cs.size(); i++)
-            {
-              if (u3c.n13() == u3cs[i].n13() && u3c.n23() == u3cs[i].n23() &&
-                  u3c.n33() == u3cs[i].n33())
-              {
-                rhomaxs[i]++;
-                flag = 1;
-              }
-            }
-
-            if (flag == 0)
-            {
-              u3cs.push_back(u3c);
-              rhomaxs.push_back(1);
-            }
+            auto index = std::distance(u3cs.begin(), iter);
+            rhomaxs[index]++;
           }
         }
       }
     }
 
-    return u3cs;
+    return std::make_pair(std::move(u3cs), std::move(rhomaxs));
   }
 
 } // namespace u3
