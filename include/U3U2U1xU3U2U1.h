@@ -32,7 +32,8 @@ namespace u3
   // the same for those other coupled states that have the same weight with the
   // state being expanded. Here indices of the uncoupled states are stored.
   std::vector<std::pair<int, int>>
-  expand_to_uncoupled(const u3::gelfand& g3, const std::vector<u3::gelfand>& gArr1,
+  expand_to_uncoupled(const u3::gelfand& g3,
+                      const std::vector<u3::gelfand>& gArr1,
                       const std::vector<u3::gelfand>& gArr2)
   {
     std::vector<std::pair<int, int>> indices;
@@ -81,44 +82,16 @@ namespace u3
           int g1 = indices[k].first, g2 = indices[k].second;
 
           // E23 and E12 act on the first state
-          if (u3::E23_12(gArr1[g1], gArr1[i]) && g2 == j)
-          {
-            std::pair<int, int> p(i, g2);
-            new_indices.push_back(p);
-            break;
-          }
-          else if (u3::E23_22(gArr1[g1], gArr1[i]) && g2 == j)
-          {
-            std::pair<int, int> p(i, g2);
-            new_indices.push_back(p);
-            break;
-          }
-          else if (u3::E12(gArr1[g1], gArr1[i]) && g2 == j)
-          {
-            std::pair<int, int> p(i, g2);
-            new_indices.push_back(p);
-            break;
-          }
+          if ((u3::E23_12(gArr1[g1], gArr1[i]) && g2 == j) ||
+              (u3::E23_22(gArr1[g1], gArr1[i]) && g2 == j) ||
+              (u3::E12(gArr1[g1], gArr1[i]) && g2 == j))
+            new_indices.emplace_back(i, g2);
 
           // E23 and E12 act on the second state
-          else if (u3::E23_12(gArr2[g2], gArr2[j]) && g1 == i)
-          {
-            std::pair<int, int> p(g1, j);
-            new_indices.push_back(p);
-            break;
-          }
-          else if (u3::E23_22(gArr2[g2], gArr2[j]) && g1 == i)
-          {
-            std::pair<int, int> p(g1, j);
-            new_indices.push_back(p);
-            break;
-          }
-          else if (u3::E12(gArr2[g2], gArr2[j]) && g1 == i)
-          {
-            std::pair<int, int> p(g1, j);
-            new_indices.push_back(p);
-            break;
-          }
+          else if ((u3::E23_12(gArr2[g2], gArr2[j]) && g1 == i) ||
+                   (u3::E23_22(gArr2[g2], gArr2[j]) && g1 == i) ||
+                   (u3::E12(gArr2[g2], gArr2[j]) && g1 == i))
+            new_indices.emplace_back(g, j);
         }
       }
     }
