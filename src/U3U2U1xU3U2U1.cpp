@@ -9,6 +9,7 @@
 #include <decomposition.h>
 #include <U3basis.h>
 #include <U3U2U1xU3U2U1.h>
+#include <U3SO3xU3SO3.h>
 
 int main()
 {
@@ -71,11 +72,21 @@ int main()
       {
         // print out only coupling coefficients allowed by selection rule
         if ((gArrA[i].e11() + gArrB[j].e11()) == (gArrC[k].e11() + n33c) &&
-            (gArrA[i].e22() + gArrB[j].e22()) == (gArrC[k].e22() + n33c))
-          std::cout << "< " << gArrA[i] << " ; " << gArrB[j] << " | "
+            (gArrA[i].e22() + gArrB[j].e22()) == (gArrC[k].e22() + n33c) &&
+             std::fabs(gArrA[i].n12() - gArrA[i].n22() - gArrB[j].n12() + gArrB[j].n22()) <= (gArrC[k].n12() - gArrC[k].n22()) &&
+             (gArrC[k].n12() - gArrC[k].n22()) <= (gArrA[i].n12() - gArrA[i].n22() + gArrB[j].n12() - gArrB[j].n22()))
+        {
+          double cgc = u3::CGC_SO3(gArrA[i].n12() - gArrA[i].n22(), 
+                                   gArrB[j].n12() - gArrB[j].n22(), 
+                                   gArrC[k].n12() - gArrC[k].n22(),
+                                   2 * gArrA[i].n11() - gArrA[i].n12() - gArrA[i].n22(),
+                                   2 * gArrB[j].n11() - gArrB[j].n12() - gArrB[j].n22(),
+                                   2 * gArrC[k].n11() - gArrC[k].n12() - gArrC[k].n22());
+          std::cout << "< " << gArrA[i] << " ; " << gArrB[j] << " | " 
                     << gArrC[k] << " >" << "\t"
-                    << coeffs.row((i * gArrB.size() + j) * gArrC.size() + k)
+                    << coeffs.row((i * gArrB.size() + j) * gArrC.size() + k)/cgc
                     << std::endl;
+        }
       }
     }
   }
@@ -89,3 +100,15 @@ int main()
 
   return 0;
 }
+ 
+/*
+if ((gArrA[i].e11() + gArrB[j].e11()) == (gArrC[k].e11() + n33c) &&
+            (gArrA[i].e22() + gArrB[j].e22()) == (gArrC[k].e22() + n33c) )
+        {
+          
+          std::cout << "< " << gArrA[i] << " ; " << gArrB[j] << " | " 
+                    << gArrC[k] << " >" << "\t"
+                    << coeffs.row((i * gArrB.size() + j) * gArrC.size() + k)///cgc
+                    << std::endl;
+        }
+*/
