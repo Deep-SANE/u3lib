@@ -43,7 +43,7 @@ int main()
               << u3cs[i].n23() - u3cs[i].n33() << ",0] \t rho = 1 ... "
               << rhomaxs[i] << std::endl;
   }
-
+  
   int index;
   std::cout
       << "Please enter the index of the coupled irrep you are interested: ";
@@ -73,15 +73,11 @@ int main()
         // print out only coupling coefficients allowed by selection rule
         if ((gArrA[i].e11() + gArrB[j].e11()) == (gArrC[k].e11() + n33c) &&
             (gArrA[i].e22() + gArrB[j].e22()) == (gArrC[k].e22() + n33c) &&
-             std::fabs(gArrA[i].n12() - gArrA[i].n22() - gArrB[j].n12() + gArrB[j].n22()) <= (gArrC[k].n12() - gArrC[k].n22()) &&
-             (gArrC[k].n12() - gArrC[k].n22()) <= (gArrA[i].n12() - gArrA[i].n22() + gArrB[j].n12() - gArrB[j].n22()))
+             std::fabs(gArrA[i].Lambdax2() - gArrB[j].Lambdax2()) <= gArrC[k].Lambdax2() &&
+             gArrC[k].Lambdax2() <= (gArrA[i].Lambdax2() + gArrB[j].Lambdax2()))
         {
-          double cgc = u3::CGC_SO3(gArrA[i].n12() - gArrA[i].n22(), 
-                                   gArrB[j].n12() - gArrB[j].n22(), 
-                                   gArrC[k].n12() - gArrC[k].n22(),
-                                   2 * gArrA[i].n11() - gArrA[i].n12() - gArrA[i].n22(),
-                                   2 * gArrB[j].n11() - gArrB[j].n12() - gArrB[j].n22(),
-                                   2 * gArrC[k].n11() - gArrC[k].n12() - gArrC[k].n22());
+          double cgc = u3::CGC_SO3(gArrA[i].Lambdax2(), gArrB[j].Lambdax2(), gArrC[k].Lambdax2(),
+                                   gArrA[i].MLambdax2(), gArrB[j].MLambdax2(), gArrC[k].MLambdax2());
           std::cout << "< " << gArrA[i] << " ; " << gArrB[j] << " | " 
                     << gArrC[k] << " >" << "\t"
                     << coeffs.row((i * gArrB.size() + j) * gArrC.size() + k)/cgc
@@ -100,15 +96,4 @@ int main()
 
   return 0;
 }
- 
-/*
-if ((gArrA[i].e11() + gArrB[j].e11()) == (gArrC[k].e11() + n33c) &&
-            (gArrA[i].e22() + gArrB[j].e22()) == (gArrC[k].e22() + n33c) )
-        {
-          
-          std::cout << "< " << gArrA[i] << " ; " << gArrB[j] << " | " 
-                    << gArrC[k] << " >" << "\t"
-                    << coeffs.row((i * gArrB.size() + j) * gArrC.size() + k)///cgc
-                    << std::endl;
-        }
-*/
+
