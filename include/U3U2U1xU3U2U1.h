@@ -306,7 +306,7 @@ namespace u3
                 else if (cond3)
                   factor = gArr2[parent_g2].e32_12();
                 else
-                  gArr2[parent_g2].e32_22();
+                  factor = gArr2[parent_g2].e32_22();
 
                 for (int r = 0; r < rmax; r++)
                   E21E32[r](i, j) +=
