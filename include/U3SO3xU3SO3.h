@@ -22,19 +22,19 @@ namespace u3
 {
 
   // usual SO(3) Clebsh-Gordan coefficients <L1 M1; L2 M2 | L3 M3>
-  double CGC_SO3(int l1, int l2, int l3, int m1, int m2, int m3)
+  double CGC_SO3(int ll1, int ll2, int ll3, int mm1, int mm2, int mm3)
   {
-    int phase = ((-l1 + l2 - m3) % 2 == 0) ? 1 : -1;
+    int phase = ((-ll1 + ll2 - mm3) % 4 == 0) ? 1 : -1;
 
     wig_table_init(2 * 100, 9);
     wig_temp_init(2 * 100);
 
-    double val3j = wig3jj(2 * l1, 2 * l2, 2 * l3, 2 * m1, 2 * m2, 2 * (-m3));
+    double val3j = wig3jj(ll1, ll2, ll3, mm1, mm2, -mm3);
 
     wig_temp_free();
     wig_table_free();
 
-    return phase * std::sqrt(2 * l3 + 1) * val3j;
+    return phase * std::sqrt(ll3 + 1) * val3j;
   }
 
   // generate all Wigner U3->SO(3) coefficients
@@ -184,8 +184,8 @@ namespace u3
               (pArrA[i].L + pArrB[m].L) >= pArrC[n].L)
           {
             double so3cgc =
-                CGC_SO3(pArrA[i].L, pArrB[m].L, pArrC[n].L,
-                        pArrC[n].L - pArrB[m].L, pArrB[m].L, pArrC[n].L);
+                CGC_SO3(2 * pArrA[i].L, 2 * pArrB[m].L, 2 * pArrC[n].L,
+                        2 * (pArrC[n].L - pArrB[m].L), 2 * pArrB[m].L, 2 * pArrC[n].L);
 
             int gamma = pArrA[i].L + pArrB[m].L - pArrC[n].L;
 
