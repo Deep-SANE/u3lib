@@ -490,7 +490,7 @@ namespace u3
 
   // all coupling coefficients
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-  WigU3U2U1(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C,
+  WigU3U2(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C,
             const int& rhomax, std::vector<u3::gelfand>& gArrA,
             std::vector<u3::gelfand>& gArrB, std::vector<u3::gelfand>& gArrC,
             std::vector<std::tuple<int,int,int>>& tArr)

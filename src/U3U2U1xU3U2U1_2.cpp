@@ -59,7 +59,7 @@ int main()
   auto t0 = std::chrono::high_resolution_clock::now();
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs =
-      u3::WigU3U2U1(u3a, u3b, u3cs[index], rhomaxs[index], gArrA, gArrB, gArrC, triArr);
+      u3::WigU3U2(u3a, u3b, u3cs[index], rhomaxs[index], gArrA, gArrB, gArrC, triArr);
   // after this, u3cs[index] is normalized, all gelfand states in gArrC are also
   // normalized
 
