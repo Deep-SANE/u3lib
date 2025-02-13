@@ -1,5 +1,6 @@
 #ifdef U3LIB_U3U2U1XU3U2U1_H
-#error "Headers 'U3U2U1xU3U2U1.h' and 'U3U2U1xU3U2U1_2.h' should not be included both!"
+#error                                                                         \
+    "Headers 'U3U2U1xU3U2U1.h' and 'U3U2U1xU3U2U1_2.h' should not be included both!"
 #endif
 
 #ifndef U3LIB_U3U2U1XU3U2U1_2_H
