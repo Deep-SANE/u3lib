@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <locale>
@@ -9,7 +10,6 @@
 
 #include <decomposition.h>
 #include <U3basis.h>
-#include <U3U2U1xU3U2U1_2.h>
 
 auto read_irrep(bool normalize, const std::string& nth = "")
 {
@@ -31,14 +31,14 @@ auto read_irrep(bool normalize, const std::string& nth = "")
   return irrep;
 }
 
-auto unique_SU2_basis(const std::vector<u3::gelfand>& basis)
+auto unique_n12n22(const std::vector<u3::gelfand>& basis)
 {
   std::vector<std::pair<int, int>> ub;
 
   for (const auto& g : basis)
   {
-    auto n12 = g.n12() - g.n33();
-    auto n22 = g.n22() - g.n33();
+    auto n12 = g.n12();
+    auto n22 = g.n22();
 
     if (std::find(ub.cbegin(), ub.cend(), std::pair(n12, n22)) == ub.end())
       ub.emplace_back(n12, n22);
@@ -76,16 +76,16 @@ int main()
   auto gArrB = u3::gelfandBasis(u3b);
   auto gArrC = u3::gelfandBasis(u3c);
 
-  std::cout.imbue(std::locale("en_US.UTF8"));
+  // std::cout.imbue(std::locale("en_US.UTF8"));
 
   std::cout << "Sizes of Gelfand bases: " << gArrA.size() << ", "
             << gArrB.size() << "; " << gArrC.size() << std::endl;
   std::cout << "Total number of basis state combinations: "
             << gArrA.size() * gArrB.size() * gArrC.size() << std::endl;
 
-  auto reduced_gArrA = unique_SU2_basis(gArrA);
-  auto reduced_gArrB = unique_SU2_basis(gArrB);
-  auto reduced_gArrC = unique_SU2_basis(gArrC);
+  auto reduced_gArrA = unique_n12n22(gArrA);
+  auto reduced_gArrB = unique_n12n22(gArrB);
+  auto reduced_gArrC = unique_n12n22(gArrC);
 
   std::cout << "Sizes of reduced Gelfand bases: " << reduced_gArrA.size()
             << ", " << reduced_gArrB.size() << "; " << reduced_gArrC.size()
@@ -94,4 +94,31 @@ int main()
             << reduced_gArrA.size() * reduced_gArrB.size() *
                    reduced_gArrC.size()
             << std::endl;
+
+  std::size_t selected = 0;
+
+  for (const auto& n12n22A : reduced_gArrA)
+    for (const auto& n12n22B : reduced_gArrB)
+      for (const auto& n12n22C : reduced_gArrC)
+      {
+        u3::gelfand gA(u3a.n13(), u3a.n23(), u3a.n33(), n12n22A.first,
+                       n12n22A.second, n12n22A.second);
+        u3::gelfand gB(u3b.n13(), u3b.n23(), u3b.n33(), n12n22B.first,
+                       n12n22B.second, n12n22B.second);
+        u3::gelfand gC(u3c.n13(), u3c.n23(), u3c.n33(), n12n22C.first,
+                       n12n22C.second, n12n22C.second);
+
+        bool selectionI = gA.epsilon() + gB.epsilon() == gC.epsilon();
+
+        bool selectionII_a =
+            gC.Lambdax2() >= std::abs(gA.Lambdax2() - gB.Lambdax2());
+
+        bool selectionII_b = gC.Lambdax2() <= gA.Lambdax2() + gB.Lambdax2();
+
+        if (selectionI && selectionII_a && selectionII_b)
+          selected++;
+      }
+
+  std::cout << "Number of allowed reduced basis state combinations: "
+            << selected << std::endl;
 }
