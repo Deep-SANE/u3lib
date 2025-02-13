@@ -1,5 +1,5 @@
 #ifdef NDEBUG
-  #error "Test compiled with disabled assertions; do not define NDEBUG!"
+#error "Test compiled with disabled assertions; do not define NDEBUG!"
 #endif
 
 #include <cassert>
@@ -102,6 +102,31 @@ int main()
   assert(g7.n11() == 3);
 
   assert(g7 == g6);
+
+  int n13 = 30;
+  int n23 = 20;
+  int n33 = 10;
+
+  for (int n12 = n13; n12 >= n23; n12--)
+    for (int n22 = n23; n22 >= n33; n22--)
+      for (int n11 = n12; n11 >= n22; n11--)
+      {
+        const u3::gelfand g(n13, n23, n33, n12, n22, n11);
+        auto gn = g;
+        gn.normalize();
+
+        assert(g.lambda() == gn.lambda());
+        assert(g.mu() == gn.mu());
+        assert(g.epsilon() == gn.epsilon());
+        assert(g.Lambdax2() == gn.Lambdax2());
+        assert(g.MLambdax2() == gn.MLambdax2());
+
+        u3::irrep u(g.n13(), g.n23(), g.n33());
+        auto un = u;
+        un.normalize();
+
+        assert(u.dim() == un.dim());
+      }
 
   std::cout << "Seemingly, all tests have passed." << std::endl;
 }

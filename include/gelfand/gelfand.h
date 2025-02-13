@@ -57,6 +57,14 @@ namespace u3
         n33(0);
       }
 
+      int lambda() const { return n13() - n23(); }
+      int mu() const { return n23() - n33(); }
+
+      int epsilon() const
+      {
+        return 2 * (n13() + n23() + n33()) - 3 * (n12() + n22());
+      }
+
       // obtain SU(2) angular momentum quantum numbers
       int Lambdax2() const { return n12() - n22(); }
       int MLambdax2() const { return 2 * n11() - n12() - n22(); }
