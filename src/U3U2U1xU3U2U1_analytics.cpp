@@ -6,8 +6,6 @@
 #include <iostream>
 #include <locale>
 #include <string>
-#include <utility>
-#include <vector>
 
 #include <decomposition.h>
 #include <U3basis.h>
@@ -30,22 +28,6 @@ auto read_irrep(bool normalize, const std::string& nth = "")
   std::cout << std::endl;
 
   return irrep;
-}
-
-auto unique_n12n22(const std::vector<u3::gelfand>& basis)
-{
-  std::vector<std::pair<int, int>> ub;
-
-  for (const auto& g : basis)
-  {
-    auto n12 = g.n12();
-    auto n22 = g.n22();
-
-    if (std::find(ub.cbegin(), ub.cend(), std::pair(n12, n22)) == ub.end())
-      ub.emplace_back(n12, n22);
-  }
-
-  return ub;
 }
 
 int main()
@@ -74,7 +56,7 @@ int main()
     rhomax = rhomaxs[index];
   }
 
-  std::cout.imbue(std::locale("en_US.UTF8"));
+  // std::cout.imbue(std::locale("en_US.UTF8"));
 
   std::size_t NA = u3a.dim(), NB = u3b.dim(), NC = u3c.dim();
 
