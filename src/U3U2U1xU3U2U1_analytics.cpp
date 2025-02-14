@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
@@ -51,74 +52,83 @@ int main()
 {
   auto u3a = read_irrep(true, "1st");
   auto u3b = read_irrep(true, "2nd");
-
-  auto [u3cs, rhomaxs] = u3::decomposition(u3a, u3b);
-
   auto u3c = read_irrep(false, "3rd");
 
-  auto iter = std::find(u3cs.cbegin(), u3cs.cend(), u3c);
-  if (iter == u3cs.end())
+  int rhomax;
   {
-    std::cerr << "The 3rd irrep has not been found in the decomposition of the "
-                 "1st and the 2nd!"
-              << std::endl;
-    return EXIT_FAILURE;
+    auto [u3cs, rhomaxs] = u3::decomposition(u3a, u3b);
+
+    auto iter = std::find(u3cs.cbegin(), u3cs.cend(), u3c);
+    if (iter == u3cs.end())
+    {
+      std::cerr
+          << "The 3rd irrep has not been found in the decomposition of the "
+             "1st and the 2nd!"
+          << std::endl;
+      return EXIT_FAILURE;
+    }
+
+    auto index = std::distance(u3cs.cbegin(), iter);
+    assert(u3cs[index] == u3c);
+
+    rhomax = rhomaxs[index];
   }
 
-  auto index = std::distance(u3cs.cbegin(), iter);
-  assert(u3cs[index] == u3c);
+  std::cout.imbue(std::locale("en_US.UTF8"));
 
-  auto rhomax = rhomaxs[index];
+  std::size_t NA = u3a.dim(), NB = u3b.dim(), NC = u3c.dim();
 
-  auto n33c = u3c.n33();
+  std::cout << "Size of 1st basis: " << NA << std::endl;
+  std::cout << "Size of 2nd basis: " << NB << std::endl;
+  std::cout << "Size of 3rd basis: " << NC << std::endl;
 
-  auto gArrA = u3::gelfandBasis(u3a);
-  auto gArrB = u3::gelfandBasis(u3b);
-  auto gArrC = u3::gelfandBasis(u3c);
-
-  // std::cout.imbue(std::locale("en_US.UTF8"));
-
-  std::cout << "Sizes of Gelfand bases: " << gArrA.size() << ", "
-            << gArrB.size() << "; " << gArrC.size() << std::endl;
-  std::cout << "Total number of basis state combinations: "
-            << gArrA.size() * gArrB.size() * gArrC.size() << std::endl;
-
-  auto reduced_gArrA = unique_n12n22(gArrA);
-  auto reduced_gArrB = unique_n12n22(gArrB);
-  auto reduced_gArrC = unique_n12n22(gArrC);
-
-  std::cout << "Sizes of reduced Gelfand bases: " << reduced_gArrA.size()
-            << ", " << reduced_gArrB.size() << "; " << reduced_gArrC.size()
-            << std::endl;
-  std::cout << "Total number of reduced basis state combinations: "
-            << reduced_gArrA.size() * reduced_gArrB.size() *
-                   reduced_gArrC.size()
+  std::cout << "Total number of basis state combinations: " << NA * NB * NC
             << std::endl;
 
+  auto t0 = std::chrono::high_resolution_clock::now();
+
+  std::size_t reduced = 0;
   std::size_t selected = 0;
 
-  for (const auto& n12n22A : reduced_gArrA)
-    for (const auto& n12n22B : reduced_gArrB)
-      for (const auto& n12n22C : reduced_gArrC)
-      {
-        u3::gelfand gA(u3a.n13(), u3a.n23(), u3a.n33(), n12n22A.first,
-                       n12n22A.second, n12n22A.second);
-        u3::gelfand gB(u3b.n13(), u3b.n23(), u3b.n33(), n12n22B.first,
-                       n12n22B.second, n12n22B.second);
-        u3::gelfand gC(u3c.n13(), u3c.n23(), u3c.n33(), n12n22C.first,
-                       n12n22C.second, n12n22C.second);
+  for (int n12a = u3a.n13(); n12a >= u3a.n23(); n12a--)
+    for (int n22a = u3a.n23(); n22a >= u3a.n33(); n22a--)
+    {
+      u3::gelfand gA(u3a.n13(), u3a.n23(), u3a.n33(), n12a, n22a, n22a);
 
-        bool selectionI = gA.epsilon() + gB.epsilon() == gC.epsilon();
+      for (int n12b = u3b.n13(); n12b >= u3b.n23(); n12b--)
+        for (int n22b = u3b.n23(); n22b >= u3b.n33(); n22b--)
+        {
+          u3::gelfand gB(u3b.n13(), u3b.n23(), u3b.n33(), n12b, n22b, n22b);
 
-        bool selectionII_a =
-            gC.Lambdax2() >= std::abs(gA.Lambdax2() - gB.Lambdax2());
+          for (int n12c = u3c.n13(); n12c >= u3c.n23(); n12c--)
+            for (int n22c = u3c.n23(); n22c >= u3c.n33(); n22c--)
+            {
+              u3::gelfand gC(u3c.n13(), u3c.n23(), u3c.n33(), n12c, n22c, n22c);
 
-        bool selectionII_b = gC.Lambdax2() <= gA.Lambdax2() + gB.Lambdax2();
+              reduced++;
 
-        if (selectionI && selectionII_a && selectionII_b)
-          selected++;
-      }
+              bool selectionI = gA.epsilon() + gB.epsilon() == gC.epsilon();
+
+              bool selectionII_a =
+                  gC.Lambdax2() >= std::abs(gA.Lambdax2() - gB.Lambdax2());
+
+              bool selectionII_b =
+                  gC.Lambdax2() <= gA.Lambdax2() + gB.Lambdax2();
+
+              if (selectionI && selectionII_a && selectionII_b)
+                selected++;
+            }
+        }
+    }
+
+  auto t1 = std::chrono::high_resolution_clock::now();
+
+  std::cout << "Total number of reduced basis state combinations: " << reduced
+            << std::endl;
 
   std::cout << "Number of allowed reduced basis state combinations: "
             << selected << std::endl;
+
+  std::chrono::duration<double> duration = t1 - t0;
+  std::cout << "Elapsed time: " << duration.count() << " [s]" << std::endl;
 }
