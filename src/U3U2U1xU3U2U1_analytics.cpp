@@ -86,6 +86,7 @@ int main()
           int Q = temp - gA.epsilon() - gB.epsilon();
           assert(Q % 3 == 0);
           int R = Q / 3;
+          int absR = std::abs(R);
 
           /*
           if ((R >= 0) && (R > u3c.lam())) 
@@ -97,9 +98,19 @@ int main()
           int p1 = (R >= 0) ? R : 0;
           int q1 = (R >= 0) ? 0 : -R;
 
+          // epsilon-selection rule:
           int kmax = std::min(u3c.lam() - p1, u3c.mu() - q1);
 
-          for (int k = 0; k <= kmax; k++)
+          // Lambda-selection rule:
+          int left = std::abs(gA.Lambdax2() - gB.Lambdax2()) - absR;
+          int right = gA.Lambdax2() + gB.Lambdax2() - absR;
+
+          int lb = std::max(0, left);
+          lb = (lb + (lb % 2)) / 2;
+
+          int ub = std::min(2 * kmax, right) / 2;
+
+          for (int k = lb; k <= ub; k++)
           {
             assert(p1 + k <= u3c.lam());
             assert(q1 + k <= u3c.mu());
@@ -109,13 +120,7 @@ int main()
 
             u3::gelfand gC(u3c.n13(), u3c.n23(), u3c.n33(), n12c, n22c, n22c);
 
-            bool selectionII_a =
-                gC.Lambdax2() >= std::abs(gA.Lambdax2() - gB.Lambdax2());
-
-            bool selectionII_b = gC.Lambdax2() <= gA.Lambdax2() + gB.Lambdax2();
-
-            if (selectionII_a && selectionII_b)
-              selected++;
+            selected++;
           }
         }
     }
