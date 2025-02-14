@@ -89,7 +89,7 @@ int main()
           int absR = std::abs(R);
 
           /*
-          if ((R >= 0) && (R > u3c.lam())) 
+          if ((R >= 0) && (R > u3c.lam()))
              continue;
           if ((R < 0) && (-R > u3c.mu()))
              continue;
@@ -105,9 +105,8 @@ int main()
           int left = std::abs(gA.Lambdax2() - gB.Lambdax2()) - absR;
           int right = gA.Lambdax2() + gB.Lambdax2() - absR;
 
-          int lb = std::max(0, left);
-          lb = (lb + (lb % 2)) / 2;
-
+          // combine selection rules:
+          int lb = (std::max(0, left) + 1) / 2;
           int ub = std::min(2 * kmax, right) / 2;
 
           for (int k = lb; k <= ub; k++)
