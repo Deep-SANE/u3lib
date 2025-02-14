@@ -67,9 +67,10 @@ int main()
   std::cout << "Total number of basis state combinations: " << NA * NB * NC
             << std::endl;
 
+  int temp = 2 * (u3c.n13() - 2 * u3c.n23() + u3c.n33());
+
   auto t0 = std::chrono::high_resolution_clock::now();
 
-  std::size_t reduced = 0;
   std::size_t selected = 0;
 
   for (int n12a = u3a.n13(); n12a >= u3a.n23(); n12a--)
@@ -82,31 +83,41 @@ int main()
         {
           u3::gelfand gB(u3b.n13(), u3b.n23(), u3b.n33(), n12b, n22b, n22b);
 
-          for (int n12c = u3c.n13(); n12c >= u3c.n23(); n12c--)
-            for (int n22c = u3c.n23(); n22c >= u3c.n33(); n22c--)
-            {
-              u3::gelfand gC(u3c.n13(), u3c.n23(), u3c.n33(), n12c, n22c, n22c);
+          int Q = temp - gA.epsilon() - gB.epsilon();
+          assert(Q % 3 == 0);
+          int R = Q / 3;
 
-              reduced++;
+          /*
+          if ((R >= 0) && (R > u3c.lam())) 
+             continue;
+          if ((R < 0) && (-R > u3c.mu()))
+             continue;
+          */
 
-              bool selectionI = gA.epsilon() + gB.epsilon() == gC.epsilon();
+          int p1 = (R >= 0) ? R : 0;
+          int q1 = (R >= 0) ? 0 : -R;
 
-              bool selectionII_a =
-                  gC.Lambdax2() >= std::abs(gA.Lambdax2() - gB.Lambdax2());
+          int kmax = std::min(u3c.lam() - p1, u3c.mu() - q1);
 
-              bool selectionII_b =
-                  gC.Lambdax2() <= gA.Lambdax2() + gB.Lambdax2();
+          for (int k = 0; k <= kmax; k++)
+          {
+            int n12c = u3c.n23() + p1 + k;
+            int n22c = u3c.n23() - q1 - k;
 
-              if (selectionI && selectionII_a && selectionII_b)
-                selected++;
-            }
+            u3::gelfand gC(u3c.n13(), u3c.n23(), u3c.n33(), n12c, n22c, n22c);
+
+            bool selectionII_a =
+                gC.Lambdax2() >= std::abs(gA.Lambdax2() - gB.Lambdax2());
+
+            bool selectionII_b = gC.Lambdax2() <= gA.Lambdax2() + gB.Lambdax2();
+
+            if (selectionII_a && selectionII_b)
+              selected++;
+          }
         }
     }
 
   auto t1 = std::chrono::high_resolution_clock::now();
-
-  std::cout << "Total number of reduced basis state combinations: " << reduced
-            << std::endl;
 
   std::cout << "Number of allowed reduced basis state combinations: "
             << selected << std::endl;
