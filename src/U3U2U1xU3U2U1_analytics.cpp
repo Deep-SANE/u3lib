@@ -101,6 +101,9 @@ int main()
 
           for (int k = 0; k <= kmax; k++)
           {
+            assert(p1 + k <= u3c.lam());
+            assert(q1 + k <= u3c.mu());
+
             int n12c = u3c.n23() + p1 + k;
             int n22c = u3c.n23() - q1 - k;
 
