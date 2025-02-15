@@ -4,8 +4,8 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 #include <decomposition.h>
 #include <U3basis.h>
@@ -43,7 +43,7 @@ int main()
               << u3cs[i].n23() - u3cs[i].n33() << ",0] \t rho = 1 ... "
               << rhomaxs[i] << std::endl;
   }
-  
+
   int index;
   std::cout
       << "Please enter the index of the coupled irrep you are interested: ";
@@ -53,30 +53,33 @@ int main()
 
   std::vector<u3::gelfand> gArrA, gArrB, gArrC;
 
-  std::vector<std::tuple<int,int,int>> triArr;
+  std::vector<std::tuple<int, int, int>> tArr;
 
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
 
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs =
-      u3::WigU3U2(u3a, u3b, u3cs[index], rhomaxs[index], gArrA, gArrB, gArrC, triArr);
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs = u3::WigU3U2(
+      u3a, u3b, u3cs[index], rhomaxs[index], gArrA, gArrB, gArrC, tArr);
   // after this, u3cs[index] is normalized, all gelfand states in gArrC are also
   // normalized
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();
 
-  for (int i = 0; i < triArr.size(); i++)
-  {        
-    int i1 = std::get<0>(triArr[i]), 
-        i2 = std::get<1>(triArr[i]), 
-        i3 = std::get<2>(triArr[i]);       
+  for (int i = 0; i < tArr.size(); i++)
+  {
+    int i1 = std::get<0>(tArr[i]), i2 = std::get<1>(tArr[i]),
+        i3 = std::get<2>(tArr[i]);
 
-    std::cout << "< " << gArrA[i1].n13() << "," << gArrA[i1].n23() << ",0;" << gArrA[i1].n12() << "," << gArrA[i1].n22()
-                    << " ; " << gArrB[i2].n13() << "," << gArrB[i2].n23() << ",0;" << gArrB[i2].n12() << "," << gArrB[i2].n22() 
-                    << " || " << gArrC[i3].n13() << "," << gArrC[i3].n23() << ",0;" << gArrC[i3].n12() << "," << gArrC[i3].n22()
-                    <<  " >" << "\t" << coeffs.row((i1 * gArrB.size() + i2) * gArrC.size() + i3) << std::endl;
-  } 
+    std::cout << "< " << gArrA[i1].n13() << "," << gArrA[i1].n23() << ",0;"
+              << gArrA[i1].n12() << "," << gArrA[i1].n22() << " ; "
+              << gArrB[i2].n13() << "," << gArrB[i2].n23() << ",0;"
+              << gArrB[i2].n12() << "," << gArrB[i2].n22() << " || "
+              << gArrC[i3].n13() << "," << gArrC[i3].n23() << ",0;"
+              << gArrC[i3].n12() << "," << gArrC[i3].n22() << " >" << "\t"
+              << coeffs.row((i1 * gArrB.size() + i2) * gArrC.size() + i3)
+              << std::endl;
+  }
 
   // Calculate the duration
   std::chrono::duration<double> duration = t1 - t0;
@@ -87,4 +90,3 @@ int main()
 
   return 0;
 }
-
