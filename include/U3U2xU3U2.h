@@ -8,6 +8,7 @@
 #include <iostream>
 #include <limits>
 #include <tuple>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -33,32 +34,116 @@ extern "C"
 
 namespace u3
 {
-  // usual SO(3) Clebsh-Gordan coefficients <L1 M1; L2 M2 | L3 M3>
-  double CGC_SO3(int ll1, int ll2, int ll3, int mm1, int mm2, int mm3)
+  // Custom hash function for tuple<int, int, int, int, int, int>
+  struct CGC_hash
   {
-    if ((ll3 == (ll1 + ll2) && ((mm1 + mm2) == ll3 || (mm1 + mm2) == -ll3)) ||
-        ll1 == 0 || ll2 == 0)
-      return 1.0;
-    else
+    template <typename T>
+    static void hash_combine(std::size_t& seed, const T& val)
     {
-      int phase = ((-ll1 + ll2 - mm3) % 4 == 0) ? 1 : -1;
+      seed ^= std::hash<T>{}(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    }
 
-      wig_table_init(2 * 100, 9);
-      wig_temp_init(2 * 100);
+    std::size_t
+    operator()(const std::tuple<int, int, int, int, int, int>& key) const
+    {
+      std::size_t seed = 0;
+      hash_combine(seed, std::get<0>(key));
+      hash_combine(seed, std::get<1>(key));
+      hash_combine(seed, std::get<2>(key));
+      hash_combine(seed, std::get<3>(key));
+      hash_combine(seed, std::get<4>(key));
+      hash_combine(seed, std::get<5>(key));
+      return seed;
+    }
+  };
 
-      double val3j = wig3jj(ll1, ll2, ll3, mm1, mm2, -mm3);
+  class CGC_SO3
+  {
+  private:
+    std::unordered_map<std::tuple<int, int, int, int, int, int>, double,
+                       CGC_hash>
+        cache;
 
-      wig_temp_free();
-      wig_table_free();
+  public:
+    double compute(int ll1, int ll2, int ll3, int mm1, int mm2, int mm3)
+    {
+      std::tuple key{ll1, ll2, ll3, mm1, mm2, mm3};
+      if (cache.find(key) != cache.end())
+        return cache[key];
 
-      val3j *= phase * std::sqrt(ll3 + 1);
+      double val3j;
+
+      std::tuple key1{ll1, ll2, ll3, -mm1, -mm2, -mm3};
+      std::tuple key2{ll2, ll1, ll3, mm2, mm1, mm3};
+      std::tuple key3{ll1, ll3, ll2, mm1, -mm3, -mm2};
+      std::tuple key4{ll3, ll2, ll1, -mm3, mm2, -mm1};
+      std::tuple key5{ll3, ll1, ll2, mm3, -mm1, mm2};
+      std::tuple key6{ll2, ll3, ll1, -mm2, mm3, mm1};
+
+      if (cache.find(key1) != cache.end())
+      {
+        int phase = ((ll1 + ll2 - ll3) % 4 == 0) ? 1 : -1;
+        val3j = phase * cache[key1];
+      }
+
+      else if (cache.find(key2) != cache.end())
+      {
+        int phase = ((ll1 + ll2 - ll3) % 4 == 0) ? 1 : -1;
+        val3j = phase * cache[key2];
+      }
+
+      else if (cache.find(key3) != cache.end())
+      {
+        int phase = ((ll1 - mm1) % 4 == 0) ? 1 : -1;
+        val3j = phase * std::sqrt((ll3 + 1.0) / (ll2 + 1.0)) * cache[key3];
+      }
+
+      else if (cache.find(key4) != cache.end())
+      {
+        int phase = ((ll2 + mm2) % 4 == 0) ? 1 : -1;
+        val3j = phase * std::sqrt((ll3 + 1.0) / (ll1 + 1.0)) * cache[key4];
+      }
+
+      else if (cache.find(key5) != cache.end())
+      {
+        int phase = ((ll1 - mm1) % 4 == 0) ? 1 : -1;
+        val3j = phase * std::sqrt((ll3 + 1.0) / (ll2 + 1.0)) * cache[key5];
+      }
+
+      else if (cache.find(key6) != cache.end())
+      {
+        int phase = ((ll2 + mm2) % 4 == 0) ? 1 : -1;
+        val3j = phase * std::sqrt((ll3 + 1.0) / (ll1 + 1.0)) * cache[key6];
+      }
+
+      else if ((ll3 == (ll1 + ll2) &&
+                ((mm1 + mm2) == ll3 || (mm1 + mm2) == -ll3)) ||
+               ll1 == 0 || ll2 == 0)
+      {
+        val3j = 1.0;
+      }
+
+      else
+      {
+        int phase = ((-ll1 + ll2 - mm3) % 4 == 0) ? 1 : -1;
+
+        wig_table_init(2 * 100, 9);
+        wig_temp_init(2 * 100);
+
+        val3j =
+            wig3jj(ll1, ll2, ll3, mm1, mm2, -mm3) * phase * std::sqrt(ll3 + 1);
+
+        wig_temp_free();
+        wig_table_free();
+      }
 
       // std::cout << ll1 << "," << ll2 << "," << ll3 << "," << mm1 << "," <<
       // mm2 << "," << mm3 << "->" << val3j << std::endl;
 
+      cache.emplace(key, val3j);
       return val3j;
     }
-  }
+  };
 
   // expansion of a coupled gelfand basis state (u3c) in terms of those
   // uncoupled ones based on the weight selection rule; hence, this expansion is
@@ -183,7 +268,8 @@ namespace u3
       const std::vector<u3::gelfand>& gArr2,
       const std::vector<u3::gelfand>& gArr3,
       std::vector<std::tuple<int, int, int>>& tArr,
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& coeffs)
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& coeffs,
+      u3::CGC_SO3& cgcs)
   {
 
     std::vector<std::pair<int, int>> indices =
@@ -217,7 +303,7 @@ namespace u3
         if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
             (jj1 + jj2) >= jj3)
         {
-          double cgc = u3::CGC_SO3(jj1, jj2, jj3, mm1, mm2, mm3);
+          double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
           coeffs.row((i1 * gArr2.size() + i2) * gArr3.size()) =
               nullspace.row(i) / cgc;
@@ -239,7 +325,8 @@ namespace u3
       const std::vector<u3::gelfand>& gArr3,
       std::vector<std::tuple<int, int, int>>& tArr,
       std::vector<int>& same_weight_gArr3,
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& coeffs)
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& coeffs,
+      u3::CGC_SO3& cgcs)
   {
 
     for (int i = 0; i < same_weight_gArr3.size(); i++)
@@ -371,7 +458,7 @@ namespace u3
                   else
                     factor = gArr2[parent_g2].e32_22();
 
-                  double cgc = u3::CGC_SO3(jj1, jj2, jj3, mm1, mm2, mm3);
+                  double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
                   for (int r = 0; r < rmax; r++)
                     E32E31[r](i, j) +=
@@ -444,7 +531,7 @@ namespace u3
                   else
                     factor = gArr2[parent_g2].e31_22();
 
-                  double cgc = u3::CGC_SO3(jj1, jj2, jj3, mm1, mm2, mm3);
+                  double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
                   for (int r = 0; r < rmax; r++)
                     E32E31[r](i, j) +=
@@ -493,7 +580,7 @@ namespace u3
             if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
                 (jj1 + jj2) >= jj3)
             {
-              double cgc = u3::CGC_SO3(jj1, jj2, jj3, mm1, mm2, mm3);
+              double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
               tArr.push_back(t);
               for (int r = 0; r < rmax; r++)
@@ -537,12 +624,15 @@ namespace u3
         all_same_weight_gArrC[w2max - gArrC[i].n12() - gArrC[i].n22()]
             .push_back(i);
 
-    u3::HighestWeightReducedCoeffs(gArrA, gArrB, gArrC, tArr, coeffs);
+    u3::CGC_SO3 cgcs;
+
+    u3::HighestWeightReducedCoeffs(gArrA, gArrB, gArrC, tArr, coeffs, cgcs);
 
     for (int w2 = w2max - 1; w2 >= w2min; w2--)
     {
       u3::LowerWeightReducedCoeffs(gArrA, gArrB, gArrC, tArr,
-                                   all_same_weight_gArrC[w2max - w2], coeffs);
+                                   all_same_weight_gArrC[w2max - w2], coeffs,
+                                   cgcs);
     }
 
     u3C.normalize();
