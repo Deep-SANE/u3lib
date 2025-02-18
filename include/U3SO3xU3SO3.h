@@ -183,9 +183,9 @@ namespace u3
           if (abs(pArrA[i].L - pArrB[m].L) <= pArrC[n].L &&
               (pArrA[i].L + pArrB[m].L) >= pArrC[n].L)
           {
-            double so3cgc =
-                CGC_SO3(2 * pArrA[i].L, 2 * pArrB[m].L, 2 * pArrC[n].L,
-                        2 * (pArrC[n].L - pArrB[m].L), 2 * pArrB[m].L, 2 * pArrC[n].L);
+            double so3cgc = CGC_SO3(
+                2 * pArrA[i].L, 2 * pArrB[m].L, 2 * pArrC[n].L,
+                2 * (pArrC[n].L - pArrB[m].L), 2 * pArrB[m].L, 2 * pArrC[n].L);
 
             int gamma = pArrA[i].L + pArrB[m].L - pArrC[n].L;
 

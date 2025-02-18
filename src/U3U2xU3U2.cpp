@@ -9,7 +9,7 @@
 
 #include <decomposition.h>
 #include <U3basis.h>
-#include <U3U2U1xU3U2U1_2.h>
+#include <U3U2xU3U2.h>
 
 int main()
 {

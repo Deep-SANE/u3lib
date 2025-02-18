@@ -1,13 +1,9 @@
-#ifdef U3LIB_U3U2U1XU3U2U1_H
-#error                                                                         \
-    "Headers 'U3U2U1xU3U2U1.h' and 'U3U2U1xU3U2U1_2.h' should not be included both!"
-#endif
-
-#ifndef U3LIB_U3U2U1XU3U2U1_2_H
-#define U3LIB_U3U2U1XU3U2U1_2_H
+#ifndef U3LIB_U3U2XU3U2_H
+#define U3LIB_U3U2XU3U2_H
 
 #include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -19,7 +15,6 @@
 
 #include "decomposition.h"
 #include "U3basis.h"
-#include "utils/inverseSolver.h"
 #include "utils/nullspaceSolver.h"
 
 extern "C"
@@ -41,17 +36,28 @@ namespace u3
   // usual SO(3) Clebsh-Gordan coefficients <L1 M1; L2 M2 | L3 M3>
   double CGC_SO3(int ll1, int ll2, int ll3, int mm1, int mm2, int mm3)
   {
-    int phase = ((-ll1 + ll2 - mm3) % 4 == 0) ? 1 : -1;
+    if ((ll3 == (ll1 + ll2) && ((mm1 + mm2) == ll3 || (mm1 + mm2) == -ll3)) ||
+        ll1 == 0 || ll2 == 0)
+      return 1.0;
+    else
+    {
+      int phase = ((-ll1 + ll2 - mm3) % 4 == 0) ? 1 : -1;
 
-    wig_table_init(2 * 100, 9);
-    wig_temp_init(2 * 100);
+      wig_table_init(2 * 100, 9);
+      wig_temp_init(2 * 100);
 
-    double val3j = wig3jj(ll1, ll2, ll3, mm1, mm2, -mm3);
+      double val3j = wig3jj(ll1, ll2, ll3, mm1, mm2, -mm3);
 
-    wig_temp_free();
-    wig_table_free();
+      wig_temp_free();
+      wig_table_free();
 
-    return phase * std::sqrt(ll3 + 1) * val3j;
+      val3j *= phase * std::sqrt(ll3 + 1);
+
+      // std::cout << ll1 << "," << ll2 << "," << ll3 << "," << mm1 << "," <<
+      // mm2 << "," << mm3 << "->" << val3j << std::endl;
+
+      return val3j;
+    }
   }
 
   // expansion of a coupled gelfand basis state (u3c) in terms of those
@@ -71,9 +77,7 @@ namespace u3
         if ((gArr1[i].e22() + gArr2[j].e22()) == g3.e22() &&
             (gArr1[i].e11() + gArr2[j].e11()) == g3.e11())
         {
-          // std::pair<int, int> p(i, j);
           indices.emplace_back(i, j);
-          // std::cout << "-" << i << "," << j << std::endl;
         }
       }
     }
@@ -128,9 +132,6 @@ namespace u3
 
     for (int i = 0; i < row_num; i++)
     {
-      // std::cout << new_indices[i].first << "," << new_indices[i].second <<
-      // std::endl;
-
       int new_g1 = new_indices[i].first, new_g2 = new_indices[i].second;
       for (int j = 0; j < col_num; j++)
       {
@@ -206,16 +207,23 @@ namespace u3
 
       if (it == tArr.end())
       {
-        double cgc = u3::CGC_SO3(
-            gArr1[indices[i].first].Lambdax2(),
-            gArr2[indices[i].second].Lambdax2(), gArr3[0].Lambdax2(),
-            gArr1[indices[i].first].MLambdax2(),
-            gArr2[indices[i].second].MLambdax2(), gArr3[0].MLambdax2());
-        if (cgc != 0.0)
+        int jj1 = gArr1[indices[i].first].Lambdax2(),
+            jj2 = gArr2[indices[i].second].Lambdax2(),
+            jj3 = gArr3[0].Lambdax2(),
+            mm1 = gArr1[indices[i].first].MLambdax2(),
+            mm2 = gArr2[indices[i].second].MLambdax2(),
+            mm3 = gArr3[0].MLambdax2();
+
+        if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
+            (jj1 + jj2) >= jj3)
+        {
+          double cgc = u3::CGC_SO3(jj1, jj2, jj3, mm1, mm2, mm3);
+
           coeffs.row((i1 * gArr2.size() + i2) * gArr3.size()) =
               nullspace.row(i) / cgc;
 
-        tArr.push_back(t);
+          tArr.push_back(t);
+        }
       }
     }
 
@@ -238,9 +246,7 @@ namespace u3
     {
       same_weight_gArr3[i] += gArr3[same_weight_gArr3[i]].n11() -
                               gArr3[same_weight_gArr3.back()].n11();
-      // std::cout << gArr3[same_weight_gArr3[i]] << std::endl;
     }
-    // std::cout << std::endl;
 
     if (!same_weight_gArr3.empty())
     {
@@ -300,7 +306,7 @@ namespace u3
       for (int i = 0; i < actOnParent.size(); i++)
       {
         int opt = actOnParent[i].first, parent_g3 = actOnParent[i].second;
-        // std::cout << opt << " : " << gArr3[parent_g3] << std::endl;
+
         int parent_g3_hw =
             parent_g3 - gArr3[parent_g3].n12() + gArr3[parent_g3].n11();
 
@@ -345,28 +351,36 @@ namespace u3
 
               if (cond1 || cond2 || cond3 || cond4)
               {
-                double factor;
-                if (cond1)
-                  factor = gArr1[parent_g1].e32_12();
-                else if (cond2)
-                  factor = gArr1[parent_g1].e32_22();
-                else if (cond3)
-                  factor = gArr2[parent_g2].e32_12();
-                else
-                  factor = gArr2[parent_g2].e32_22();
+                int jj1 = gArr1[parent_g1].Lambdax2(),
+                    jj2 = gArr2[parent_g2].Lambdax2(),
+                    jj3 = gArr3[parent_g3].Lambdax2(),
+                    mm1 = gArr1[parent_g1].MLambdax2(),
+                    mm2 = gArr2[parent_g2].MLambdax2(),
+                    mm3 = gArr3[parent_g3].MLambdax2();
 
-                double cgc = u3::CGC_SO3(
-                    gArr1[parent_g1].Lambdax2(), gArr2[parent_g2].Lambdax2(),
-                    gArr3[parent_g3].Lambdax2(), gArr1[parent_g1].MLambdax2(),
-                    gArr2[parent_g2].MLambdax2(), gArr3[parent_g3].MLambdax2());
+                if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
+                    (jj1 + jj2) >= jj3)
+                {
+                  double factor;
+                  if (cond1)
+                    factor = gArr1[parent_g1].e32_12();
+                  else if (cond2)
+                    factor = gArr1[parent_g1].e32_22();
+                  else if (cond3)
+                    factor = gArr2[parent_g2].e32_12();
+                  else
+                    factor = gArr2[parent_g2].e32_22();
 
-                for (int r = 0; r < rmax; r++)
-                  E32E31[r](i, j) +=
-                      coeffs((parent_g1_hw * gArr2.size() + parent_g2_hw) *
-                                     gArr3.size() +
-                                 parent_g3_hw,
-                             r) *
-                      cgc * factor;
+                  double cgc = u3::CGC_SO3(jj1, jj2, jj3, mm1, mm2, mm3);
+
+                  for (int r = 0; r < rmax; r++)
+                    E32E31[r](i, j) +=
+                        coeffs((parent_g1_hw * gArr2.size() + parent_g2_hw) *
+                                       gArr3.size() +
+                                   parent_g3_hw,
+                               r) *
+                        cgc * factor;
+                }
               }
             }
           }
@@ -410,39 +424,41 @@ namespace u3
 
               if (cond1 || cond2 || cond3 || cond4)
               {
-                double factor;
-                if (cond1)
-                  factor = gArr1[parent_g1].e31_12();
-                else if (cond2)
-                  factor = gArr1[parent_g1].e31_22();
-                else if (cond3)
-                  factor = gArr2[parent_g2].e31_12();
-                else
-                  factor = gArr2[parent_g2].e31_22();
+                int jj1 = gArr1[parent_g1].Lambdax2(),
+                    jj2 = gArr2[parent_g2].Lambdax2(),
+                    jj3 = gArr3[parent_g3].Lambdax2(),
+                    mm1 = gArr1[parent_g1].MLambdax2(),
+                    mm2 = gArr2[parent_g2].MLambdax2(),
+                    mm3 = gArr3[parent_g3].MLambdax2();
 
-                double cgc = u3::CGC_SO3(
-                    gArr1[parent_g1].Lambdax2(), gArr2[parent_g2].Lambdax2(),
-                    gArr3[parent_g3].Lambdax2(), gArr1[parent_g1].MLambdax2(),
-                    gArr2[parent_g2].MLambdax2(), gArr3[parent_g3].MLambdax2());
+                if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
+                    (jj1 + jj2) >= jj3)
+                {
+                  double factor;
+                  if (cond1)
+                    factor = gArr1[parent_g1].e31_12();
+                  else if (cond2)
+                    factor = gArr1[parent_g1].e31_22();
+                  else if (cond3)
+                    factor = gArr2[parent_g2].e31_12();
+                  else
+                    factor = gArr2[parent_g2].e31_22();
 
-                for (int r = 0; r < rmax; r++)
-                  E32E31[r](i, j) +=
-                      coeffs((parent_g1_hw * gArr2.size() + parent_g2_hw) *
-                                     gArr3.size() +
-                                 parent_g3_hw,
-                             r) *
-                      cgc * factor;
+                  double cgc = u3::CGC_SO3(jj1, jj2, jj3, mm1, mm2, mm3);
+
+                  for (int r = 0; r < rmax; r++)
+                    E32E31[r](i, j) +=
+                        coeffs((parent_g1_hw * gArr2.size() + parent_g2_hw) *
+                                       gArr3.size() +
+                                   parent_g3_hw,
+                               r) *
+                        cgc * factor;
+                }
               }
             }
           }
         }
       }
-
-      // inverse b
-      // Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> b_inverse =
-      // inverse(b);
-
-      // std::cout << "b = " << b << std::endl;
 
       Eigen::ColPivHouseholderQR<Eigen::MatrixXd> factorize;
       factorize.compute(b);
@@ -470,12 +486,15 @@ namespace u3
 
           if (it == tArr.end())
           {
-            double cgc =
-                u3::CGC_SO3(gArr1[i1].Lambdax2(), gArr2[i2].Lambdax2(),
-                            gArr3[i3].Lambdax2(), gArr1[i1].MLambdax2(),
-                            gArr2[i2].MLambdax2(), gArr3[i3].MLambdax2());
-            if (cgc != 0.0)
+            int jj1 = gArr1[i1].Lambdax2(), jj2 = gArr2[i2].Lambdax2(),
+                jj3 = gArr3[i3].Lambdax2(), mm1 = gArr1[i1].MLambdax2(),
+                mm2 = gArr2[i2].MLambdax2(), mm3 = gArr3[i3].MLambdax2();
+
+            if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
+                (jj1 + jj2) >= jj3)
             {
+              double cgc = u3::CGC_SO3(jj1, jj2, jj3, mm1, mm2, mm3);
+
               tArr.push_back(t);
               for (int r = 0; r < rmax; r++)
               {
