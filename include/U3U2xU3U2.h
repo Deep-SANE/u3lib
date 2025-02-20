@@ -5,15 +5,16 @@
 #include <cassert>
 #include <chrono>
 #include <cmath>
+#include <cstddef>
 #include <iostream>
 #include <limits>
 #include <tuple>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include <Eigen/Dense>
 
+#include "cgc_so3/CGC_SO3.h"
 #include "decomposition.h"
 #include "U3basis.h"
 #include "utils/nullspaceSolver.h"
@@ -34,115 +35,179 @@ extern "C"
 
 namespace u3
 {
-  // Custom hash function for tuple<int, int, int, int, int, int>
-  struct CGC_hash
+  class WigU3U2_coeffs
   {
-    template <typename T>
-    static void hash_combine(std::size_t& seed, const T& val)
+    u3::irrep u3a_, u3b_, u3c_;
+
+    std::size_t rhomax_;
+
+    std::size_t D1_, D2_, D3_, D4_;
+
+    struct Record
     {
-      seed ^= std::hash<T>{}(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+      int p1, q1;
+      int kmin, kmax;
+      std::size_t first_row;
+    };
+
+    std::vector<Record> records_;
+
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        coeffs_;
+
+    std::size_t record_index(int pa, int qa, int pb, int qb) const
+    {
+      assert(pa >= 0);
+      assert(pa <= u3a_.lam());
+
+      assert(qa >= 0);
+      assert(qa <= u3a_.mu());
+
+      assert(pb >= 0);
+      assert(pb <= u3b_.lam());
+
+      assert(qb >= 0);
+      assert(qb <= u3b_.mu());
+
+      std::size_t index = ((pa * D2_ + qa) * D3_ + pb) * D4_ + qb;
+
+      assert(index < records_.size());
+
+      return index;
     }
 
-    std::size_t
-    operator()(const std::tuple<int, int, int, int, int, int>& key) const
+    const auto& record(int pa, int qa, int pb, int qb) const
     {
-      std::size_t seed = 0;
-      hash_combine(seed, std::get<0>(key));
-      hash_combine(seed, std::get<1>(key));
-      hash_combine(seed, std::get<2>(key));
-      hash_combine(seed, std::get<3>(key));
-      hash_combine(seed, std::get<4>(key));
-      hash_combine(seed, std::get<5>(key));
-      return seed;
+      return records_[record_index(pa, qa, pb, qb)];
     }
-  };
 
-  class CGC_SO3
-  {
-  private:
-    std::unordered_map<std::tuple<int, int, int, int, int, int>, double,
-                       CGC_hash>
-        cache;
+    auto& record(int pa, int qa, int pb, int qb)
+    {
+      return records_[record_index(pa, qa, pb, qb)];
+    }
+
+    std::size_t row(int n12a, int n22a, int n12b, int n22b, int n12c,
+                    int n22c) const
+    {
+      int pa = n12a - u3a_.n23();
+      int qa = u3a_.n23() - n22a;
+      int pb = n12b - u3b_.n23();
+      int qb = u3b_.n23() - n22b;
+
+      const auto& rec = record(pa, qa, pb, qb);
+
+      assert(rec.kmax >= rec.kmin);
+
+      int k1 = n12c - u3c_.n23() - rec.p1;
+      int k2 = u3c_.n23() - n22c - rec.q1;
+
+      assert(k1 == k2);
+
+      assert(rec.first_row + k1 < coeffs_.rows());
+
+      return rec.first_row + k1;
+    }
 
   public:
-    double compute(int ll1, int ll2, int ll3, int mm1, int mm2, int mm3)
+    WigU3U2_coeffs(const u3::irrep& u3a, const u3::irrep& u3b,
+                   const u3::irrep& u3c, int rhomax)
+        : u3a_(u3a), u3b_(u3b), u3c_(u3c), rhomax_(rhomax)
     {
-      std::tuple key{ll1, ll2, ll3, mm1, mm2, mm3};
-      if (cache.find(key) != cache.end())
-        return cache[key];
+      assert(rhomax > 0);
 
-      double val3j;
+      D1_ = u3a.lam() + 1;
+      D2_ = u3a.mu() + 1;
+      D3_ = u3b.lam() + 1;
+      D4_ = u3b.mu() + 1;
 
-      std::tuple key1{ll1, ll2, ll3, -mm1, -mm2, -mm3};
-      std::tuple key2{ll2, ll1, ll3, mm2, mm1, mm3};
-      std::tuple key3{ll1, ll3, ll2, mm1, -mm3, -mm2};
-      std::tuple key4{ll3, ll2, ll1, -mm3, mm2, -mm1};
-      std::tuple key5{ll3, ll1, ll2, mm3, -mm1, mm2};
-      std::tuple key6{ll2, ll3, ll1, -mm2, mm3, mm1};
+      records_.resize(D1_ * D2_ * D3_ * D4_);
 
-      if (cache.find(key1) != cache.end())
-      {
-        int phase = ((ll1 + ll2 - ll3) % 4 == 0) ? 1 : -1;
-        val3j = phase * cache[key1];
-      }
+      int temp = 2 * (u3c.n13() - 2 * u3c.n23() + u3c.n33());
 
-      else if (cache.find(key2) != cache.end())
-      {
-        int phase = ((ll1 + ll2 - ll3) % 4 == 0) ? 1 : -1;
-        val3j = phase * cache[key2];
-      }
+      std::size_t row = 0;
 
-      else if (cache.find(key3) != cache.end())
-      {
-        int phase = ((ll1 - mm1) % 4 == 0) ? 1 : -1;
-        val3j = phase * std::sqrt((ll3 + 1.0) / (ll2 + 1.0)) * cache[key3];
-      }
+      for (int pa = 0; pa <= u3a.lam(); pa++)
+        for (int qa = 0; qa <= u3a.mu(); qa++)
+        {
+          u3::gelfand gA(u3a.n13(), u3a.n23(), u3a.n33(), u3a.n23() + pa,
+                         u3a.n23() - qa, u3a.n23() - qa);
 
-      else if (cache.find(key4) != cache.end())
-      {
-        int phase = ((ll2 + mm2) % 4 == 0) ? 1 : -1;
-        val3j = phase * std::sqrt((ll3 + 1.0) / (ll1 + 1.0)) * cache[key4];
-      }
+          for (int pb = 0; pb <= u3b.lam(); pb++)
+            for (int qb = 0; qb <= u3b.mu(); qb++)
+            {
+              u3::gelfand gB(u3b.n13(), u3b.n23(), u3b.n33(), u3b.n23() + pb,
+                             u3b.n23() - qb, u3b.n23() - qb);
 
-      else if (cache.find(key5) != cache.end())
-      {
-        int phase = ((ll1 - mm1) % 4 == 0) ? 1 : -1;
-        val3j = phase * std::sqrt((ll3 + 1.0) / (ll2 + 1.0)) * cache[key5];
-      }
+              int Q = temp - gA.epsilon() - gB.epsilon();
+              assert(Q % 3 == 0);
+              int R = Q / 3;
 
-      else if (cache.find(key6) != cache.end())
-      {
-        int phase = ((ll2 + mm2) % 4 == 0) ? 1 : -1;
-        val3j = phase * std::sqrt((ll3 + 1.0) / (ll1 + 1.0)) * cache[key6];
-      }
+              int p1 = (R >= 0) ? R : 0;
+              int q1 = (R >= 0) ? 0 : -R;
 
-      else if ((ll3 == (ll1 + ll2) &&
-                ((mm1 + mm2) == ll3 || (mm1 + mm2) == -ll3)) ||
-               ll1 == 0 || ll2 == 0)
-      {
-        val3j = 1.0;
-      }
+              // epsilon-selection rule:
+              int ub1 = std::min(u3c.lam() - p1, u3c.mu() - q1);
 
-      else
-      {
-        int phase = ((-ll1 + ll2 - mm3) % 4 == 0) ? 1 : -1;
+              // Lambda-selection rule:
+              int absR = std::abs(R);
+              int lb2 = std::abs(gA.Lambdax2() - gB.Lambdax2()) - absR;
+              int ub2 = gA.Lambdax2() + gB.Lambdax2() - absR;
 
-        wig_table_init(2 * 100, 9);
-        wig_temp_init(2 * 100);
+              // combine selection rules:
+              int kmin = (std::max(0, lb2) + 1) / 2;
+              int kmax = std::min(2 * ub1, ub2) / 2;
 
-        val3j =
-            wig3jj(ll1, ll2, ll3, mm1, mm2, -mm3) * phase * std::sqrt(ll3 + 1);
+              record(pa, qa, pb, qb) = {p1, q1, kmin, kmax, row};
 
-        wig_temp_free();
-        wig_table_free();
-      }
+              if (kmax >= kmin)
+                row += kmax - kmin + 1;
+            }
+        }
 
-      // std::cout << ll1 << "," << ll2 << "," << ll3 << "," << mm1 << "," <<
-      // mm2 << "," << mm3 << "->" << val3j << std::endl;
+      // std::cout << "Matrix size: " << row << " x " << rhomax << std::endl;
+      // std::cout << "Records size: " << records_.size() << std::endl;
 
-      cache.emplace(key, val3j);
-      return val3j;
+      coeffs_.resize(row, rhomax);
+      coeffs_.setZero();
     }
+
+    void normalize()
+    {
+      u3a_.normalize();
+      u3b_.normalize();
+      u3c_.normalize();
+    }
+
+    double get(int n12a, int n22a, int n12b, int n22b, int n12c, int n22c,
+               int rho) const
+    {
+      auto I = row(n12a, n22a, n12b, n22b, n12c, n22c);
+      return coeffs_(I, rho);
+    }
+
+    void set(int n12a, int n22a, int n12b, int n22b, int n12c, int n22c,
+             int rho, double value)
+    {
+      auto I = row(n12a, n22a, n12b, n22b, n12c, n22c);
+      coeffs_(I, rho) = value;
+    }
+
+    auto get_row(int n12a, int n22a, int n12b, int n22b, int n12c,
+                 int n22c) const
+    {
+      auto I = row(n12a, n22a, n12b, n22b, n12c, n22c);
+      return coeffs_.row(I);
+    }
+
+    template <typename T>
+    void set_row(int n12a, int n22a, int n12b, int n22b, int n12c, int n22c,
+                 T&& values)
+    {
+      auto I = row(n12a, n22a, n12b, n22b, n12c, n22c);
+      coeffs_.row(I) = std::forward<T>(values);
+    }
+
+    std::size_t size() const { return coeffs_.rows(); }
   };
 
   // expansion of a coupled gelfand basis state (u3c) in terms of those
@@ -263,13 +328,11 @@ namespace u3
   // highest-weight reduced coefficients
   // / n13a n23a n33a ; n13b n23b n33b || n13c n23c n33c \
   // \   n12a  n22a       n12b  n22b   ||   n13c n23c    /
-  void HighestWeightReducedCoeffs(
-      const std::vector<u3::gelfand>& gArr1,
-      const std::vector<u3::gelfand>& gArr2,
-      const std::vector<u3::gelfand>& gArr3,
-      std::vector<std::tuple<int, int, int>>& tArr,
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& coeffs,
-      u3::CGC_SO3& cgcs)
+  void HighestWeightReducedCoeffs(const std::vector<u3::gelfand>& gArr1,
+                                  const std::vector<u3::gelfand>& gArr2,
+                                  const std::vector<u3::gelfand>& gArr3,
+                                  std::vector<std::tuple<int, int, int>>& tArr,
+                                  u3::CGC_SO3& cgcs, WigU3U2_coeffs& coeffs)
   {
 
     std::vector<std::pair<int, int>> indices =
@@ -305,10 +368,16 @@ namespace u3
         {
           double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
-          coeffs.row((i1 * gArr2.size() + i2) * gArr3.size()) =
-              nullspace.row(i) / cgc;
-
           tArr.push_back(t);
+
+          assert(cgc != 0.0);
+
+          const auto& gA = gArr1[i1];
+          const auto& gB = gArr2[i2];
+          const auto& gC = gArr3[0];
+
+          coeffs.set_row(gA.n12(), gA.n22(), gB.n12(), gB.n22(), gC.n12(),
+                         gC.n22(), nullspace.row(i) / cgc);
         }
       }
     }
@@ -319,14 +388,13 @@ namespace u3
   // lower-weight reduced coefficients
   // / n13a n23a n33a ; n13b n23b n33b || n13c n23c n33c \
   // \   n12a  n22a       n12b  n22b   ||   n12c n22c    /
-  void LowerWeightReducedCoeffs(
-      const std::vector<u3::gelfand>& gArr1,
-      const std::vector<u3::gelfand>& gArr2,
-      const std::vector<u3::gelfand>& gArr3,
-      std::vector<std::tuple<int, int, int>>& tArr,
-      std::vector<int>& same_weight_gArr3,
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& coeffs,
-      u3::CGC_SO3& cgcs)
+  void LowerWeightReducedCoeffs(const std::vector<u3::gelfand>& gArr1,
+                                const std::vector<u3::gelfand>& gArr2,
+                                const std::vector<u3::gelfand>& gArr3,
+                                int rhomax,
+                                std::vector<std::tuple<int, int, int>>& tArr,
+                                std::vector<int>& same_weight_gArr3,
+                                u3::CGC_SO3& cgcs, WigU3U2_coeffs& coeffs)
   {
 
     for (int i = 0; i < same_weight_gArr3.size(); i++)
@@ -377,7 +445,7 @@ namespace u3
 
       // the lowering matrix from the action of E32 and E31, which depends on
       // outer multiplicity
-      int rmax = coeffs.cols();
+      int rmax = rhomax;
 
       std::vector<Eigen::MatrixXd> E32E31(rmax);
 
@@ -460,13 +528,25 @@ namespace u3
 
                   double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
+                  // assert(cgc != 0.0);
+
+                  const auto& gA = gArr1[parent_g1_hw];
+                  const auto& gB = gArr2[parent_g2_hw];
+                  const auto& gC = gArr3[parent_g3_hw];
+
                   for (int r = 0; r < rmax; r++)
                     E32E31[r](i, j) +=
-                        coeffs((parent_g1_hw * gArr2.size() + parent_g2_hw) *
-                                       gArr3.size() +
-                                   parent_g3_hw,
-                               r) *
+                        coeffs.get(gA.n12(), gA.n22(), gB.n12(), gB.n22(),
+                                   gC.n12(), gC.n22(), r) *
                         cgc * factor;
+
+                  /*
+                    coeffs((parent_g1_hw * gArr2.size() + parent_g2_hw) *
+                                   gArr3.size() +
+                               parent_g3_hw,
+                           r) *
+                    cgc * factor;
+                  */
                 }
               }
             }
@@ -533,13 +613,25 @@ namespace u3
 
                   double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
+                  // assert(cgc != 0.0);
+
+                  const auto& gA = gArr1[parent_g1_hw];
+                  const auto& gB = gArr2[parent_g2_hw];
+                  const auto& gC = gArr3[parent_g3_hw];
+
                   for (int r = 0; r < rmax; r++)
                     E32E31[r](i, j) +=
-                        coeffs((parent_g1_hw * gArr2.size() + parent_g2_hw) *
-                                       gArr3.size() +
-                                   parent_g3_hw,
-                               r) *
+                        coeffs.get(gA.n12(), gA.n22(), gB.n12(), gB.n22(),
+                                   gC.n12(), gC.n22(), r) *
                         cgc * factor;
+
+                  /*
+                    coeffs((parent_g1_hw * gArr2.size() + parent_g2_hw) *
+                                   gArr3.size() +
+                               parent_g3_hw,
+                           r) *
+                    cgc * factor;
+                  */
                 }
               }
             }
@@ -588,8 +680,14 @@ namespace u3
                 if (std::fabs(coeffs_temp[r](i, j)) < 1e-10)
                   coeffs_temp[r](i, j) = 0.0;
 
-                coeffs((i1_hw * gArr2.size() + i2_hw) * gArr3.size() + i3_hw,
-                       r) = coeffs_temp[r](i, j) / cgc;
+                assert(cgc != 0.0);
+
+                const auto& gA = gArr1[i1_hw];
+                const auto& gB = gArr2[i2_hw];
+                const auto& gC = gArr3[i3_hw];
+
+                coeffs.set(gA.n12(), gA.n22(), gB.n12(), gB.n22(), gC.n12(),
+                           gC.n22(), r, coeffs_temp[r](i, j) / cgc);
               }
             }
           }
@@ -601,19 +699,16 @@ namespace u3
   }
 
   // all coupling coefficients
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-  WigU3U2(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C,
-          const int& rhomax, std::vector<u3::gelfand>& gArrA,
-          std::vector<u3::gelfand>& gArrB, std::vector<u3::gelfand>& gArrC,
-          std::vector<std::tuple<int, int, int>>& tArr)
+  auto WigU3U2(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C,
+               int rhomax, std::vector<u3::gelfand>& gArrA,
+               std::vector<u3::gelfand>& gArrB, std::vector<u3::gelfand>& gArrC,
+               std::vector<std::tuple<int, int, int>>& tArr)
   {
+    WigU3U2_coeffs coeffs(u3A, u3B, u3C, rhomax);
+
     gArrA = u3::gelfandBasis(u3A);
     gArrB = u3::gelfandBasis(u3B);
     gArrC = u3::gelfandBasis(u3C);
-
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs(
-        gArrA.size() * gArrB.size() * gArrC.size(), rhomax);
-    coeffs.setZero();
 
     int w2max = u3C.n13() + u3C.n23();
     int w2min = u3C.n23() + u3C.n33();
@@ -626,13 +721,13 @@ namespace u3
 
     u3::CGC_SO3 cgcs;
 
-    u3::HighestWeightReducedCoeffs(gArrA, gArrB, gArrC, tArr, coeffs, cgcs);
+    u3::HighestWeightReducedCoeffs(gArrA, gArrB, gArrC, tArr, cgcs, coeffs);
 
     for (int w2 = w2max - 1; w2 >= w2min; w2--)
     {
-      u3::LowerWeightReducedCoeffs(gArrA, gArrB, gArrC, tArr,
-                                   all_same_weight_gArrC[w2max - w2], coeffs,
-                                   cgcs);
+      u3::LowerWeightReducedCoeffs(gArrA, gArrB, gArrC, rhomax, tArr,
+                                   all_same_weight_gArrC[w2max - w2], cgcs,
+                                   coeffs);
     }
 
     u3C.normalize();

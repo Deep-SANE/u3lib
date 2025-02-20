@@ -49,8 +49,6 @@ int main()
       << "Please enter the index of the coupled irrep you are interested: ";
   std::cin >> index;
 
-  int n33c = u3cs[index].n33();
-
   std::vector<u3::gelfand> gArrA, gArrB, gArrC;
 
   std::vector<std::tuple<int, int, int>> tArr;
@@ -58,7 +56,7 @@ int main()
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
 
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs = u3::WigU3U2(
+  auto coeffs = u3::WigU3U2(
       u3a, u3b, u3cs[index], rhomaxs[index], gArrA, gArrB, gArrC, tArr);
   // after this, u3cs[index] is normalized, all gelfand states in gArrC are also
   // normalized
@@ -66,20 +64,31 @@ int main()
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();
 
+  coeffs.normalize();
+
   for (int i = 0; i < tArr.size(); i++)
   {
     int i1 = std::get<0>(tArr[i]), i2 = std::get<1>(tArr[i]),
         i3 = std::get<2>(tArr[i]);
 
+    const auto& gA = gArrA[i1];
+    const auto& gB = gArrB[i2];
+    const auto& gC = gArrC[i3];
+
+    /*
     std::cout << "< " << gArrA[i1].n13() << "," << gArrA[i1].n23() << ",0;"
               << gArrA[i1].n12() << "," << gArrA[i1].n22() << " ; "
               << gArrB[i2].n13() << "," << gArrB[i2].n23() << ",0;"
               << gArrB[i2].n12() << "," << gArrB[i2].n22() << " || "
               << gArrC[i3].n13() << "," << gArrC[i3].n23() << ",0;"
               << gArrC[i3].n12() << "," << gArrC[i3].n22() << " >" << "\t"
-              << coeffs.row((i1 * gArrB.size() + i2) * gArrC.size() + i3)
+              << coeffs.get_row(gA.n12(), gA.n22(), gB.n12(), gB.n22(), gC.n12(), gC.n22()) 
               << std::endl;
+    */
   }
+
+  std::cout << "Reduced coefficients count: " << coeffs.size() << std::endl;
+  std::cout << "tArr size: " << tArr.size() << std::endl;
 
   // Calculate the duration
   std::chrono::duration<double> duration = t1 - t0;
