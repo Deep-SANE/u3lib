@@ -413,7 +413,7 @@ namespace u3
       // find parent states and operators to get to lower weight states
       // (daughter states)
       std::vector<std::pair<int, int>> actOnParent;
-
+/*
       // loop over states that may be parent
       for (int j = 0; j < same_weight_gArr3.back(); j++)
       {
@@ -439,6 +439,70 @@ namespace u3
           }
         }
       }
+*/
+      
+      // loop over daughter states
+      for (int i = 0; i < same_weight_gArr3.size(); i++)
+      {
+        u3::gelfand g3_n12p1 = gArr3[same_weight_gArr3[i]];
+        g3_n12p1.n12(g3_n12p1.n12() + 1);
+        if (g3_n12p1.check())
+        {
+          auto j = u3::findGelfand(g3_n12p1,gArr3);
+          std::pair p(0, j);
+          auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
+          if (it == actOnParent.end())
+          {
+            actOnParent.push_back(p);
+            continue;
+          }
+        }
+
+        u3::gelfand g3_n22p1 = gArr3[same_weight_gArr3[i]];
+        g3_n22p1.n22(g3_n22p1.n22() + 1);
+        if (g3_n22p1.check())
+        {
+          auto j = u3::findGelfand(g3_n22p1,gArr3);
+          std::pair p(0, j);
+          auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
+          if (it == actOnParent.end())
+          {
+            actOnParent.push_back(p);
+            continue;
+          }
+        }
+
+        u3::gelfand g3_n12n11p1 = gArr3[same_weight_gArr3[i]];
+        g3_n12n11p1.n12(g3_n12n11p1.n12() + 1);
+        g3_n12n11p1.n11(g3_n12n11p1.n11() + 1);
+        if (g3_n12n11p1.check())
+        {
+          auto j = u3::findGelfand(g3_n12n11p1,gArr3);
+          std::pair p(1, j);
+          auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
+          if (it == actOnParent.end())
+          {
+            actOnParent.push_back(p);
+            continue;
+          }
+        }
+
+        u3::gelfand g3_n22n11p1 = gArr3[same_weight_gArr3[i]];
+        g3_n22n11p1.n22(g3_n22n11p1.n22() + 1);
+        g3_n22n11p1.n11(g3_n22n11p1.n11() + 1);
+        if (g3_n22n11p1.check())
+        {
+          auto j = u3::findGelfand(g3_n22n11p1,gArr3);
+          std::pair p(1, j);
+          auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
+          if (it == actOnParent.end())
+          {
+            actOnParent.push_back(p);
+            continue;
+          }
+        }
+      }
+      
 
       // matrix b is independent of outer multiplicity
       Eigen::MatrixXd b(actOnParent.size(), same_weight_gArr3.size());
@@ -688,7 +752,11 @@ namespace u3
 
                 coeffs.set(gA.n12(), gA.n22(), gB.n12(), gB.n22(), gC.n12(),
                            gC.n22(), r, coeffs_temp[r](i, j) / cgc);
+
+                std::cout << coeffs.get(gA.n12(), gA.n22(), gB.n12(), gB.n22(),
+                                   gC.n12(), gC.n22(), r) << " ";
               }
+              std::cout  << std::endl;
             }
           }
         }
