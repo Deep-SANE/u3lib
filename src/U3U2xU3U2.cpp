@@ -84,7 +84,7 @@ int main()
               << gC.n12() << "," << gC.n22() << " >" << "\t"
               << coeffs.get_row(gA.n12(), gA.n22(), gB.n12(), gB.n22(), gC.n12(), gC.n22()) 
               << std::endl;
-       
+    
   }
  
   std::cout << "Reduced coefficients count: " << coeffs.size() << std::endl;
