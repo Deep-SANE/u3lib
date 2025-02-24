@@ -257,7 +257,7 @@ namespace u3
       if (g1_n11p1.check())
       {
         auto i = u3::findGelfand(g1_n11p1,gArr1);
-        std::pair p(i,g2);
+        std::pair<int, int> p(i, g2);
         auto it = std::find(new_indices.begin(), new_indices.end(), p);
         if (it == new_indices.end())
           new_indices.push_back(p);
@@ -268,7 +268,7 @@ namespace u3
       if (g1_n12p1.check())
       {
         auto i = u3::findGelfand(g1_n12p1,gArr1);
-        std::pair p(i,g2);
+        std::pair<int, int> p(i, g2);
         auto it = std::find(new_indices.begin(), new_indices.end(), p);
         if (it == new_indices.end())
           new_indices.push_back(p);
@@ -279,7 +279,7 @@ namespace u3
       if (g1_n22p1.check())
       {
         auto i = u3::findGelfand(g1_n22p1,gArr1);
-        std::pair p(i,g2);
+        std::pair<int, int> p(i, g2);
         auto it = std::find(new_indices.begin(), new_indices.end(), p);
         if (it == new_indices.end())
           new_indices.push_back(p);
@@ -291,7 +291,7 @@ namespace u3
       if (g2_n11p1.check())
       {
         auto i = u3::findGelfand(g2_n11p1,gArr2);
-        std::pair p(g1,i);
+        std::pair<int, int> p(g1, i);
         auto it = std::find(new_indices.begin(), new_indices.end(), p);
         if (it == new_indices.end())
           new_indices.push_back(p);
@@ -302,7 +302,7 @@ namespace u3
       if (g2_n12p1.check())
       {
         auto i = u3::findGelfand(g2_n12p1,gArr2);
-        std::pair p(g1,i);
+        std::pair<int, int> p(g1, i);
         auto it = std::find(new_indices.begin(), new_indices.end(), p);
         if (it == new_indices.end())
           new_indices.push_back(p);
@@ -313,7 +313,7 @@ namespace u3
       if (g2_n22p1.check())
       {
         auto i = u3::findGelfand(g2_n22p1,gArr2);
-        std::pair p(g1,i);
+        std::pair<int, int> p(g1, i);
         auto it = std::find(new_indices.begin(), new_indices.end(), p);
         if (it == new_indices.end())
           new_indices.push_back(p);
@@ -470,7 +470,7 @@ namespace u3
         if (g3_n12p1.check())
         {
           auto j = u3::findGelfand(g3_n12p1,gArr3);
-          std::pair p(0, j);
+          std::pair<int, int> p(0, j);
           auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
           if (it == actOnParent.end())
           {
@@ -484,7 +484,7 @@ namespace u3
         if (g3_n22p1.check())
         {
           auto j = u3::findGelfand(g3_n22p1,gArr3);
-          std::pair p(0, j);
+          std::pair<int, int> p(0, j);
           auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
           if (it == actOnParent.end())
           {
@@ -499,7 +499,7 @@ namespace u3
         if (g3_n12n11p1.check())
         {
           auto j = u3::findGelfand(g3_n12n11p1,gArr3);
-          std::pair p(1, j);
+          std::pair<int, int> p(1, j);
           auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
           if (it == actOnParent.end())
           {
@@ -514,7 +514,7 @@ namespace u3
         if (g3_n22n11p1.check())
         {
           auto j = u3::findGelfand(g3_n22n11p1,gArr3);
-          std::pair p(1, j);
+          std::pair<int, int> p(1, j);
           auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
           if (it == actOnParent.end())
           {
