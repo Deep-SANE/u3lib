@@ -3,6 +3,11 @@
 
 #include <cmath>
 
+#ifdef U3LIB_TIME_LOG
+#include <chrono>
+#include <iostream>
+#endif
+
 extern "C"
 {
 #include <wigxjpf.h>
@@ -12,6 +17,10 @@ namespace u3
 {
   class CGC_SO3
   {
+#ifdef U3LIB_TIME_LOG
+    double time_ = 0.0;
+#endif
+
   public:
     CGC_SO3()
     {
@@ -23,14 +32,28 @@ namespace u3
     {
       wig_temp_free();
       wig_table_free();
+
+#ifdef U3LIB_TIME_LOG
+      std::cerr << "CGC_SO3::compute time: " << time_ << " [s]" << std::endl;
+#endif
     }
 
     double compute(int ll1, int ll2, int ll3, int mm1, int mm2, int mm3)
     {
+#ifdef U3LIB_TIME_LOG
+      auto t0 = std::chrono::high_resolution_clock::now();
+#endif
+
       double phase = ((-ll1 + ll2 - mm3) % 4 == 0) ? 1.0 : -1.0;
       double factor = std::sqrt(static_cast<double>(ll3) + 1.0);
 
       double val3j = wig3jj(ll1, ll2, ll3, mm1, mm2, -mm3) * phase * factor;
+
+#ifdef U3LIB_TIME_LOG
+      auto t1 = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> duration = t1 - t0;
+      time_ += duration.count();
+#endif
 
       return val3j;
     }

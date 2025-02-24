@@ -3,14 +3,17 @@
 
 #include <algorithm>
 #include <cassert>
-#include <chrono>
 #include <cmath>
 #include <cstddef>
-#include <iostream>
 #include <limits>
 #include <tuple>
 #include <utility>
 #include <vector>
+
+#ifdef U3LIB_TIME_LOG
+#include <chrono>
+#include <iostream>
+#endif
 
 #include <Eigen/Dense>
 
@@ -380,14 +383,24 @@ namespace u3
                                   std::vector<std::tuple<int, int, int>>& tArr,
                                   u3::CGC_SO3& cgcs, WigU3U2_coeffs& coeffs)
   {
-
     std::vector<std::pair<int, int>> indices =
         expand_to_uncoupled(gArr3[0], gArr1, gArr2);
 
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> mat =
         E23E12(gArr1, gArr2, indices);
+
+#ifdef U3LIB_TIME_LOG
+      auto t0 = std::chrono::high_resolution_clock::now();
+#endif
+
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> nullspace =
         null_space(mat);
+
+#ifdef U3LIB_TIME_LOG
+      auto t1 = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> duration = t1 - t0;
+      std::cerr << "null_space time: " << duration.count() << " [s]" << std::endl;
+#endif
 
     for (int i = 0; i < indices.size(); i++)
     {
@@ -896,12 +909,22 @@ namespace u3
 
     u3::HighestWeightReducedCoeffs(gArrA, gArrB, gArrC, tArr, cgcs, coeffs);
 
+#ifdef U3LIB_TIME_LOG
+    auto t0 = std::chrono::high_resolution_clock::now();
+#endif
+
     for (int w2 = w2max - 1; w2 >= w2min; w2--)
     {
       u3::LowerWeightReducedCoeffs(gArrA, gArrB, gArrC, rhomax, tArr,
                                    all_same_weight_gArrC[w2max - w2], cgcs,
                                    coeffs);
     }
+
+#ifdef U3LIB_TIME_LOG
+      auto t1 = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> duration = t1 - t0;
+      std::cerr << "LowerWeightReducedCoeffs total time: " << duration.count() << " [s]" << std::endl;
+#endif
 
     u3C.normalize();
     for (int i = 0; i < gArrC.size(); i++)
