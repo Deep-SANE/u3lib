@@ -139,4 +139,73 @@ null_space(Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& mat)
   }
 }
 
+Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
+null_space(Eigen::SparseMatrix<double, Eigen::RowMajor>& mat)
+{
+  if (mat.size() <= 1)
+  {
+    Eigen::Matrix<double, 1, 1> one;
+    one(0, 0) = 1;
+    return one;
+  }
+
+  else
+  {
+    // Create a matrix to store the null space
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> nullSpace;
+
+    // Sparse matrix solver
+    if (true)
+    {
+      // Convert Matrix to SparseMatrix
+      // Eigen::SparseMatrix<double> spar_mat = mat.sparseView();
+      // spar_mat.makeCompressed();
+      auto& spar_mat = mat;
+
+      // Create a SparseQR decomposition of the projection matrix
+      Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>>
+          qr;
+
+      // Compute the qR decomposition of the projection matrix
+      qr.setPivotThreshold(1e-6);
+      qr.compute(spar_mat);
+
+      // Get the upper triangular matrix and resize it to square
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> R(qr.matrixR());
+      R.conservativeResize(mat.cols(), mat.cols());
+
+      // Get the nullity -- dimension of the nullspace
+      int nullity = mat.cols() - qr.rank();
+
+      nullSpace = backwardSubstitution(R, nullity);
+
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> P(
+          qr.colsPermutation());
+
+      nullSpace = P * nullSpace;
+    }
+
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> ornorNullSpace =
+        gramSchmidt(nullSpace);
+
+    // Sign convention
+    for (int i = 0; i < ornorNullSpace.cols(); i++)
+    {
+      int j;
+      for (j = 0; j < ornorNullSpace.rows(); j++)
+        if (std::fabs(ornorNullSpace(j, i)) > 1e-15)
+          break;
+      if (ornorNullSpace(j, i) < 0)
+        ornorNullSpace.col(i) = -ornorNullSpace.col(i);
+
+      for (j = 0; j < ornorNullSpace.rows(); j++)
+        if (std::fabs(ornorNullSpace(j, i)) <= 1e-15)
+          ornorNullSpace(j, i) = 0.0;
+    }
+
+    return ornorNullSpace;
+  }
+}
+
+
 #endif

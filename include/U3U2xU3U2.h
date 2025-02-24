@@ -3,20 +3,25 @@
 
 #include <algorithm>
 #include <cassert>
-#include <chrono>
 #include <cmath>
-#include <iostream>
+#include <cstddef>
 #include <limits>
 #include <tuple>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
+#ifdef U3LIB_TIME_LOG
+#include <chrono>
+#include <iostream>
+#endif
+
 #include <Eigen/Dense>
 
+#include "cgc_so3/CGC_SO3.h"
 #include "decomposition.h"
 #include "U3basis.h"
 #include "utils/nullspaceSolver.h"
+#include "utils/inverseSolver.h"
 
 extern "C"
 {
@@ -34,115 +39,178 @@ extern "C"
 
 namespace u3
 {
-  // Custom hash function for tuple<int, int, int, int, int, int>
-  struct CGC_hash
+  class WigU3U2_coeffs
   {
-    template <typename T>
-    static void hash_combine(std::size_t& seed, const T& val)
+    u3::irrep u3a_, u3b_, u3c_;
+
+    std::size_t rhomax_;
+
+    std::size_t D1_, D2_, D3_, D4_;
+
+    struct Record
     {
-      seed ^= std::hash<T>{}(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+      int p1, q1;
+      int kmin, kmax;
+      std::size_t first_row;
+    };
+
+    std::vector<Record> records_;
+
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        coeffs_;
+
+    std::size_t record_index(int pa, int qa, int pb, int qb) const
+    {
+      assert(pa >= 0);
+      assert(pa <= u3a_.lam());
+
+      assert(qa >= 0);
+      assert(qa <= u3a_.mu());
+
+      assert(pb >= 0);
+      assert(pb <= u3b_.lam());
+
+      assert(qb >= 0);
+      assert(qb <= u3b_.mu());
+
+      std::size_t index = ((pa * D2_ + qa) * D3_ + pb) * D4_ + qb;
+
+      assert(index < records_.size());
+
+      return index;
     }
 
-    std::size_t
-    operator()(const std::tuple<int, int, int, int, int, int>& key) const
+    const auto& record(int pa, int qa, int pb, int qb) const
     {
-      std::size_t seed = 0;
-      hash_combine(seed, std::get<0>(key));
-      hash_combine(seed, std::get<1>(key));
-      hash_combine(seed, std::get<2>(key));
-      hash_combine(seed, std::get<3>(key));
-      hash_combine(seed, std::get<4>(key));
-      hash_combine(seed, std::get<5>(key));
-      return seed;
+      return records_[record_index(pa, qa, pb, qb)];
     }
-  };
 
-  class CGC_SO3
-  {
-  private:
-    std::unordered_map<std::tuple<int, int, int, int, int, int>, double,
-                       CGC_hash>
-        cache;
+    auto& record(int pa, int qa, int pb, int qb)
+    {
+      return records_[record_index(pa, qa, pb, qb)];
+    }
+
+    std::size_t row(int n12a, int n22a, int n12b, int n22b, int n12c,
+                    int n22c) const
+    {
+      int pa = n12a - u3a_.n23();
+      int qa = u3a_.n23() - n22a;
+      int pb = n12b - u3b_.n23();
+      int qb = u3b_.n23() - n22b;
+
+      const auto& rec = record(pa, qa, pb, qb);
+
+      assert(rec.kmax >= rec.kmin);
+
+      int k1 = n12c - u3c_.n23() - rec.p1;
+      int k2 = u3c_.n23() - n22c - rec.q1;
+
+      assert(k1 == k2);
+
+      assert(rec.first_row + k1 < coeffs_.rows());
+
+      return rec.first_row + (k1 - rec.kmin);
+    }
 
   public:
-    double compute(int ll1, int ll2, int ll3, int mm1, int mm2, int mm3)
+    WigU3U2_coeffs(const u3::irrep& u3a, const u3::irrep& u3b,
+                   const u3::irrep& u3c, int rhomax)
+        : u3a_(u3a), u3b_(u3b), u3c_(u3c), rhomax_(rhomax)
     {
-      std::tuple key{ll1, ll2, ll3, mm1, mm2, mm3};
-      if (cache.find(key) != cache.end())
-        return cache[key];
+      assert(rhomax > 0);
 
-      double val3j;
+      D1_ = u3a.lam() + 1;
+      D2_ = u3a.mu() + 1;
+      D3_ = u3b.lam() + 1;
+      D4_ = u3b.mu() + 1;
 
-      std::tuple key1{ll1, ll2, ll3, -mm1, -mm2, -mm3};
-      std::tuple key2{ll2, ll1, ll3, mm2, mm1, mm3};
-      std::tuple key3{ll1, ll3, ll2, mm1, -mm3, -mm2};
-      std::tuple key4{ll3, ll2, ll1, -mm3, mm2, -mm1};
-      std::tuple key5{ll3, ll1, ll2, mm3, -mm1, mm2};
-      std::tuple key6{ll2, ll3, ll1, -mm2, mm3, mm1};
+      records_.resize(D1_ * D2_ * D3_ * D4_);
 
-      if (cache.find(key1) != cache.end())
-      {
-        int phase = ((ll1 + ll2 - ll3) % 4 == 0) ? 1 : -1;
-        val3j = phase * cache[key1];
-      }
+      int temp = 2 * (u3c.n13() - 2 * u3c.n23() + u3c.n33());
 
-      else if (cache.find(key2) != cache.end())
-      {
-        int phase = ((ll1 + ll2 - ll3) % 4 == 0) ? 1 : -1;
-        val3j = phase * cache[key2];
-      }
+      std::size_t row = 0;
 
-      else if (cache.find(key3) != cache.end())
-      {
-        int phase = ((ll1 - mm1) % 4 == 0) ? 1 : -1;
-        val3j = phase * std::sqrt((ll3 + 1.0) / (ll2 + 1.0)) * cache[key3];
-      }
+      for (int pa = 0; pa <= u3a.lam(); pa++)
+        for (int qa = 0; qa <= u3a.mu(); qa++)
+        {
+          u3::gelfand gA(u3a.n13(), u3a.n23(), u3a.n33(), u3a.n23() + pa,
+                         u3a.n23() - qa, u3a.n23() - qa);
 
-      else if (cache.find(key4) != cache.end())
-      {
-        int phase = ((ll2 + mm2) % 4 == 0) ? 1 : -1;
-        val3j = phase * std::sqrt((ll3 + 1.0) / (ll1 + 1.0)) * cache[key4];
-      }
+          for (int pb = 0; pb <= u3b.lam(); pb++)
+            for (int qb = 0; qb <= u3b.mu(); qb++)
+            {
+              u3::gelfand gB(u3b.n13(), u3b.n23(), u3b.n33(), u3b.n23() + pb,
+                             u3b.n23() - qb, u3b.n23() - qb);
 
-      else if (cache.find(key5) != cache.end())
-      {
-        int phase = ((ll1 - mm1) % 4 == 0) ? 1 : -1;
-        val3j = phase * std::sqrt((ll3 + 1.0) / (ll2 + 1.0)) * cache[key5];
-      }
+              int Q = temp - gA.epsilon() - gB.epsilon();
+              assert(Q % 3 == 0);
+              int R = Q / 3;
 
-      else if (cache.find(key6) != cache.end())
-      {
-        int phase = ((ll2 + mm2) % 4 == 0) ? 1 : -1;
-        val3j = phase * std::sqrt((ll3 + 1.0) / (ll1 + 1.0)) * cache[key6];
-      }
+              int p1 = (R >= 0) ? R : 0;
+              int q1 = (R >= 0) ? 0 : -R;
 
-      else if ((ll3 == (ll1 + ll2) &&
-                ((mm1 + mm2) == ll3 || (mm1 + mm2) == -ll3)) ||
-               ll1 == 0 || ll2 == 0)
-      {
-        val3j = 1.0;
-      }
+              // epsilon-selection rule:
+              int ub1 = std::min(u3c.lam() - p1, u3c.mu() - q1);
 
-      else
-      {
-        int phase = ((-ll1 + ll2 - mm3) % 4 == 0) ? 1 : -1;
+              // Lambda-selection rule:
+              int absR = std::abs(R);
+              int lb2 = std::abs(gA.Lambdax2() - gB.Lambdax2()) - absR;
+              int ub2 = gA.Lambdax2() + gB.Lambdax2() - absR;
 
-        wig_table_init(2 * 100, 9);
-        wig_temp_init(2 * 100);
+              // combine selection rules:
+              int kmin = (std::max(0, lb2) + 1) / 2;
+              int kmax = std::min(2 * ub1, ub2) / 2;
 
-        val3j =
-            wig3jj(ll1, ll2, ll3, mm1, mm2, -mm3) * phase * std::sqrt(ll3 + 1);
+              record(pa, qa, pb, qb) = {p1, q1, kmin, kmax, row};
 
-        wig_temp_free();
-        wig_table_free();
-      }
+              if (kmax >= kmin)
+                row += kmax - kmin + 1;
+            }
+        }
 
-      // std::cout << ll1 << "," << ll2 << "," << ll3 << "," << mm1 << "," <<
-      // mm2 << "," << mm3 << "->" << val3j << std::endl;
-
-      cache.emplace(key, val3j);
-      return val3j;
+      coeffs_.resize(row, rhomax);
+      coeffs_.setZero();
     }
+
+    void normalize()
+    {
+      u3a_.normalize();
+      u3b_.normalize();
+      u3c_.normalize();
+    }
+
+    double get(int n12a, int n22a, int n12b, int n22b, int n12c, int n22c,
+               int rho) const
+    {
+      auto I = row(n12a, n22a, n12b, n22b, n12c, n22c);
+      return coeffs_(I, rho);
+    }
+
+    void set(int n12a, int n22a, int n12b, int n22b, int n12c, int n22c,
+             int rho, double value)
+    {
+      auto I = row(n12a, n22a, n12b, n22b, n12c, n22c);
+
+      coeffs_(I, rho) = value;
+    }
+
+    auto get_row(int n12a, int n22a, int n12b, int n22b, int n12c,
+                 int n22c) const
+    {
+      auto I = row(n12a, n22a, n12b, n22b, n12c, n22c);
+      return coeffs_.row(I);
+    }
+
+    template <typename T>
+    void set_row(int n12a, int n22a, int n12b, int n22b, int n12c, int n22c,
+                 T&& values)
+    {
+      auto I = row(n12a, n22a, n12b, n22b, n12c, n22c);
+
+      coeffs_.row(I) = std::forward<T>(values);
+    }
+
+    std::size_t size() const { return coeffs_.rows(); }
   };
 
   // expansion of a coupled gelfand basis state (u3c) in terms of those
@@ -181,36 +249,82 @@ namespace u3
 
     std::vector<std::pair<int, int>> new_indices; // store the parent states
 
-    // Initialize max values
-    int maxFirst = indices.back().first;
-    int maxSecond = std::numeric_limits<int>::min();
-
-    // Iterate through the vector to find the maximum
-    for (const auto& p : indices)
-      maxSecond = std::max(maxSecond, p.second); // Update maxSecond
-
-    for (int i = 0; i < maxFirst; i++)
+    for (int k = 0; k < indices.size(); k++)
     {
-      for (int j = 0; j < maxSecond; j++)
+      int g1 = indices[k].first, g2 = indices[k].second;
+
+      // parent of the first state
+      u3::gelfand g1_n11p1 = gArr1[g1];
+      g1_n11p1.n11(g1_n11p1.n11() + 1);
+      if (g1_n11p1.check())
       {
-        for (int k = 0; k < indices.size(); k++)
-        {
-          int g1 = indices[k].first, g2 = indices[k].second;
+        auto i = u3::findGelfand(g1_n11p1,gArr1);
+        std::pair<int, int> p(i, g2);
+        auto it = std::find(new_indices.begin(), new_indices.end(), p);
+        if (it == new_indices.end())
+          new_indices.push_back(p);
+      }
 
-          // E23 and E12 act on the first state
-          if ((u3::E23_12(gArr1[g1], gArr1[i]) && g2 == j) ||
-              (u3::E23_22(gArr1[g1], gArr1[i]) && g2 == j) ||
-              (u3::E12(gArr1[g1], gArr1[i]) && g2 == j))
-            new_indices.emplace_back(i, g2);
+      u3::gelfand g1_n12p1 = gArr1[g1];
+      g1_n12p1.n12(g1_n12p1.n12() + 1);
+      if (g1_n12p1.check())
+      {
+        auto i = u3::findGelfand(g1_n12p1,gArr1);
+        std::pair<int, int> p(i, g2);
+        auto it = std::find(new_indices.begin(), new_indices.end(), p);
+        if (it == new_indices.end())
+          new_indices.push_back(p);
+      }
 
-          // E23 and E12 act on the second state
-          else if ((u3::E23_12(gArr2[g2], gArr2[j]) && g1 == i) ||
-                   (u3::E23_22(gArr2[g2], gArr2[j]) && g1 == i) ||
-                   (u3::E12(gArr2[g2], gArr2[j]) && g1 == i))
-            new_indices.emplace_back(g1, j);
-        }
+      u3::gelfand g1_n22p1 = gArr1[g1];
+      g1_n22p1.n22(g1_n22p1.n22() + 1);
+      if (g1_n22p1.check())
+      {
+        auto i = u3::findGelfand(g1_n22p1,gArr1);
+        std::pair<int, int> p(i, g2);
+        auto it = std::find(new_indices.begin(), new_indices.end(), p);
+        if (it == new_indices.end())
+          new_indices.push_back(p);
+      }
+
+      // parent of the second state
+      u3::gelfand g2_n11p1 = gArr2[g2];
+      g2_n11p1.n11(g2_n11p1.n11() + 1);
+      if (g2_n11p1.check())
+      {
+        auto i = u3::findGelfand(g2_n11p1,gArr2);
+        std::pair<int, int> p(g1, i);
+        auto it = std::find(new_indices.begin(), new_indices.end(), p);
+        if (it == new_indices.end())
+          new_indices.push_back(p);
+      }
+
+      u3::gelfand g2_n12p1 = gArr2[g2];
+      g2_n12p1.n12(g2_n12p1.n12() + 1);
+      if (g2_n12p1.check())
+      {
+        auto i = u3::findGelfand(g2_n12p1,gArr2);
+        std::pair<int, int> p(g1, i);
+        auto it = std::find(new_indices.begin(), new_indices.end(), p);
+        if (it == new_indices.end())
+          new_indices.push_back(p);
+      }
+
+      u3::gelfand g2_n22p1 = gArr2[g2];
+      g2_n22p1.n22(g2_n22p1.n22() + 1);
+      if (g2_n22p1.check())
+      {
+        auto i = u3::findGelfand(g2_n22p1,gArr2);
+        std::pair<int, int> p(g1, i);
+        auto it = std::find(new_indices.begin(), new_indices.end(), p);
+        if (it == new_indices.end())
+          new_indices.push_back(p);
       }
     }
+
+    //for (const auto& p : new_indices) {
+        //std::cout << "(" << p.first << ", " << p.second << ")\n";
+    //}
 
     int row_num = new_indices.size();
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> mat(row_num, col_num);
@@ -263,23 +377,30 @@ namespace u3
   // highest-weight reduced coefficients
   // / n13a n23a n33a ; n13b n23b n33b || n13c n23c n33c \
   // \   n12a  n22a       n12b  n22b   ||   n13c n23c    /
-  void HighestWeightReducedCoeffs(
-      const std::vector<u3::gelfand>& gArr1,
-      const std::vector<u3::gelfand>& gArr2,
-      const std::vector<u3::gelfand>& gArr3,
-      std::vector<std::tuple<int, int, int>>& tArr,
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& coeffs,
-      u3::CGC_SO3& cgcs)
+  void HighestWeightReducedCoeffs(const std::vector<u3::gelfand>& gArr1,
+                                  const std::vector<u3::gelfand>& gArr2,
+                                  const std::vector<u3::gelfand>& gArr3,
+                                  std::vector<std::tuple<int, int, int>>& tArr,
+                                  u3::CGC_SO3& cgcs, WigU3U2_coeffs& coeffs)
   {
-
     std::vector<std::pair<int, int>> indices =
         expand_to_uncoupled(gArr3[0], gArr1, gArr2);
 
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> mat =
         E23E12(gArr1, gArr2, indices);
 
+#ifdef U3LIB_TIME_LOG
+      auto t0 = std::chrono::high_resolution_clock::now();
+#endif
+
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> nullspace =
         null_space(mat);
+
+#ifdef U3LIB_TIME_LOG
+      auto t1 = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> duration = t1 - t0;
+      std::cerr << "null_space time: " << duration.count() << " [s]" << std::endl;
+#endif
 
     for (int i = 0; i < indices.size(); i++)
     {
@@ -305,10 +426,16 @@ namespace u3
         {
           double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
-          coeffs.row((i1 * gArr2.size() + i2) * gArr3.size()) =
-              nullspace.row(i) / cgc;
-
           tArr.push_back(t);
+
+          assert(cgc != 0.0);
+
+          const auto& gA = gArr1[i1];
+          const auto& gB = gArr2[i2];
+          const auto& gC = gArr3[0];
+
+          coeffs.set_row(gA.n12(), gA.n22(), gB.n12(), gB.n22(), gC.n12(),
+                         gC.n22(), nullspace.row(i) / cgc);
         }
       }
     }
@@ -319,14 +446,13 @@ namespace u3
   // lower-weight reduced coefficients
   // / n13a n23a n33a ; n13b n23b n33b || n13c n23c n33c \
   // \   n12a  n22a       n12b  n22b   ||   n12c n22c    /
-  void LowerWeightReducedCoeffs(
-      const std::vector<u3::gelfand>& gArr1,
-      const std::vector<u3::gelfand>& gArr2,
-      const std::vector<u3::gelfand>& gArr3,
-      std::vector<std::tuple<int, int, int>>& tArr,
-      std::vector<int>& same_weight_gArr3,
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& coeffs,
-      u3::CGC_SO3& cgcs)
+  void LowerWeightReducedCoeffs(const std::vector<u3::gelfand>& gArr1,
+                                const std::vector<u3::gelfand>& gArr2,
+                                const std::vector<u3::gelfand>& gArr3,
+                                int rhomax,
+                                std::vector<std::tuple<int, int, int>>& tArr,
+                                std::vector<int>& same_weight_gArr3,
+                                u3::CGC_SO3& cgcs, WigU3U2_coeffs& coeffs)
   {
 
     for (int i = 0; i < same_weight_gArr3.size(); i++)
@@ -344,40 +470,76 @@ namespace u3
 
       // find parent states and operators to get to lower weight states
       // (daughter states)
-      std::vector<std::pair<int, int>> actOnParent;
+      std::vector<std::pair<int, int>> actOnParent;      
 
-      // loop over states that may be parent
-      for (int j = 0; j < same_weight_gArr3.back(); j++)
+      // loop over daughter states
+      for (int i = 0; i < same_weight_gArr3.size(); i++)
       {
-        // loop over daughter states
-        for (int i = 0; i < same_weight_gArr3.size(); i++)
+        u3::gelfand g3_n12p1 = gArr3[same_weight_gArr3[i]];
+        g3_n12p1.n12(g3_n12p1.n12() + 1);
+        if (g3_n12p1.check())
         {
-          if (u3::E23_12(gArr3[same_weight_gArr3[i]], gArr3[j]) ||
-              u3::E23_22(gArr3[same_weight_gArr3[i]], gArr3[j]))
+          auto j = u3::findGelfand(g3_n12p1,gArr3);
+          std::pair<int, int> p(0, j);
+          auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
+          if (it == actOnParent.end())
           {
-            std::pair p(0, j);
-            auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
-            if (it == actOnParent.end())
-              actOnParent.push_back(p);
-          }
-
-          else if (u3::E13_12(gArr3[same_weight_gArr3[i]], gArr3[j]) ||
-                   u3::E13_22(gArr3[same_weight_gArr3[i]], gArr3[j]))
-          {
-            std::pair p(1, j);
-            auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
-            if (it == actOnParent.end())
-              actOnParent.push_back(p);
+            actOnParent.push_back(p);
+            continue;
           }
         }
-      }
+
+        u3::gelfand g3_n22p1 = gArr3[same_weight_gArr3[i]];
+        g3_n22p1.n22(g3_n22p1.n22() + 1);
+        if (g3_n22p1.check())
+        {
+          auto j = u3::findGelfand(g3_n22p1,gArr3);
+          std::pair<int, int> p(0, j);
+          auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
+          if (it == actOnParent.end())
+          {
+            actOnParent.push_back(p);
+            continue;
+          }
+        }
+
+        u3::gelfand g3_n12n11p1 = gArr3[same_weight_gArr3[i]];
+        g3_n12n11p1.n12(g3_n12n11p1.n12() + 1);
+        g3_n12n11p1.n11(g3_n12n11p1.n11() + 1);
+        if (g3_n12n11p1.check())
+        {
+          auto j = u3::findGelfand(g3_n12n11p1,gArr3);
+          std::pair<int, int> p(1, j);
+          auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
+          if (it == actOnParent.end())
+          {
+            actOnParent.push_back(p);
+            continue;
+          }
+        }
+
+        u3::gelfand g3_n22n11p1 = gArr3[same_weight_gArr3[i]];
+        g3_n22n11p1.n22(g3_n22n11p1.n22() + 1);
+        g3_n22n11p1.n11(g3_n22n11p1.n11() + 1);
+        if (g3_n22n11p1.check())
+        {
+          auto j = u3::findGelfand(g3_n22n11p1,gArr3);
+          std::pair<int, int> p(1, j);
+          auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
+          if (it == actOnParent.end())
+          {
+            actOnParent.push_back(p);
+            continue;
+          }
+        }
+      }      
 
       // matrix b is independent of outer multiplicity
       Eigen::MatrixXd b(actOnParent.size(), same_weight_gArr3.size());
 
       // the lowering matrix from the action of E32 and E31, which depends on
       // outer multiplicity
-      int rmax = coeffs.cols();
+      int rmax = rhomax;
 
       std::vector<Eigen::MatrixXd> E32E31(rmax);
 
@@ -392,13 +554,16 @@ namespace u3
       // now build matrix b and E32E31
       for (int i = 0; i < actOnParent.size(); i++)
       {
-        int opt = actOnParent[i].first, parent_g3 = actOnParent[i].second;
+        int opt = actOnParent[i].first, 
+            parent_g3 = actOnParent[i].second,
+            jj3 = gArr3[parent_g3].Lambdax2(),
+            mm3 = gArr3[parent_g3].MLambdax2();;
 
-        int parent_g3_hw =
-            parent_g3 - gArr3[parent_g3].n12() + gArr3[parent_g3].n11();
+        //int parent_g3_hw =
+            //parent_g3 - gArr3[parent_g3].n12() + gArr3[parent_g3].n11();
 
-        std::vector<std::pair<int, int>> uncoupled_parent_g3 =
-            expand_to_uncoupled(gArr3[parent_g3], gArr1, gArr2);
+        //std::vector<std::pair<int, int>> uncoupled_parent_g3 =
+            //expand_to_uncoupled(gArr3[parent_g3], gArr1, gArr2);
 
         // build with E32
         if (opt == 0)
@@ -417,57 +582,109 @@ namespace u3
             int g1 = uncoupled_same_weight_gArr3[j].first,
                 g2 = uncoupled_same_weight_gArr3[j].second;
 
-            for (int l = 0; l < uncoupled_parent_g3.size(); l++)
+            // act on the first state
+            u3::gelfand g1_n12p1 = gArr1[g1];
+            g1_n12p1.n12(g1_n12p1.n12() + 1);
+            if (g1_n12p1.check())
             {
-              int parent_g1 = uncoupled_parent_g3[l].first,
-                  parent_g2 = uncoupled_parent_g3[l].second;
+              int jj1 = g1_n12p1.Lambdax2(),
+                  mm1 = g1_n12p1.MLambdax2(),
+                  jj2 = gArr2[g2].Lambdax2(),
+                  mm2 = gArr2[g2].MLambdax2();
 
-              int parent_g1_hw = parent_g1 - gArr1[parent_g1].n12() +
-                                 gArr1[parent_g1].n11(),
-                  parent_g2_hw = parent_g2 - gArr2[parent_g2].n12() +
-                                 gArr2[parent_g2].n11();
-
-              bool cond1 =
-                  (u3::E23_12(gArr1[g1], gArr1[parent_g1]) && g2 == parent_g2);
-              bool cond2 =
-                  (u3::E23_22(gArr1[g1], gArr1[parent_g1]) && g2 == parent_g2);
-              bool cond3 =
-                  (u3::E23_12(gArr2[g2], gArr2[parent_g2]) && g1 == parent_g1);
-              bool cond4 =
-                  (u3::E23_22(gArr2[g2], gArr2[parent_g2]) && g1 == parent_g1);
-
-              if (cond1 || cond2 || cond3 || cond4)
-              {
-                int jj1 = gArr1[parent_g1].Lambdax2(),
-                    jj2 = gArr2[parent_g2].Lambdax2(),
-                    jj3 = gArr3[parent_g3].Lambdax2(),
-                    mm1 = gArr1[parent_g1].MLambdax2(),
-                    mm2 = gArr2[parent_g2].MLambdax2(),
-                    mm3 = gArr3[parent_g3].MLambdax2();
-
-                if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
+              if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
                     (jj1 + jj2) >= jj3)
-                {
-                  double factor;
-                  if (cond1)
-                    factor = gArr1[parent_g1].e32_12();
-                  else if (cond2)
-                    factor = gArr1[parent_g1].e32_22();
-                  else if (cond3)
-                    factor = gArr2[parent_g2].e32_12();
-                  else
-                    factor = gArr2[parent_g2].e32_22();
+              {
+                double factor = g1_n12p1.e32_12();
 
-                  double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+                double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
-                  for (int r = 0; r < rmax; r++)
+                for (int r = 0; r < rmax; r++)
                     E32E31[r](i, j) +=
-                        coeffs((parent_g1_hw * gArr2.size() + parent_g2_hw) *
-                                       gArr3.size() +
-                                   parent_g3_hw,
-                               r) *
+                        coeffs.get(g1_n12p1.n12(), g1_n12p1.n22(), 
+                                    gArr2[g2].n12(), gArr2[g2].n22(),
+                                    gArr3[parent_g3].n12(), 
+                                    gArr3[parent_g3].n22(), r) *
                         cgc * factor;
-                }
+              }
+            }
+
+            u3::gelfand g1_n22p1 = gArr1[g1];
+            g1_n22p1.n22(g1_n22p1.n22() + 1);
+            if (g1_n22p1.check())
+            {
+              int jj1 = g1_n22p1.Lambdax2(),
+                  mm1 = g1_n22p1.MLambdax2(),
+                  jj2 = gArr2[g2].Lambdax2(),
+                  mm2 = gArr2[g2].MLambdax2();
+
+              if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
+                    (jj1 + jj2) >= jj3)
+              {
+                double factor = g1_n22p1.e32_22();
+
+                double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+
+                for (int r = 0; r < rmax; r++)
+                    E32E31[r](i, j) +=
+                        coeffs.get(g1_n22p1.n12(), g1_n22p1.n22(), 
+                                    gArr2[g2].n12(), gArr2[g2].n22(),
+                                    gArr3[parent_g3].n12(), 
+                                    gArr3[parent_g3].n22(), r) *
+                        cgc * factor;
+              }
+            }
+
+            // act on the second state
+            u3::gelfand g2_n12p1 = gArr2[g2];
+            g2_n12p1.n12(g2_n12p1.n12() + 1);
+            if (g2_n12p1.check())
+            {
+              int jj2 = g2_n12p1.Lambdax2(),
+                  mm2 = g2_n12p1.MLambdax2(),
+                  jj1 = gArr1[g1].Lambdax2(),
+                  mm1 = gArr1[g1].MLambdax2();
+
+              if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
+                    (jj1 + jj2) >= jj3)
+              {
+                double factor = g2_n12p1.e32_12();
+
+                double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+
+                for (int r = 0; r < rmax; r++)
+                    E32E31[r](i, j) +=
+                        coeffs.get(gArr1[g1].n12(), gArr1[g1].n22(),
+                                    g2_n12p1.n12(), g2_n12p1.n22(), 
+                                    gArr3[parent_g3].n12(), 
+                                    gArr3[parent_g3].n22(), r) *
+                        cgc * factor;
+              }
+            }
+
+            u3::gelfand g2_n22p1 = gArr2[g2];
+            g2_n22p1.n22(g2_n22p1.n22() + 1);
+            if (g2_n22p1.check())
+            {
+              int jj2 = g2_n22p1.Lambdax2(),
+                  mm2 = g2_n22p1.MLambdax2(),
+                  jj1 = gArr1[g1].Lambdax2(),
+                  mm1 = gArr1[g1].MLambdax2();
+
+              if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
+                    (jj1 + jj2) >= jj3)
+              {
+                double factor = g2_n22p1.e32_22();
+
+                double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+
+                for (int r = 0; r < rmax; r++)
+                    E32E31[r](i, j) +=
+                        coeffs.get(gArr1[g1].n12(), gArr1[g1].n22(),
+                                    g2_n22p1.n12(), g2_n22p1.n22(), 
+                                    gArr3[parent_g3].n12(), 
+                                    gArr3[parent_g3].n22(), r) *
+                        cgc * factor;
               }
             }
           }
@@ -490,70 +707,131 @@ namespace u3
             int g1 = uncoupled_same_weight_gArr3[j].first,
                 g2 = uncoupled_same_weight_gArr3[j].second;
 
-            for (int l = 0; l < uncoupled_parent_g3.size(); l++)
+            // act on the first state
+            u3::gelfand g1_n12n11p1 = gArr1[g1];
+            g1_n12n11p1.n12(g1_n12n11p1.n12() + 1);
+            g1_n12n11p1.n11(g1_n12n11p1.n11() + 1);
+            if (g1_n12n11p1.check())
             {
-              int parent_g1 = uncoupled_parent_g3[l].first,
-                  parent_g2 = uncoupled_parent_g3[l].second;
+              int jj1 = g1_n12n11p1.Lambdax2(),
+                  mm1 = g1_n12n11p1.MLambdax2(),
+                  jj2 = gArr2[g2].Lambdax2(),
+                  mm2 = gArr2[g2].MLambdax2();
 
-              int parent_g1_hw = parent_g1 - gArr1[parent_g1].n12() +
-                                 gArr1[parent_g1].n11(),
-                  parent_g2_hw = parent_g2 - gArr2[parent_g2].n12() +
-                                 gArr2[parent_g2].n11();
-
-              bool cond1 =
-                  (u3::E13_12(gArr1[g1], gArr1[parent_g1]) && g2 == parent_g2);
-              bool cond2 =
-                  (u3::E13_22(gArr1[g1], gArr1[parent_g1]) && g2 == parent_g2);
-              bool cond3 =
-                  (u3::E13_12(gArr2[g2], gArr2[parent_g2]) && g1 == parent_g1);
-              bool cond4 =
-                  (u3::E13_22(gArr2[g2], gArr2[parent_g2]) && g1 == parent_g1);
-
-              if (cond1 || cond2 || cond3 || cond4)
-              {
-                int jj1 = gArr1[parent_g1].Lambdax2(),
-                    jj2 = gArr2[parent_g2].Lambdax2(),
-                    jj3 = gArr3[parent_g3].Lambdax2(),
-                    mm1 = gArr1[parent_g1].MLambdax2(),
-                    mm2 = gArr2[parent_g2].MLambdax2(),
-                    mm3 = gArr3[parent_g3].MLambdax2();
-
-                if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
+              if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
                     (jj1 + jj2) >= jj3)
-                {
-                  double factor;
-                  if (cond1)
-                    factor = gArr1[parent_g1].e31_12();
-                  else if (cond2)
-                    factor = gArr1[parent_g1].e31_22();
-                  else if (cond3)
-                    factor = gArr2[parent_g2].e31_12();
-                  else
-                    factor = gArr2[parent_g2].e31_22();
+              {
+                double factor = g1_n12n11p1.e31_12();
 
-                  double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+                double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
-                  for (int r = 0; r < rmax; r++)
+                for (int r = 0; r < rmax; r++)
                     E32E31[r](i, j) +=
-                        coeffs((parent_g1_hw * gArr2.size() + parent_g2_hw) *
-                                       gArr3.size() +
-                                   parent_g3_hw,
-                               r) *
+                        coeffs.get(g1_n12n11p1.n12(), g1_n12n11p1.n22(), 
+                                    gArr2[g2].n12(), gArr2[g2].n22(),
+                                    gArr3[parent_g3].n12(), 
+                                    gArr3[parent_g3].n22(), r) *
                         cgc * factor;
-                }
+              }
+            }
+
+            u3::gelfand g1_n22n11p1 = gArr1[g1];
+            g1_n22n11p1.n22(g1_n22n11p1.n22() + 1);
+            g1_n22n11p1.n11(g1_n22n11p1.n11() + 1);
+            if (g1_n22n11p1.check())
+            {
+              int jj1 = g1_n22n11p1.Lambdax2(),
+                  mm1 = g1_n22n11p1.MLambdax2(),
+                  jj2 = gArr2[g2].Lambdax2(),
+                  mm2 = gArr2[g2].MLambdax2();
+
+              if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
+                    (jj1 + jj2) >= jj3)
+              {
+                double factor = g1_n22n11p1.e31_22();
+
+                double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+
+                for (int r = 0; r < rmax; r++)
+                    E32E31[r](i, j) +=
+                        coeffs.get(g1_n22n11p1.n12(), g1_n22n11p1.n22(), 
+                                    gArr2[g2].n12(), gArr2[g2].n22(),
+                                    gArr3[parent_g3].n12(), 
+                                    gArr3[parent_g3].n22(), r) *
+                        cgc * factor;
+              }
+            }
+
+            // act on the second state
+            u3::gelfand g2_n12n11p1 = gArr2[g2];
+            g2_n12n11p1.n12(g2_n12n11p1.n12() + 1);
+            g2_n12n11p1.n11(g2_n12n11p1.n11() + 1);
+            if (g2_n12n11p1.check())
+            {
+              int jj2 = g2_n12n11p1.Lambdax2(),
+                  mm2 = g2_n12n11p1.MLambdax2(),
+                  jj1 = gArr1[g1].Lambdax2(),
+                  mm1 = gArr1[g1].MLambdax2();
+
+              if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
+                    (jj1 + jj2) >= jj3)
+              {
+                double factor = g2_n12n11p1.e31_12();
+
+                double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+
+                for (int r = 0; r < rmax; r++)
+                    E32E31[r](i, j) +=
+                        coeffs.get(gArr1[g1].n12(), gArr1[g1].n22(),
+                                    g2_n12n11p1.n12(), g2_n12n11p1.n22(), 
+                                    gArr3[parent_g3].n12(), 
+                                    gArr3[parent_g3].n22(), r) *
+                        cgc * factor;
+              }
+            }
+
+            u3::gelfand g2_n22n11p1 = gArr2[g2];
+            g2_n22n11p1.n22(g2_n22n11p1.n22() + 1);
+            g2_n22n11p1.n11(g2_n22n11p1.n11() + 1);
+            if (g2_n22n11p1.check())
+            {
+              int jj2 = g2_n22n11p1.Lambdax2(),
+                  mm2 = g2_n22n11p1.MLambdax2(),
+                  jj1 = gArr1[g1].Lambdax2(),
+                  mm1 = gArr1[g1].MLambdax2();
+
+              if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
+                    (jj1 + jj2) >= jj3)
+              {
+                double factor = g2_n22n11p1.e31_22();
+
+                double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+
+                for (int r = 0; r < rmax; r++)
+                    E32E31[r](i, j) +=
+                        coeffs.get(gArr1[g1].n12(), gArr1[g1].n22(),
+                                    g2_n22n11p1.n12(), g2_n22n11p1.n22(), 
+                                    gArr3[parent_g3].n12(), 
+                                    gArr3[parent_g3].n22(), r) *
+                        cgc * factor;
               }
             }
           }
         }
       }
 
+      //std::cout << b.rows() << "," << b.cols() << std::endl;
+
       Eigen::ColPivHouseholderQR<Eigen::MatrixXd> factorize;
       factorize.compute(b);
+
+      //Eigen::MatrixXd b_inverse = inverse(b);
 
       std::vector<Eigen::MatrixXd> coeffs_temp(rmax);
 
       for (int r = 0; r < rmax; r++)
         coeffs_temp[r] = factorize.solve(E32E31[r]);
+        //coeffs_temp[r] = b_inverse * E32E31[r];
 
       for (int i = 0; i < same_weight_gArr3.size(); i++)
       {
@@ -588,8 +866,14 @@ namespace u3
                 if (std::fabs(coeffs_temp[r](i, j)) < 1e-10)
                   coeffs_temp[r](i, j) = 0.0;
 
-                coeffs((i1_hw * gArr2.size() + i2_hw) * gArr3.size() + i3_hw,
-                       r) = coeffs_temp[r](i, j) / cgc;
+                assert(cgc != 0.0);
+
+                const auto& gA = gArr1[i1_hw];
+                const auto& gB = gArr2[i2_hw];
+                const auto& gC = gArr3[i3_hw];
+
+                coeffs.set(gA.n12(), gA.n22(), gB.n12(), gB.n22(), gC.n12(),
+                           gC.n22(), r, coeffs_temp[r](i, j) / cgc);
               }
             }
           }
@@ -601,19 +885,16 @@ namespace u3
   }
 
   // all coupling coefficients
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-  WigU3U2(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C,
-          const int& rhomax, std::vector<u3::gelfand>& gArrA,
-          std::vector<u3::gelfand>& gArrB, std::vector<u3::gelfand>& gArrC,
-          std::vector<std::tuple<int, int, int>>& tArr)
+  auto WigU3U2(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C,
+               int rhomax, std::vector<u3::gelfand>& gArrA,
+               std::vector<u3::gelfand>& gArrB, std::vector<u3::gelfand>& gArrC,
+               std::vector<std::tuple<int, int, int>>& tArr)
   {
+    WigU3U2_coeffs coeffs(u3A, u3B, u3C, rhomax);
+
     gArrA = u3::gelfandBasis(u3A);
     gArrB = u3::gelfandBasis(u3B);
     gArrC = u3::gelfandBasis(u3C);
-
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs(
-        gArrA.size() * gArrB.size() * gArrC.size(), rhomax);
-    coeffs.setZero();
 
     int w2max = u3C.n13() + u3C.n23();
     int w2min = u3C.n23() + u3C.n33();
@@ -626,18 +907,31 @@ namespace u3
 
     u3::CGC_SO3 cgcs;
 
-    u3::HighestWeightReducedCoeffs(gArrA, gArrB, gArrC, tArr, coeffs, cgcs);
+    u3::HighestWeightReducedCoeffs(gArrA, gArrB, gArrC, tArr, cgcs, coeffs);
+
+#ifdef U3LIB_TIME_LOG
+    auto t0 = std::chrono::high_resolution_clock::now();
+#endif
 
     for (int w2 = w2max - 1; w2 >= w2min; w2--)
     {
-      u3::LowerWeightReducedCoeffs(gArrA, gArrB, gArrC, tArr,
-                                   all_same_weight_gArrC[w2max - w2], coeffs,
-                                   cgcs);
+      u3::LowerWeightReducedCoeffs(gArrA, gArrB, gArrC, rhomax, tArr,
+                                   all_same_weight_gArrC[w2max - w2], cgcs,
+                                   coeffs);
     }
+
+#ifdef U3LIB_TIME_LOG
+      auto t1 = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> duration = t1 - t0;
+      std::cerr << "LowerWeightReducedCoeffs total time: " << duration.count() << " [s]" << std::endl;
+#endif
 
     u3C.normalize();
     for (int i = 0; i < gArrC.size(); i++)
       gArrC[i].normalize();
+
+    // once bases are normalized, coeffs needs to be as well:
+    coeffs.normalize();
 
     return coeffs;
   }
@@ -645,3 +939,66 @@ namespace u3
 } // namespace u3
 
 #endif
+
+
+/*
+    // Initialize max values
+    int maxFirst = indices.back().first;
+    int maxSecond = std::numeric_limits<int>::min();
+
+    // Iterate through the vector to find the maximum
+    for (const auto& p : indices)
+      maxSecond = std::max(maxSecond, p.second); // Update maxSecond
+
+    for (int i = 0; i < maxFirst; i++)
+    {
+      for (int j = 0; j < maxSecond; j++)
+      {
+        for (int k = 0; k < indices.size(); k++)
+        {
+          int g1 = indices[k].first, g2 = indices[k].second;
+
+          // E23 and E12 act on the first state
+          if ((u3::E23_12(gArr1[g1], gArr1[i]) && g2 == j) ||
+              (u3::E23_22(gArr1[g1], gArr1[i]) && g2 == j) ||
+              (u3::E12(gArr1[g1], gArr1[i]) && g2 == j))
+            new_indices.emplace_back(i, g2);
+
+          // E23 and E12 act on the second state
+          else if ((u3::E23_12(gArr2[g2], gArr2[j]) && g1 == i) ||
+                   (u3::E23_22(gArr2[g2], gArr2[j]) && g1 == i) ||
+                   (u3::E12(gArr2[g2], gArr2[j]) && g1 == i))
+            new_indices.emplace_back(g1, j);
+        }
+      }
+    }
+*/
+
+
+/*
+      // loop over states that may be parent
+      for (int j = 0; j < same_weight_gArr3.back(); j++)
+      {
+        // loop over daughter states
+        for (int i = 0; i < same_weight_gArr3.size(); i++)
+        {
+          if (u3::E23_12(gArr3[same_weight_gArr3[i]], gArr3[j]) ||
+              u3::E23_22(gArr3[same_weight_gArr3[i]], gArr3[j]))
+          {
+            std::pair p(0, j);
+            auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
+            if (it == actOnParent.end())
+              actOnParent.push_back(p);
+          }
+
+          else if (u3::E13_12(gArr3[same_weight_gArr3[i]], gArr3[j]) ||
+                   u3::E13_22(gArr3[same_weight_gArr3[i]], gArr3[j]))
+          {
+            std::pair p(1, j);
+            auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
+            if (it == actOnParent.end())
+              actOnParent.push_back(p);
+          }
+        }
+      }
+*/
