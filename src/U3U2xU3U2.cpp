@@ -64,7 +64,7 @@ int main()
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();
 
-  //coeffs.normalize();
+  coeffs.normalize();
 
   for (int i = 0; i < tArr.size(); i++)
   { 
