@@ -106,7 +106,7 @@ namespace u3
 
       assert(rec.first_row + k1 < coeffs_.rows());
 
-      return rec.first_row + k1;
+      return rec.first_row + (k1 - rec.kmin);
     }
 
   public:
@@ -165,9 +165,6 @@ namespace u3
             }
         }
 
-      // std::cout << "Matrix size: " << row << " x " << rhomax << std::endl;
-      // std::cout << "Records size: " << records_.size() << std::endl;
-
       coeffs_.resize(row, rhomax);
       coeffs_.setZero();
     }
@@ -190,6 +187,7 @@ namespace u3
              int rho, double value)
     {
       auto I = row(n12a, n22a, n12b, n22b, n12c, n22c);
+
       coeffs_(I, rho) = value;
     }
 
@@ -205,6 +203,7 @@ namespace u3
                  T&& values)
     {
       auto I = row(n12a, n22a, n12b, n22b, n12c, n22c);
+
       coeffs_.row(I) = std::forward<T>(values);
     }
 
@@ -424,8 +423,6 @@ namespace u3
 
           coeffs.set_row(gA.n12(), gA.n22(), gB.n12(), gB.n22(), gC.n12(),
                          gC.n22(), nullspace.row(i) / cgc);
-          std::cout << coeffs.get_row(gA.n12(), gA.n22(), gB.n12(), gB.n22(),
-                                   gC.n12(), gC.n22()) << std::endl;
         }
       }
     }
@@ -864,11 +861,7 @@ namespace u3
 
                 coeffs.set(gA.n12(), gA.n22(), gB.n12(), gB.n22(), gC.n12(),
                            gC.n22(), r, coeffs_temp[r](i, j) / cgc);
-
-                std::cout << coeffs.get(gA.n12(), gA.n22(), gB.n12(), gB.n22(),
-                                   gC.n12(), gC.n22(), r) << " ";
               }
-              std::cout  << std::endl;
             }
           }
         }
@@ -913,6 +906,9 @@ namespace u3
     u3C.normalize();
     for (int i = 0; i < gArrC.size(); i++)
       gArrC[i].normalize();
+
+    // once bases are normalized, coeffs needs to be as well:
+    coeffs.normalize();
 
     return coeffs;
   }

@@ -64,8 +64,6 @@ int main()
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();
 
-  coeffs.normalize();
-
   for (int i = 0; i < tArr.size(); i++)
   { 
     int i1 = std::get<0>(tArr[i]), i2 = std::get<1>(tArr[i]),
@@ -75,7 +73,6 @@ int main()
     const auto& gB = gArrB[i2];
     const auto& gC = gArrC[i3];
 
-    
     std::cout << "< " << gA.n13() << "," << gA.n23() << ",0;"
               << gA.n12() << "," << gA.n22() << " ; "
               << gB.n13() << "," << gB.n23() << ",0;"
