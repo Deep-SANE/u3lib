@@ -17,6 +17,10 @@
 
 #include <Eigen/Dense>
 
+#ifdef U3LIB_SPARSE_MAT
+#include <Eigen/Sparse>
+#endif
+
 #include "cgc_so3/CGC_SO3.h"
 #include "decomposition.h"
 #include "U3basis.h"
@@ -240,7 +244,7 @@ namespace u3
   // build the matrix representating a system of linear equations resulting from
   // the action two generators E23 and E12 that annihiliate the highest weight
   // state
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
+  auto
   E23E12(const std::vector<u3::gelfand>& gArr1,
          const std::vector<u3::gelfand>& gArr2,
          std::vector<std::pair<int, int>>& indices)
@@ -327,7 +331,12 @@ namespace u3
     //}
 
     int row_num = new_indices.size();
+
+#ifdef U3LIB_SPARSE_MAT
+    Eigen::SparseMatrix<double, Eigen::RowMajor> mat(row_num, col_num);
+#else
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> mat(row_num, col_num);
+#endif
 
     for (int i = 0; i < row_num; i++)
     {
@@ -337,22 +346,50 @@ namespace u3
         int g1 = indices[j].first, g2 = indices[j].second;
         // action of E23
         if (u3::E23_12(gArr1[g1], gArr1[new_g1]) && new_g2 == g2)
+#ifdef U3LIB_SPARSE_MAT
+          mat.insert(i, j) = gArr1[g1].e23_12();
+#else
           mat(i, j) = gArr1[g1].e23_12();
+#endif
         else if (u3::E23_22(gArr1[g1], gArr1[new_g1]) && new_g2 == g2)
+#ifdef U3LIB_SPARSE_MAT
+          mat.insert(i, j) = gArr1[g1].e23_22();
+#else
           mat(i, j) = gArr1[g1].e23_22();
+#endif
         else if (new_g1 == g1 && u3::E23_12(gArr2[g2], gArr2[new_g2]))
+#ifdef U3LIB_SPARSE_MAT
+          mat.insert(i, j) = gArr2[g2].e23_12();
+#else
           mat(i, j) = gArr2[g2].e23_12();
+#endif
         else if (new_g1 == g1 && u3::E23_22(gArr2[g2], gArr2[new_g2]))
+#ifdef U3LIB_SPARSE_MAT
+          mat.insert(i, j) = gArr2[g2].e23_22();
+#else
           mat(i, j) = gArr2[g2].e23_22();
+#endif
 
         // action of E12
         else if (u3::E12(gArr1[g1], gArr1[new_g1]) && new_g2 == g2)
+#ifdef U3LIB_SPARSE_MAT
+          mat.insert(i, j) = gArr1[g1].e12();
+#else
           mat(i, j) = gArr1[g1].e12();
+#endif
         else if (new_g1 == g1 && u3::E12(gArr2[g2], gArr2[new_g2]))
+#ifdef U3LIB_SPARSE_MAT
+          mat.insert(i, j) = gArr2[g2].e12();
+#else
           mat(i, j) = gArr2[g2].e12();
+#endif
 
         else
+#ifdef U3LIB_SPARSE_MAT
+          ;
+#else
           mat(i, j) = 0.0;
+#endif
       }
     }
 
@@ -386,8 +423,7 @@ namespace u3
     std::vector<std::pair<int, int>> indices =
         expand_to_uncoupled(gArr3[0], gArr1, gArr2);
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> mat =
-        E23E12(gArr1, gArr2, indices);
+    auto mat = E23E12(gArr1, gArr2, indices);
 
 #ifdef U3LIB_TIME_LOG
       auto t0 = std::chrono::high_resolution_clock::now();
