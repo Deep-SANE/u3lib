@@ -111,6 +111,9 @@ namespace u3
 
       assert(k1 == k2);
 
+      assert(k1 >= rec.kmin);
+      assert(k1 <= rec.kmax);
+
       assert(rec.first_row + k1 < coeffs_.rows());
 
       return rec.first_row + (k1 - rec.kmin);
