@@ -505,7 +505,6 @@ namespace u3
                                 int rhomax, std::vector<int>& same_weight_gArr3,
                                 u3::CGC_SO3& cgcs, WigU3U2_coeffs& coeffs)
   {
-
     for (int i = 0; i < same_weight_gArr3.size(); i++)
     {
       same_weight_gArr3[i] += gArr3[same_weight_gArr3[i]].n11() -
@@ -884,6 +883,8 @@ namespace u3
         coeffs_temp[r] = factorize.solve(E32E31[r]);
       // coeffs_temp[r] = b_inverse * E32E31[r];
 
+      Eigen::RowVectorXd coeffs_row(rmax); // define here to avoid allocation
+
       for (int i = 0; i < same_weight_gArr3.size(); i++)
       {
         for (int j = 0; j < uncoupled_same_weight_gArr3.size(); j++)
@@ -922,8 +923,10 @@ namespace u3
 
                 assert(cgc != 0.0);
 
-                coeffs.set(acc, r, coeffs_temp[r](i, j) / cgc);
+                coeffs_row(r) = coeffs_temp[r](i, j) / cgc;
               }
+
+              coeffs.set_row(acc, coeffs_row);
             }
           }
         }
