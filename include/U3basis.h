@@ -129,7 +129,7 @@ namespace u3
   }
 
   // find all physical states associated with an irrep
-  std::vector<u3::physicalvector> physicalBasis(u3::irrep& u3)
+  std::vector<u3::physicalvector> physicalBasis(const u3::irrep& u3)
   {
     std::vector<u3::physicalvector> basis;
     int l;
