@@ -51,41 +51,40 @@ int main()
 
   std::vector<u3::gelfand> gArrA, gArrB, gArrC;
 
-  std::vector<std::tuple<int, int, int>> tArr;
-
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
 
-  auto coeffs = u3::WigU3U2(
-      u3a, u3b, u3cs[index], rhomaxs[index], gArrA, gArrB, gArrC, tArr);
+  auto coeffs =
+      u3::WigU3U2(u3a, u3b, u3cs[index], rhomaxs[index], gArrA, gArrB, gArrC);
   // after this, u3cs[index] is normalized, all gelfand states in gArrC are also
   // normalized
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();
 
-  for (int i = 0; i < tArr.size(); i++)
-  { 
-    int i1 = std::get<0>(tArr[i]), i2 = std::get<1>(tArr[i]),
-        i3 = std::get<2>(tArr[i]);
+  const auto& u3c = u3cs[index];
 
-    const auto& gA = gArrA[i1];
-    const auto& gB = gArrB[i2];
-    const auto& gC = gArrC[i3];
+  for (int n12a = u3a.n13(); n12a >= u3a.n23(); n12a--)
+    for (int n22a = u3a.n23(); n22a >= u3a.n33(); n22a--)
+      for (int n12b = u3b.n13(); n12b >= u3b.n23(); n12b--)
+        for (int n22b = u3b.n23(); n22b >= u3b.n33(); n22b--)
+          for (int n12c = u3c.n13(); n12c >= u3c.n23(); n12c--)
+            for (int n22c = u3c.n23(); n22c >= u3c.n33(); n22c--)
+            {
+              auto acc = coeffs.access(n12a, n22a, n12b, n22b, n12c, n22c);
+              
+              if (acc.allowed == false)
+                continue;
 
-    std::cout << "< " << gA.n13() << "," << gA.n23() << ",0;"
-              << gA.n12() << "," << gA.n22() << " ; "
-              << gB.n13() << "," << gB.n23() << ",0;"
-              << gB.n12() << "," << gB.n22() << " || "
-              << gC.n13() << "," << gC.n23() << ",0;"
-              << gC.n12() << "," << gC.n22() << " >" << "\t"
-              << coeffs.get_row(gA.n12(), gA.n22(), gB.n12(), gB.n22(), gC.n12(), gC.n22()) 
-              << std::endl;
-    
-  }
+              std::cout << "< " << u3a.n13() << "," << u3a.n23() << ",0;"
+                        << n12a << "," << n22a << " ; " << u3b.n13() << ","
+                        << u3b.n23() << ",0;" << n12b << "," << n22b << " || "
+                        << u3c.n13() << "," << u3c.n23() << ",0;" << n12c << ","
+                        << n22c << " >" << "\t" << coeffs.get_row(acc)
+                        << std::endl;
+            }
  
   std::cout << "Reduced coefficients count: " << coeffs.size() << std::endl;
-  std::cout << "tArr size: " << tArr.size() << std::endl;
 
   // Calculate the duration
   std::chrono::duration<double> duration = t1 - t0;
