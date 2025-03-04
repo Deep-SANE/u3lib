@@ -2,6 +2,7 @@
 #define U3LIB_U3SO3_to_U3U2U1_H
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <iostream>
 #include <vector>
@@ -14,27 +15,6 @@
 
 namespace u3
 {
-
-  /*------------------------------------------------------
-  The gelfand (canonical) basis states for each M >= 0 can be expressed by two
-  parameters q,t
-  |  n13,n23,0 \
-  |  M+2*q-t,t  >
-  |     M+q    /
-  where
-  0 <= M <= n13
-  0 <= t <= n23
-  max(t,round((t-L+n23)/2)) <= q <= Int((n13-L+t)/2)
-  */
-
-  // Definition of IntM(x) funtion
-  int IntM(double x)
-  {
-    if ((x - std::floor(x)) == 0.0)
-      return (int)std::floor(x);
-    else
-      return (int)std::floor(x) + 1;
-  }
 
   // construction of the canonical basis: the canonical basis vectors will be
   // stored in an array
@@ -119,27 +99,97 @@ namespace u3
     return projector;
   }
 
-  // get the transformation
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> 
+    lowerM(int kappa_max, int L, int M, std::vector<u3::gelfand>& gArr,
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& transformation,
+           std::vector<int>& canoBasis, std::vector<int>& canoBasis_new)
+  {
+    // normalize coefficient
+    double n = std::sqrt(2.0 / ((L - M) * (L + M + 1.0)));
+
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> 
+        transformation_new(canoBasis_new.size(), kappa_max);
+    transformation_new.setZero();
+
+    // basis states are obtained by acting with two generators E31 and E23
+    for (int i = 0; i < canoBasis_new.size(); i++)
+    {
+      for (int j = 0; j < canoBasis.size(); j++)
+      {
+        if (u3::E13_12(gArr[canoBasis_new[i]],
+                       gArr[canoBasis[j]]))
+        {
+          for (int k = 0; k < kappa_max; k++)
+            transformation_new(i, k) +=
+                n * transformation(j, k) *
+                gArr[canoBasis[j]].e31_12();
+        }
+        else if (u3::E13_22(gArr[canoBasis_new[i]],
+                        gArr[canoBasis[j]]))
+        {
+          for (int k = 0; k < kappa_max; k++)
+            transformation_new(i, k) +=
+                n * transformation(j, k) *
+                gArr[canoBasis[j]].e31_22();
+        }
+        else if (u3::E23_12(gArr[canoBasis[j]],
+                        gArr[canoBasis_new[i]]))
+        {
+          for (int k = 0; k < kappa_max; k++)
+            transformation_new(i, k) +=
+                n * transformation(j, k) *
+                gArr[canoBasis[j]].e23_12();
+        }
+        else if (u3::E23_22(gArr[canoBasis[j]],
+                        gArr[canoBasis_new[i]]))
+        {
+          for (int k = 0; k < kappa_max; k++)
+            transformation_new(i, k) +=
+                n * transformation(j, k) *
+                gArr[canoBasis[j]].e23_22();
+        }
+      }
+
+      for (int k = 0; k < kappa_max; k++)
+        if (std::fabs(transformation_new(i,k)) < 1e-10)
+          transformation_new(i,k) = 0.0;
+    }
+    return transformation_new;
+  }
+
+  // get the transformation for M <= L
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-  phys_to_cano(u3::physicalvector& physvec, std::vector<int>& indices,
+  phys_to_cano(u3::physicalvector& physvec, int M, std::vector<int>& canoBasis,
                std::vector<u3::gelfand>& gArr)
   {
-    indices = u3::expand_to_gelfand(physvec.L, gArr);
+    canoBasis = u3::expand_to_gelfand(physvec.L, gArr);
 
     // Building the projection matrix
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Lproj =
-        u3::Lprojection(physvec, gArr, indices);
+        u3::Lprojection(physvec, gArr, canoBasis);
     // and solving its null space
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> nullSpace =
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> transformation =
         null_space(Lproj);
-    // after solving the nullspace, the dimension of the nullspace is the
-    // multiplicity of L, and the multiplicity within the physical basis state
-    // labeling is modified
 
-    // return the multipplicity
-    physvec.kappa = nullSpace.cols();
+    // ensure the nullspace is solved correctly
+    assert(physvec.kappa == transformation.cols());
 
-    return nullSpace;
+    if (M < physvec.L)
+    {
+      for (int m = physvec.L - 1; m >= M; m--)
+      {
+        // store new expansion
+        std::vector<int> canoBasis_new = u3::expand_to_gelfand(m, gArr);
+
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> 
+            transformation_new = lowerM(physvec.kappa, physvec.L, m, gArr, 
+                                  transformation, canoBasis, canoBasis_new);
+
+        transformation = transformation_new;
+        canoBasis = canoBasis_new;
+      }
+    }
+    return transformation;
   }
 
 } // namespace u3

@@ -33,16 +33,20 @@ int main()
   int index;
   std::cout << "Please enter the index of the state that you are interested: ";
   std::cin >> index;
+ 
+  int M;
+  std::cout << "Please enter projection M <= L: ";
+  std::cin >> M;
 
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
 
   // store Gelfand states associated with the interested physical state
-  std::vector<int> indices;
+  std::vector<int> canoBasis;
 
-  // get the transformation for the highest weight state M = L
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> nullspace =
-      u3::phys_to_cano(pArr[index], indices, gArr);
+  // get the transformation 
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> transformation =
+      u3::phys_to_cano(pArr[index], M, canoBasis, gArr);
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();
@@ -51,8 +55,8 @@ int main()
       << "The Gelfand states and the expansion coefficients for kappa = 1,...,"
       << pArr[index].kappa << " are:" << std::endl;
 
-  for (int i = 0; i < indices.size(); i++)
-    std::cout << "|" << gArr[indices[i]] << "> \t" << nullspace.row(i)
+  for (int i = 0; i < canoBasis.size(); i++) 
+    std::cout << "|" << gArr[canoBasis[i]] << "> \t" << transformation.row(i)
               << std::endl;
 
   // Calculate the duration
@@ -65,81 +69,7 @@ int main()
   // Print error
   // std::cout << "Error: " << error(Lproj,nullspace) << std::endl;
 
-  /*  uncomment if you want to obtain the transformation
-  // for lower weight state M = L-1, L-2, ..., -L
-  // remember that gamma = L - M = 0,1,...,2L
-
-  // store transformation, each column corresponds to one kappa
-  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>
-      allCanoCoeffs(2 * pArr[index].L + 1);
-  // store expansion
-  std::vector<std::vector<int>> allCanoBasis(2 * pArr[index].L + 1);
-
-  allCanoCoeffs[0] = nullspace;
-  allCanoBasis[0] = indices;
-
-  for (int gamma = 1; gamma <= 2 * pArr[index].L; gamma++)
-  {
-
-    // store new expansion
-    allCanoBasis[gamma] = u3::expand_to_gelfand(pArr[index].L - gamma, gArr);
-
-    // normalize coefficient
-    double n = std::sqrt(2.0 / (gamma * (2 * pArr[index].L - gamma + 1.0)));
-
-    allCanoCoeffs[gamma] =
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>(
-            allCanoBasis[gamma].size(), pArr[index].kappa);
-    allCanoCoeffs[gamma].setZero();
-
-    // basis states are obtained by acting with two generators E31 and E23
-    for (int m = 0; m < allCanoBasis[gamma].size(); m++)
-    {
-      for (int j = 0; j < allCanoBasis[gamma - 1].size(); j++)
-      {
-        if (u3::E13_12(gArr[allCanoBasis[gamma][m]],
-                       gArr[allCanoBasis[gamma - 1][j]]))
-        {
-          for (int k = 0; k < pArr[index].kappa; k++)
-            allCanoCoeffs[gamma](m, k) +=
-                n * allCanoCoeffs[gamma - 1](j, k) *
-                gArr[allCanoBasis[gamma - 1][j]].e31_12();
-        }
-        else if (u3::E13_22(gArr[allCanoBasis[gamma][m]],
-                            gArr[allCanoBasis[gamma - 1][j]]))
-        {
-          for (int k = 0; k < pArr[index].kappa; k++)
-            allCanoCoeffs[gamma](m, k) +=
-                n * allCanoCoeffs[gamma - 1](j, k) *
-                gArr[allCanoBasis[gamma - 1][j]].e31_22();
-        }
-        else if (u3::E23_12(gArr[allCanoBasis[gamma - 1][j]],
-                            gArr[allCanoBasis[gamma][m]]))
-        {
-          for (int k = 0; k < pArr[index].kappa; k++)
-            allCanoCoeffs[gamma](m, k) +=
-                n * allCanoCoeffs[gamma - 1](j, k) *
-                gArr[allCanoBasis[gamma - 1][j]].e23_12();
-        }
-        else if (u3::E23_22(gArr[allCanoBasis[gamma - 1][j]],
-                            gArr[allCanoBasis[gamma][m]]))
-        {
-          for (int k = 0; k < pArr[index].kappa; k++)
-            allCanoCoeffs[gamma](m, k) +=
-                n * allCanoCoeffs[gamma - 1](j, k) *
-                gArr[allCanoBasis[gamma - 1][j]].e23_22();
-        }
-      }
-    }
-
-    std::cout << "The Gelfand states and the expansion coefficients for M = "
-              << pArr[index].L - gamma << ", kappa = 1,...,"
-              << pArr[index].kappa << " are:" << std::endl;
-
-    for (int i = 0; i < allCanoBasis[gamma].size(); i++)
-      std::cout << "|" << gArr[allCanoBasis[gamma][i]] << "> \t"
-                << allCanoCoeffs[gamma].row(i) << std::endl;
-  }
-  */
+  
+   
   return 0;
 }
