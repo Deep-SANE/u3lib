@@ -21,13 +21,10 @@ namespace u3
   WigU3SO3_specific(int& rhomax, u3::physicalvector& pA,
           u3::physicalvector& pB, u3::physicalvector& pC)
   {
-
-    // find all the reduced canonical coupling coefficients
-    std::vector<u3::gelfand> gArrA, gArrB, gArrC;
-
-    auto canoCoeffs =
-      u3::WigU3U2(pA.toprow, pB.toprow, pC.toprow, rhomax, gArrA, gArrB, gArrC);
-    // note that u3C and all gelfand states are already normalized here
+    // build Gelfand basis
+    std::vector<u3::gelfand>  gArrA = u3::gelfandBasis(pA.toprow),
+                              gArrB = u3::gelfandBasis(pB.toprow),
+                              gArrC = u3::gelfandBasis(pC.toprow);
 
     // find transformation for the first state
     int mA = pC.L - pB.L;
@@ -44,6 +41,12 @@ namespace u3
     std::vector<int> canoBasisC;
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> 
       transformationC = u3::phys_to_cano(pC, pC.L, canoBasisC, gArrC);
+
+    // find all the reduced canonical coupling coefficients
+    int w2min = gArrC[canoBasisC.back()].n12() + gArrC[canoBasisC.back()].n22();
+    auto canoCoeffs =
+      u3::WigU3U2(pA.toprow, pB.toprow, pC.toprow, rhomax, w2min, gArrA, gArrB, gArrC);
+    // note that u3C and all gelfand states are already normalized here
 
     u3::CGC_SO3 cgcs;
     double cgc1 = cgcs.compute(2*pA.L, 2*pB.L, 2*pC.L, 2*mA, 2*pB.L, 2*pC.L);

@@ -17,7 +17,7 @@ int main()
   std::cout << "Please enter lambda1, mu1: ";
   std::cin >> lam1 >> mu1;
 
-  std::cout << "Please enter lambda2, mu2: ";
+  std::cout << "Please enter lambda2, mu2: "; 
   std::cin >> lam2 >> mu2;
 
   u3::irrep u3a(lam1, mu1), u3b(lam2, mu2);
