@@ -34,7 +34,7 @@ int main()
     std::cout << "Your irrep is normalized to " << u3b << std::endl;
   }
 
-  auto [u3cs, rhomaxs] = u3::decomposition(u3a, u3b);
+  auto [u3cs, rhomaxs] = u3::decomposition(u3a, u3b);  
 
   std::cout << "The normalized coupled irreps are: " << std::endl;
   for (int i = 0; i < u3cs.size(); i++)
@@ -82,7 +82,7 @@ int main()
                         << u3c.n13() << "," << u3c.n23() << ",0;" << n12c << ","
                         << n22c << " >" << "\t" << coeffs.get_row(acc)
                         << std::endl;
-            }
+            } 
  
   std::cout << "Reduced coefficients count: " << coeffs.size() << std::endl;
 
