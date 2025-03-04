@@ -958,17 +958,14 @@ namespace u3
 
   // all coupling coefficients
   auto WigU3U2(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C,
-               int rhomax, std::vector<u3::gelfand>& gArrA,
+               int rhomax, int w2min, std::vector<u3::gelfand>& gArrA,
                std::vector<u3::gelfand>& gArrB, std::vector<u3::gelfand>& gArrC)
   {
     WigU3U2_coeffs coeffs(u3A, u3B, u3C, rhomax);
 
-    gArrA = u3::gelfandBasis(u3A);
-    gArrB = u3::gelfandBasis(u3B);
-    gArrC = u3::gelfandBasis(u3C);
-
     int w2max = u3C.n13() + u3C.n23();
-    int w2min = u3C.n23() + u3C.n33();
+    if (w2min == -1) // calculate all
+      w2min = u3C.n23() + u3C.n33();
 
     std::vector<std::vector<int>> all_same_weight_gArrC(w2max - w2min + 1);
     for (int i = 0; i < gArrC.size(); i++)

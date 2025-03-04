@@ -15,7 +15,7 @@ int main()
 {
 
   int n13a, n23a, n33a;
-  std::cout << "Please enter the first irrep [n13a,n23a,n33a]: ";
+  std::cout << "Enter the first irrep [n13a,n23a,n33a]: ";
   std::cin >> n13a >> n23a >> n33a;
   u3::irrep u3a(n13a, n23a, n33a);
   if (n33a != 0)
@@ -25,7 +25,7 @@ int main()
   }
 
   int n13b, n23b, n33b;
-  std::cout << "Please enter the second irrep [n13b,n23b,n33b]: ";
+  std::cout << "Enter the second irrep [n13b,n23b,n33b]: ";
   std::cin >> n13b >> n23b >> n33b;
   u3::irrep u3b(n13b, n23b, n33b);
   if (n33b != 0)
@@ -45,17 +45,18 @@ int main()
   }
 
   int index;
-  std::cout
-      << "Please enter the index of the coupled irrep you are interested: ";
+  std::cout << "Enter the index of the coupled irrep you are interested: ";
   std::cin >> index;
-
-  std::vector<u3::gelfand> gArrA, gArrB, gArrC;
 
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
 
+  std::vector<u3::gelfand>  gArrA = u3::gelfandBasis(u3a),
+                            gArrB = u3::gelfandBasis(u3b),
+                            gArrC = u3::gelfandBasis(u3cs[index]);
+
   auto coeffs =
-      u3::WigU3U2(u3a, u3b, u3cs[index], rhomaxs[index], gArrA, gArrB, gArrC);
+      u3::WigU3U2(u3a, u3b, u3cs[index], rhomaxs[index], -1, gArrA, gArrB, gArrC);
   // after this, u3cs[index] is normalized, all gelfand states in gArrC are also
   // normalized
 
