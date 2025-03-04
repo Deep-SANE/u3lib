@@ -77,13 +77,9 @@ int main()
                 gArrC[k].Lambdax2() &&
             gArrC[k].Lambdax2() <= (gArrA[i].Lambdax2() + gArrB[j].Lambdax2()))
         {
-          double cgc = u3::CGC_SO3(gArrA[i].Lambdax2(), gArrB[j].Lambdax2(),
-                                   gArrC[k].Lambdax2(), gArrA[i].MLambdax2(),
-                                   gArrB[j].MLambdax2(), gArrC[k].MLambdax2());
           std::cout << "< " << gArrA[i] << " ; " << gArrB[j] << " | "
                     << gArrC[k] << " >" << "\t"
-                    << coeffs.row((i * gArrB.size() + j) * gArrC.size() + k) /
-                           cgc
+                    << coeffs.row((i * gArrB.size() + j) * gArrC.size() + k)
                     << std::endl;
         }
       }
