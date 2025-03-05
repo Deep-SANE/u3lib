@@ -106,6 +106,7 @@ namespace u3
   {
     // normalize coefficient
     double n = std::sqrt(2.0 / ((L - M) * (L + M + 1.0)));
+    // input M is for the new state
 
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> 
         transformation_new(canoBasis_new.size(), kappa_max);
@@ -151,7 +152,7 @@ namespace u3
       }
 
       for (int k = 0; k < kappa_max; k++)
-        if (std::fabs(transformation_new(i,k)) < 1e-10)
+        if (std::fabs(transformation_new(i,k)) < 1e-15)
           transformation_new(i,k) = 0.0;
     }
     return transformation_new;
