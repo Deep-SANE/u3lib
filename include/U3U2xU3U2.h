@@ -968,7 +968,7 @@ namespace u3
 
               for (int r = 0; r < rhomax; r++)
               {
-                if (std::fabs(coeffs_temp[r](i, j)) < 1e-10)
+                if (std::fabs(coeffs_temp[r](i, j)) < 1e-15)
                   coeffs_temp[r](i, j) = 0.0;
 
                 assert(cgc != 0.0);
