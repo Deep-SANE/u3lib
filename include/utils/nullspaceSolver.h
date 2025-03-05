@@ -133,7 +133,7 @@ null_space(Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& mat)
 }
 
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-null_space(const Eigen::SparseMatrix<double, Eigen::RowMajor>& mat)
+null_space(const Eigen::SparseMatrix<double>& mat)
 {
   if (mat.size() <= 1)
   {

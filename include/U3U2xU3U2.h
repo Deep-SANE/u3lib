@@ -354,7 +354,7 @@ namespace u3
     int row_num = new_indices.size();
 
 #ifdef U3LIB_SPARSE_MAT
-    Eigen::SparseMatrix<double, Eigen::RowMajor> mat(row_num, col_num);
+    std::vector<Eigen::Triplet<double>> ija;
 #else
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> mat(row_num, col_num);
 #endif
@@ -368,25 +368,25 @@ namespace u3
         // action of E23
         if (u3::E23_12(gArr1[g1], gArr1[new_g1]) && new_g2 == g2)
 #ifdef U3LIB_SPARSE_MAT
-          mat.insert(i, j) = gArr1[g1].e23_12();
+          ija.emplace_back(i, j, gArr1[g1].e23_12());
 #else
           mat(i, j) = gArr1[g1].e23_12();
 #endif
         else if (u3::E23_22(gArr1[g1], gArr1[new_g1]) && new_g2 == g2)
 #ifdef U3LIB_SPARSE_MAT
-          mat.insert(i, j) = gArr1[g1].e23_22();
+          ija.emplace_back(i, j, gArr1[g1].e23_22());
 #else
           mat(i, j) = gArr1[g1].e23_22();
 #endif
         else if (new_g1 == g1 && u3::E23_12(gArr2[g2], gArr2[new_g2]))
 #ifdef U3LIB_SPARSE_MAT
-          mat.insert(i, j) = gArr2[g2].e23_12();
+          ija.emplace_back(i, j, gArr2[g2].e23_12());
 #else
           mat(i, j) = gArr2[g2].e23_12();
 #endif
         else if (new_g1 == g1 && u3::E23_22(gArr2[g2], gArr2[new_g2]))
 #ifdef U3LIB_SPARSE_MAT
-          mat.insert(i, j) = gArr2[g2].e23_22();
+          ija.emplace_back(i, j, gArr2[g2].e23_22());
 #else
           mat(i, j) = gArr2[g2].e23_22();
 #endif
@@ -394,13 +394,13 @@ namespace u3
         // action of E12
         else if (u3::E12(gArr1[g1], gArr1[new_g1]) && new_g2 == g2)
 #ifdef U3LIB_SPARSE_MAT
-          mat.insert(i, j) = gArr1[g1].e12();
+          ija.emplace_back(i, j, gArr1[g1].e12());
 #else
           mat(i, j) = gArr1[g1].e12();
 #endif
         else if (new_g1 == g1 && u3::E12(gArr2[g2], gArr2[new_g2]))
 #ifdef U3LIB_SPARSE_MAT
-          mat.insert(i, j) = gArr2[g2].e12();
+          ija.emplace_back(i, j, gArr2[g2].e12());
 #else
           mat(i, j) = gArr2[g2].e12();
 #endif
@@ -413,6 +413,11 @@ namespace u3
 #endif
       }
     }
+
+#ifdef U3LIB_SPARSE_MAT
+    Eigen::SparseMatrix<double> mat(row_num, col_num);
+    mat.setFromTriplets(ija.begin(), ija.end());
+#endif
 
     return mat;
   }
