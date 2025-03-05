@@ -449,8 +449,33 @@ namespace u3
     auto t0 = std::chrono::high_resolution_clock::now();
 #endif
 
+#ifdef U3LIB_NULLSPACE_LOG
+    std::cout << "mat: " << mat.rows() << " x " << mat.cols() << std::endl;
+    std::cout << "\telements: " << mat.rows() * mat.cols() << std::endl;
+
+#ifdef U3LIB_SPARSE_MAT
+    long nnz = mat.nonZeros();
+#else
+    long nnz = 0;
+    for (auto x : mat.reshaped())
+      if (x != 0.0)
+        nnz++;
+#endif
+    std::cout << "\tnonzero elements: " << nnz << std::endl;
+#endif
+
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> nullspace =
         null_space(mat);
+
+#ifdef U3LIB_NULLSPACE_LOG
+    std::cout << "nullspace: " << nullspace.rows() << " x " << nullspace.cols() << std::endl;
+    std::cout << "\telements: " << nullspace.rows() * nullspace.cols() << std::endl;
+    nnz = 0;
+    for (auto x : nullspace.reshaped())
+      if (x != 0.0)
+        nnz++;
+    std::cout << "\tnonzero elements: " << nnz << std::endl;
+#endif
 
 #ifdef U3LIB_TIME_LOG
     auto t1 = std::chrono::high_resolution_clock::now();
