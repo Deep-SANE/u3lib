@@ -15,6 +15,11 @@
 #include <iostream>
 #endif
 
+#ifdef U3LIB_SAVE_MAT
+#include <fstream>
+#include <iomanip>
+#endif
+
 #include <Eigen/Dense>
 
 #ifdef U3LIB_SPARSE_MAT
@@ -417,6 +422,21 @@ namespace u3
 #ifdef U3LIB_SPARSE_MAT
     Eigen::SparseMatrix<double> mat(row_num, col_num);
     mat.setFromTriplets(ija.begin(), ija.end());
+
+#ifdef U3LIB_SAVE_MAT
+    {
+      std::ofstream fmat("mat.ija");
+
+      fmat << row_num << std::endl;
+      fmat << col_num << std::endl;
+      fmat << ija.size() << std::endl;
+
+      for (const auto& elem : ija)
+        fmat << elem.row() << " " << elem.col() << " " << std::setprecision(12)
+             << elem.value() << std::endl;
+    }
+#endif
+
 #endif
 
     return mat;
