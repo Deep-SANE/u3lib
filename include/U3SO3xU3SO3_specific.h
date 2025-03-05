@@ -61,7 +61,6 @@ namespace u3
         for (int iC = 0; iC < canoBasisC.size(); iC++)
         {
           Eigen::MatrixXd wigU3U2U1;
-          double cgc2;
 
           int n12A = gArrA[canoBasisA[iA]].n12(), n22A = gArrA[canoBasisA[iA]].n22(),
               n12B = gArrB[canoBasisB[iB]].n12(), n22B = gArrB[canoBasisB[iB]].n22(),
@@ -77,10 +76,7 @@ namespace u3
             continue;
 
           else
-          {
-            wigU3U2U1 = canoCoeffs.get_row(acc);
-            cgc2 = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
-          }
+            wigU3U2U1 = canoCoeffs.get_row(acc) * cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
           for (int r = 0; r < rhomax; r++)
             for (int k1 = 0; k1 < pA.kappa; k1++)
@@ -88,7 +84,7 @@ namespace u3
                 for (int k3 = 0; k3 < pC.kappa; k3++)
                   coeffs((k1 * pB.kappa + k2) * pC.kappa + k3, r) +=
                     transformationA(iA,k1) * transformationB(iB,k2) *
-                    transformationC(iC,k3) * wigU3U2U1(0,r) * cgc2;
+                    transformationC(iC,k3) * wigU3U2U1(0,r);
         }
       }
     }

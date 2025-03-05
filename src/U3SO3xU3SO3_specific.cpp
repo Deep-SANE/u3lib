@@ -1,3 +1,4 @@
+#include <cassert>
 #include <chrono>
 #include <fstream>
 #include <iomanip>
@@ -47,11 +48,14 @@ int main()
   {
     u3::physicalvector pA(u3a,l1), pB(u3b,l2), pC(u3cs[index],l3);
 
+    assert(pA.kappa != 0);
+    assert(pB.kappa != 0);
+    assert(pC.kappa != 0);
+
     // Start time measurement
     auto t0 = std::chrono::high_resolution_clock::now();
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs =
-                  u3::WigU3SO3_specific(rhomaxs[index], pA, pB, pC);
+    Eigen::MatrixXd coeffs = u3::WigU3SO3_specific(rhomaxs[index], pA, pB, pC);
 
     // End time measurement
     auto t1 = std::chrono::high_resolution_clock::now();
