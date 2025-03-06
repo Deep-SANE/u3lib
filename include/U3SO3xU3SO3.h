@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <tuple>
 #include <vector>
 
 #include <Eigen/Dense>
@@ -20,7 +21,8 @@ namespace u3
   std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>
   WigU3SO3(int& rhomax, std::vector<u3::physicalvector>& pArrA,
             std::vector<u3::physicalvector>& pArrB,
-            std::vector<u3::physicalvector>& pArrC)
+            std::vector<u3::physicalvector>& pArrC,
+            std::vector<std::tuple<int,int,int>>& tArr)
   {
 
     // build Gelfand basis
@@ -52,25 +54,28 @@ namespace u3
 
     u3::CGC_SO3 cgcs;
 
-    std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> coeffs(pArrA.size() * pArrB.size() * pArrC.size());
+    std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> coeffs;
 
-    for (int i = 0; i < pArrA.size(); i++)
+    int i, j, k;
+    for (i = 0; i < pArrA.size(); i++)
     {
       std::vector<std::vector<int>> canoBasisA(1);
       std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> transformationA(1);
       transformationA[0] = u3::phys_to_cano(pArrA[i], pArrA[i].L, canoBasisA[0], gArrA);
 
-      for (int j = 0; j < pArrB.size(); j++)
+      for (j = 0; j < pArrB.size(); j++)
       {
-        for (int k = 0; k < pArrC.size(); k++)
+        for (k = 0; k < pArrC.size(); k++)
         {
-          Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> 
-            coeffs_temp(pArrA[i].kappa * pArrB[j].kappa * pArrC[k].kappa, rhomax);
-          coeffs_temp.setZero();
-
           if (std::fabs(pArrA[i].L - pArrB[j].L) <= pArrC[k].L && 
               (pArrA[i].L + pArrB[j].L) >= pArrC[k].L)
           {
+            tArr.emplace_back(i,j,k);
+
+            Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> 
+              coeffs_temp(pArrA[i].kappa * pArrB[j].kappa * pArrC[k].kappa, rhomax);
+            coeffs_temp.setZero();
+
             int mA = pArrC[k].L - pArrB[j].L;
             while ((pArrA[i].L - mA + 1) > canoBasisA.size())
             {
@@ -129,8 +134,8 @@ namespace u3
               }
             }
             coeffs_temp /= cgc1;
+            coeffs.push_back(coeffs_temp);
           }
-          coeffs[(i * pArrB.size() + j) * pArrC.size() + k] = coeffs_temp;
         }
       }
     }

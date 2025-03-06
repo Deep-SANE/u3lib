@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include <decomposition.h>
@@ -131,37 +132,37 @@ int main()
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
 
+  std::vector<std::tuple<int,int,int>> tArr;
+
   std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> 
-    coeffs = WigU3SO3(rhomax, pArrA, pArrB, pArrC);
+    coeffs = WigU3SO3(rhomax, pArrA, pArrB, pArrC, tArr);
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();
 
-  // Print out
-  for (int i = 0; i < pArrA.size(); i++)
+  // Print out 
+  for (int t = 0; t < tArr.size(); t++)
   {
-    for (int j = 0; j < pArrB.size(); j++)
-    {
-      for (int k = 0; k < pArrC.size(); k++)
-      {
-        std::cout << "Reduced coupling coefficients: < (" << lam1 << "," << mu1 << ") k1 " << pArrA[i].L 
+    int i = std::get<0>(tArr[t]),
+        j = std::get<1>(tArr[t]),
+        k = std::get<2>(tArr[t]); 
+ 
+    std::cout << "Reduced coupling coefficients: < (" << lam1 << "," << mu1 << ") k1 " << pArrA[i].L 
               << " ; (" << lam2 << "," << mu2 << ") k2 " << pArrB[j].L << " || "
               << "(" << u3C.lam() << "," << u3C.mu() << ") k3 " << pArrC[k].L << " > "
               << "for rho = 1 ... " << rhomax << std::endl;
-        std::cout << "k1\tk2\tk3" << std::endl;
+    std::cout << "k1\tk2\tk3" << std::endl;
 
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> 
-          coeffs_temp = coeffs[(i * pArrB.size() + j) * pArrC.size() + k]; 
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> 
+      coeffs_temp = coeffs[t]; 
 
-        for (int k1 = 0; k1 < pArrA[i].kappa; k1++)
-          for (int k2 = 0; k2 < pArrB[j].kappa; k2++)
-            for (int k3 = 0; k3 < pArrC[k].kappa; k3++)
-              std::cout << "" << k1+1 << "\t" << k2+1 << "\t" << k3+1 << "\t" 
-                  << coeffs_temp.row((k1 * pArrB[j].kappa + k2) * pArrC[k].kappa + k3) << std::endl;
-      }
-    }
+    for (int k1 = 0; k1 < pArrA[i].kappa; k1++)
+      for (int k2 = 0; k2 < pArrB[j].kappa; k2++)
+        for (int k3 = 0; k3 < pArrC[k].kappa; k3++)
+          std::cout << "" << k1+1 << "\t" << k2+1 << "\t" << k3+1 << "\t" 
+              << coeffs_temp.row((k1 * pArrB[j].kappa + k2) * pArrC[k].kappa + k3) << std::endl;
   }
-  
+ 
 
   // Calculate the duration
   std::chrono::duration<double> duration = t1 - t0;
