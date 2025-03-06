@@ -76,8 +76,13 @@ namespace u3
               coeffs_temp(pArrA[i].kappa * pArrB[j].kappa * pArrC[k].kappa, rhomax);
             coeffs_temp.setZero();
 
-            int mA = pArrC[k].L - pArrB[j].L;
-            while ((pArrA[i].L - mA + 1) > canoBasisA.size())
+            int mA = pArrC[k].L - pArrB[j].L, mA_abs;
+            if (mA >= 0)
+              mA_abs = mA;
+            else
+              mA_abs = -mA;
+
+            while ((pArrA[i].L - mA_abs + 1) > canoBasisA.size())
             {
               int m_new = pArrA[i].L - canoBasisA.size();
               std::vector<int> canoBasisA_new = u3::expand_to_gelfand(m_new, gArrA);
@@ -93,7 +98,7 @@ namespace u3
             double cgc1 = cgcs.compute(2*pArrA[i].L, 2*pArrB[j].L, 
                    2*pArrC[k].L, 2*mA, 2*pArrB[j].L, 2*pArrC[k].L);
 
-            for (int iA = 0; iA < canoBasisA[pArrA[i].L - mA].size(); iA++)
+            for (int iA = 0; iA < canoBasisA[pArrA[i].L - mA_abs].size(); iA++)
             {
               for (int iB = 0; iB < canoBasisB[j].size(); iB++)
               {
@@ -101,8 +106,8 @@ namespace u3
                 {
                   Eigen::MatrixXd wigU3U2U1;
 
-                  int n12A = gArrA[canoBasisA[pArrA[i].L - mA][iA]].n12(), 
-                      n22A = gArrA[canoBasisA[pArrA[i].L - mA][iA]].n22(),
+                  int n12A = gArrA[canoBasisA[pArrA[i].L - mA_abs][iA]].n12(), 
+                      n22A = gArrA[canoBasisA[pArrA[i].L - mA_abs][iA]].n22(),
                       n12B = gArrB[canoBasisB[j][iB]].n12(), 
                       n22B = gArrB[canoBasisB[j][iB]].n22(),
                       n12C = gArrC[canoBasisC[k][iC]].n12(), 
@@ -110,12 +115,14 @@ namespace u3
 
                   auto acc = canoCoeffs.access(n12A, n22A, n12B, n22B, n12C, n22C);
 
-                  int jj1 = gArrA[canoBasisA[pArrA[i].L - mA][iA]].Lambdax2(), 
-                      mm1 = gArrA[canoBasisA[pArrA[i].L - mA][iA]].MLambdax2(),
+                  int jj1 = gArrA[canoBasisA[pArrA[i].L - mA_abs][iA]].Lambdax2(), 
+                      mm1 = gArrA[canoBasisA[pArrA[i].L - mA_abs][iA]].MLambdax2(),
                       jj2 = gArrB[canoBasisB[j][iB]].Lambdax2(), 
                       mm2 = gArrB[canoBasisB[j][iB]].MLambdax2(),
                       jj3 = gArrC[canoBasisC[k][iC]].Lambdax2(), 
                       mm3 = gArrC[canoBasisC[k][iC]].MLambdax2();
+                  if (mA < 0)
+                    mm1 *= -1;
 
                   if ((acc.allowed == false) || ((mm1 + mm2) != mm3))
                     continue;
@@ -123,13 +130,23 @@ namespace u3
                   else
                     wigU3U2U1 = canoCoeffs.get_row(acc) * cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
+                  int phase = ((pArrA[i].toprow.lam() + pArrA[i].L + 
+                    gArrA[canoBasisA[pArrA[i].L - mA_abs][iA]].n22())%2 == 0) ? 1 : -1;
+
                   for (int r = 0; r < rhomax; r++)
                     for (int k1 = 0; k1 < pArrA[i].kappa; k1++)
                       for (int k2 = 0; k2 < pArrB[j].kappa; k2++)
                         for (int k3 = 0; k3 < pArrC[k].kappa; k3++)
-                          coeffs_temp((k1 * pArrB[j].kappa + k2) * pArrC[k].kappa + k3, r) +=
-                            transformationA[pArrA[i].L - mA](iA,k1) * transformationB[j](iB,k2) *
-                            transformationC[k](iC,k3) * wigU3U2U1(0,r);
+                        {
+                          if (mA >= 0)
+                            coeffs_temp((k1 * pArrB[j].kappa + k2) * pArrC[k].kappa + k3, r) +=
+                              transformationA[pArrA[i].L - mA_abs](iA,k1) * transformationB[j](iB,k2) *
+                              transformationC[k](iC,k3) * wigU3U2U1(0,r);
+                          else
+                            coeffs_temp((k1 * pArrB[j].kappa + k2) * pArrC[k].kappa + k3, r) +=
+                              phase * transformationA[pArrA[i].L - mA_abs](iA,k1) * transformationB[j](iB,k2) *
+                              transformationC[k](iC,k3) * wigU3U2U1(0,r);
+                        }
                 }
               }
             }

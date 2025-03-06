@@ -152,7 +152,7 @@ namespace u3
       }
 
       for (int k = 0; k < kappa_max; k++)
-        if (std::fabs(transformation_new(i,k)) < 1e-15)
+        if (std::fabs(transformation_new(i,k)) < 1e-12)
           transformation_new(i,k) = 0.0;
     }
     return transformation_new;
@@ -175,21 +175,30 @@ namespace u3
     // ensure the nullspace is solved correctly
     assert(physvec.kappa == transformation.cols());
 
-    if (M < physvec.L)
+    for (int m = physvec.L - 1; m >= std::fabs(M); m--)
     {
-      for (int m = physvec.L - 1; m >= M; m--)
-      {
-        // store new expansion
-        std::vector<int> canoBasis_new = u3::expand_to_gelfand(m, gArr);
+      // store new expansion
+      std::vector<int> canoBasis_new = u3::expand_to_gelfand(m, gArr);
 
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> 
-            transformation_new = lowerM(physvec.kappa, physvec.L, m, gArr, 
-                                  transformation, canoBasis, canoBasis_new);
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> 
+          transformation_new = lowerM(physvec.kappa, physvec.L, m, gArr, 
+                                transformation, canoBasis, canoBasis_new);
 
-        transformation = transformation_new;
-        canoBasis = canoBasis_new;
-      }
+      transformation = transformation_new;
+      canoBasis = canoBasis_new;
     }
+
+    if (M < 0)
+    {
+      canoBasis = u3::expand_to_gelfand(M, gArr);
+
+      for (int j = 0; j < canoBasis.size(); j++) 
+        {
+          int phase = ((physvec.toprow.lam() + physvec.L + gArr[canoBasis[j]].n22())%2 == 0) ? 1 : -1;
+          transformation.row(j) *= phase;
+        }
+    }
+
     return transformation;
   }
 

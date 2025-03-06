@@ -120,6 +120,12 @@ int main()
     }
   }
 
+  if (pArrA.empty() || pArrB.empty() || pArrC.empty())
+  {
+    std::cout << "Your angular momentum values are valid" << std::endl;
+    return 1;
+  }
+
 /*
   for (int i = 0; i < pArrA.size(); i++)
     std::cout << pArrA[i] << std::endl;
@@ -172,4 +178,4 @@ int main()
             << duration.count() / 60.0 << " minutes" << std::endl;
 
   return 0;
-}
+}  
