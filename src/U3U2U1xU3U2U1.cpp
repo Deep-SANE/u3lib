@@ -8,7 +8,6 @@
 
 #include <decomposition.h>
 #include <U3basis.h>
-#include <U3SO3xU3SO3.h>
 #include <U3U2U1xU3U2U1.h>
 
 int main()
