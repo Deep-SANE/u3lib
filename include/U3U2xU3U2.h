@@ -26,8 +26,8 @@
 #include <Eigen/Sparse>
 #endif
 
-#include "cgc_so3/CGC_SO3.h"
 #include "decomposition.h"
+#include "so3Coeffs/SO3_CGC.h"
 #include "U3basis.h"
 #include "utils/inverseSolver.h"
 #include "utils/nullspaceSolver.h"
@@ -463,7 +463,7 @@ namespace u3
   void HighestWeightReducedCoeffs(const std::vector<u3::gelfand>& gArr1,
                                   const std::vector<u3::gelfand>& gArr2,
                                   const std::vector<u3::gelfand>& gArr3,
-                                  u3::CGC_SO3& cgcs, WigU3U2_coeffs& coeffs)
+                                  u3::SO3_CGC& cgcs, WigU3U2_coeffs& coeffs)
   {
     std::vector<std::pair<int, int>> indices =
         expand_to_uncoupled(gArr3[0], gArr1, gArr2);
@@ -493,8 +493,10 @@ namespace u3
         null_space(mat);
 
 #ifdef U3LIB_NULLSPACE_LOG
-    std::cout << "nullspace: " << nullspace.rows() << " x " << nullspace.cols() << std::endl;
-    std::cout << "\telements: " << nullspace.rows() * nullspace.cols() << std::endl;
+    std::cout << "nullspace: " << nullspace.rows() << " x " << nullspace.cols()
+              << std::endl;
+    std::cout << "\telements: " << nullspace.rows() * nullspace.cols()
+              << std::endl;
     nnz = 0;
     for (auto x : nullspace.reshaped())
       if (x != 0.0)
@@ -551,18 +553,16 @@ namespace u3
   // \   n12a  n22a       n12b  n22b   ||   n12c n22c    /
 
   // build with E32
-  void E32(int parent_g3, int& row, int rhomax, 
-           std::vector<int>& same_weight_gArr3, 
+  void E32(int parent_g3, int& row, int rhomax,
+           std::vector<int>& same_weight_gArr3,
            std::vector<std::pair<int, int>>& uncoupled_same_weight_gArr3,
            const std::vector<u3::gelfand>& gArr1,
            const std::vector<u3::gelfand>& gArr2,
-           const std::vector<u3::gelfand>& gArr3,
-           Eigen::MatrixXd& b, u3::CGC_SO3& cgcs, 
-           std::vector<Eigen::MatrixXd>& E32E31, 
+           const std::vector<u3::gelfand>& gArr3, Eigen::MatrixXd& b,
+           u3::SO3_CGC& cgcs, std::vector<Eigen::MatrixXd>& E32E31,
            WigU3U2_coeffs& coeffs)
   {
-    int jj3 = gArr3[parent_g3].Lambdax2(),
-        mm3 = gArr3[parent_g3].MLambdax2();
+    int jj3 = gArr3[parent_g3].Lambdax2(), mm3 = gArr3[parent_g3].MLambdax2();
 
     // loop over daughter states
     for (int j = 0; j < same_weight_gArr3.size(); j++)
@@ -595,10 +595,10 @@ namespace u3
 
           for (int r = 0; r < rhomax; r++)
           {
-            auto acc = coeffs.access(g1_n12p1.n12(), g1_n12p1.n22(),
-                                     gArr2[g2].n12(), gArr2[g2].n22(),
-                                     gArr3[parent_g3].n12(),
-                                     gArr3[parent_g3].n22());
+            auto acc =
+                coeffs.access(g1_n12p1.n12(), g1_n12p1.n22(), gArr2[g2].n12(),
+                              gArr2[g2].n22(), gArr3[parent_g3].n12(),
+                              gArr3[parent_g3].n22());
 
             E32E31[r](row, j) += coeffs.get(acc, r) * cgc * factor;
           }
@@ -621,10 +621,10 @@ namespace u3
 
           for (int r = 0; r < rhomax; r++)
           {
-            auto acc = coeffs.access(g1_n22p1.n12(), g1_n22p1.n22(),
-                                     gArr2[g2].n12(), gArr2[g2].n22(),
-                                     gArr3[parent_g3].n12(),
-                                     gArr3[parent_g3].n22());
+            auto acc =
+                coeffs.access(g1_n22p1.n12(), g1_n22p1.n22(), gArr2[g2].n12(),
+                              gArr2[g2].n22(), gArr3[parent_g3].n12(),
+                              gArr3[parent_g3].n22());
 
             E32E31[r](row, j) += coeffs.get(acc, r) * cgc * factor;
           }
@@ -648,10 +648,9 @@ namespace u3
 
           for (int r = 0; r < rhomax; r++)
           {
-            auto acc = coeffs.access(gArr1[g1].n12(), gArr1[g1].n22(),
-                                     g2_n12p1.n12(), g2_n12p1.n22(),
-                                     gArr3[parent_g3].n12(),
-                                     gArr3[parent_g3].n22());
+            auto acc = coeffs.access(
+                gArr1[g1].n12(), gArr1[g1].n22(), g2_n12p1.n12(),
+                g2_n12p1.n22(), gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
 
             E32E31[r](row, j) += coeffs.get(acc, r) * cgc * factor;
           }
@@ -674,10 +673,9 @@ namespace u3
 
           for (int r = 0; r < rhomax; r++)
           {
-            auto acc = coeffs.access(gArr1[g1].n12(), gArr1[g1].n22(),
-                                     g2_n22p1.n12(), g2_n22p1.n22(),
-                                     gArr3[parent_g3].n12(),
-                                     gArr3[parent_g3].n22());
+            auto acc = coeffs.access(
+                gArr1[g1].n12(), gArr1[g1].n22(), g2_n22p1.n12(),
+                g2_n22p1.n22(), gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
 
             E32E31[r](row, j) += coeffs.get(acc, r) * cgc * factor;
           }
@@ -689,18 +687,16 @@ namespace u3
   }
 
   // build with E31
-  void E31(int parent_g3, int& row, int rhomax, 
-           std::vector<int>& same_weight_gArr3, 
+  void E31(int parent_g3, int& row, int rhomax,
+           std::vector<int>& same_weight_gArr3,
            std::vector<std::pair<int, int>>& uncoupled_same_weight_gArr3,
            const std::vector<u3::gelfand>& gArr1,
            const std::vector<u3::gelfand>& gArr2,
-           const std::vector<u3::gelfand>& gArr3,
-           Eigen::MatrixXd& b, u3::CGC_SO3& cgcs, 
-           std::vector<Eigen::MatrixXd>& E32E31, 
+           const std::vector<u3::gelfand>& gArr3, Eigen::MatrixXd& b,
+           u3::SO3_CGC& cgcs, std::vector<Eigen::MatrixXd>& E32E31,
            WigU3U2_coeffs& coeffs)
   {
-    int jj3 = gArr3[parent_g3].Lambdax2(),
-        mm3 = gArr3[parent_g3].MLambdax2();
+    int jj3 = gArr3[parent_g3].Lambdax2(), mm3 = gArr3[parent_g3].MLambdax2();
 
     // loop over daughter states
     for (int j = 0; j < same_weight_gArr3.size(); j++)
@@ -734,10 +730,10 @@ namespace u3
 
           for (int r = 0; r < rhomax; r++)
           {
-            auto acc = coeffs.access(g1_n12n11p1.n12(), g1_n12n11p1.n22(),
-                                     gArr2[g2].n12(), gArr2[g2].n22(),
-                                     gArr3[parent_g3].n12(),
-                                     gArr3[parent_g3].n22());
+            auto acc =
+                coeffs.access(g1_n12n11p1.n12(), g1_n12n11p1.n22(),
+                              gArr2[g2].n12(), gArr2[g2].n22(),
+                              gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
 
             E32E31[r](row, j) += coeffs.get(acc, r) * cgc * factor;
           }
@@ -761,10 +757,10 @@ namespace u3
 
           for (int r = 0; r < rhomax; r++)
           {
-            auto acc = coeffs.access(g1_n22n11p1.n12(), g1_n22n11p1.n22(),
-                                     gArr2[g2].n12(), gArr2[g2].n22(),
-                                     gArr3[parent_g3].n12(),
-                                     gArr3[parent_g3].n22());
+            auto acc =
+                coeffs.access(g1_n22n11p1.n12(), g1_n22n11p1.n22(),
+                              gArr2[g2].n12(), gArr2[g2].n22(),
+                              gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
 
             E32E31[r](row, j) += coeffs.get(acc, r) * cgc * factor;
           }
@@ -789,10 +785,10 @@ namespace u3
 
           for (int r = 0; r < rhomax; r++)
           {
-            auto acc = coeffs.access(gArr1[g1].n12(), gArr1[g1].n22(),
-                                     g2_n12n11p1.n12(), g2_n12n11p1.n22(),
-                                     gArr3[parent_g3].n12(),
-                                     gArr3[parent_g3].n22());
+            auto acc =
+                coeffs.access(gArr1[g1].n12(), gArr1[g1].n22(),
+                              g2_n12n11p1.n12(), g2_n12n11p1.n22(),
+                              gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
 
             E32E31[r](row, j) += coeffs.get(acc, r) * cgc * factor;
           }
@@ -816,10 +812,10 @@ namespace u3
 
           for (int r = 0; r < rhomax; r++)
           {
-            auto acc = coeffs.access(gArr1[g1].n12(), gArr1[g1].n22(),
-                                     g2_n22n11p1.n12(), g2_n22n11p1.n22(),
-                                     gArr3[parent_g3].n12(),
-                                     gArr3[parent_g3].n22());
+            auto acc =
+                coeffs.access(gArr1[g1].n12(), gArr1[g1].n22(),
+                              g2_n22n11p1.n12(), g2_n22n11p1.n22(),
+                              gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
 
             E32E31[r](row, j) += coeffs.get(acc, r) * cgc * factor;
           }
@@ -834,7 +830,7 @@ namespace u3
                                 const std::vector<u3::gelfand>& gArr2,
                                 const std::vector<u3::gelfand>& gArr3,
                                 int rhomax, std::vector<int>& same_weight_gArr3,
-                                u3::CGC_SO3& cgcs, WigU3U2_coeffs& coeffs)
+                                u3::SO3_CGC& cgcs, WigU3U2_coeffs& coeffs)
   {
     for (int i = 0; i < same_weight_gArr3.size(); i++)
     {
@@ -1013,17 +1009,7 @@ namespace u3
   {
     WigU3U2_coeffs coeffs(u3A, u3B, u3C, rhomax);
 
-    int w2max = u3C.n13() + u3C.n23();
-    if (w2min == -1) // calculate all
-      w2min = u3C.n23() + u3C.n33();
-
-    std::vector<std::vector<int>> all_same_weight_gArrC(w2max - w2min + 1);
-    for (int i = 0; i < gArrC.size(); i++)
-      if (gArrC[i].n12() == gArrC[i].n11())
-        all_same_weight_gArrC[w2max - gArrC[i].n12() - gArrC[i].n22()]
-            .push_back(i);
-
-    u3::CGC_SO3 cgcs;
+    u3::SO3_CGC cgcs;
 
     u3::HighestWeightReducedCoeffs(gArrA, gArrB, gArrC, cgcs, coeffs);
 
@@ -1031,11 +1017,24 @@ namespace u3
     auto t0 = std::chrono::high_resolution_clock::now();
 #endif
 
-    for (int w2 = w2max - 1; w2 >= w2min; w2--)
+    int w2max = u3C.n13() + u3C.n23();
+    if (w2min < w2max)
     {
-      u3::LowerWeightReducedCoeffs(gArrA, gArrB, gArrC, rhomax,
-                                   all_same_weight_gArrC[w2max - w2], cgcs,
-                                   coeffs);
+      if (w2min == -1) // calculate all
+        w2min = u3C.n23() + u3C.n33();
+
+      std::vector<std::vector<int>> all_same_weight_gArrC(w2max - w2min + 1);
+      for (int i = 0; i < gArrC.size(); i++)
+        if (gArrC[i].n12() == gArrC[i].n11())
+          all_same_weight_gArrC[w2max - gArrC[i].n12() - gArrC[i].n22()]
+              .push_back(i);
+
+      for (int w2 = w2max - 1; w2 >= w2min; w2--)
+      {
+        u3::LowerWeightReducedCoeffs(gArrA, gArrB, gArrC, rhomax,
+                                     all_same_weight_gArrC[w2max - w2], cgcs,
+                                     coeffs);
+      }
     }
 
 #ifdef U3LIB_TIME_LOG

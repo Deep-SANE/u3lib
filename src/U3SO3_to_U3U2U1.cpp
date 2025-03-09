@@ -25,7 +25,7 @@ int main()
   std::cout << "The physical basis states are: " << std::endl;
   for (int i = 0; i < pArr.size(); i++)
   {
-    std::cout << "(" << i << "): |" << "(" << pArr[i].toprow.lam() << "," 
+    std::cout << "(" << i << "): |" << "(" << pArr[i].toprow.lam() << ","
               << pArr[i].toprow.mu() << "), kappa_max=" << pArr[i].kappa
               << ", L=" << pArr[i].L << ">" << std::endl;
   }
@@ -33,7 +33,7 @@ int main()
   int index;
   std::cout << "Please enter the index of the state that you are interested: ";
   std::cin >> index;
- 
+
   int M;
   std::cout << "Please enter projection M <= L: ";
   std::cin >> M;
@@ -44,7 +44,7 @@ int main()
   // store Gelfand states associated with the interested physical state
   std::vector<int> canoBasis;
 
-  // get the transformation 
+  // get the transformation
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> transformation =
       u3::phys_to_cano(pArr[index], M, canoBasis, gArr);
 
@@ -55,10 +55,10 @@ int main()
       << "The Gelfand states and the expansion coefficients for kappa = 1,...,"
       << pArr[index].kappa << " are:" << std::endl;
 
-  for (int i = 0; i < canoBasis.size(); i++) 
+  for (int i = 0; i < canoBasis.size(); i++)
     std::cout << "|" << gArr[canoBasis[i]] << "> \t" << transformation.row(i)
               << std::endl;
- 
+
   // Calculate the duration
   std::chrono::duration<double> duration = t1 - t0;
 
@@ -69,7 +69,5 @@ int main()
   // Print error
   // std::cout << "Error: " << error(Lproj,nullspace) << std::endl;
 
-  
-   
   return 0;
-}    
+}

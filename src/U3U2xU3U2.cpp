@@ -34,7 +34,7 @@ int main()
     std::cout << "Your irrep is normalized to " << u3b << std::endl;
   }
 
-  auto [u3cs, rhomaxs] = u3::decomposition(u3a, u3b);  
+  auto [u3cs, rhomaxs] = u3::decomposition(u3a, u3b);
 
   std::cout << "The normalized coupled irreps are: " << std::endl;
   for (int i = 0; i < u3cs.size(); i++)
@@ -51,12 +51,12 @@ int main()
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
 
-  std::vector<u3::gelfand>  gArrA = u3::gelfandBasis(u3a),
-                            gArrB = u3::gelfandBasis(u3b),
-                            gArrC = u3::gelfandBasis(u3cs[index]);
+  std::vector<u3::gelfand> gArrA = u3::gelfandBasis(u3a),
+                           gArrB = u3::gelfandBasis(u3b),
+                           gArrC = u3::gelfandBasis(u3cs[index]);
 
-  auto coeffs =
-      u3::WigU3U2(u3a, u3b, u3cs[index], rhomaxs[index], -1, gArrA, gArrB, gArrC);
+  auto coeffs = u3::WigU3U2(u3a, u3b, u3cs[index], rhomaxs[index], -1, gArrA,
+                            gArrB, gArrC);
   // after this, u3cs[index] is normalized, all gelfand states in gArrC are also
   // normalized
 
@@ -73,7 +73,7 @@ int main()
             for (int n22c = u3c.n23(); n22c >= u3c.n33(); n22c--)
             {
               auto acc = coeffs.access(n12a, n22a, n12b, n22b, n12c, n22c);
-              
+
               if (acc.allowed == false)
                 continue;
 
@@ -83,8 +83,8 @@ int main()
                         << u3c.n13() << "," << u3c.n23() << ",0;" << n12c << ","
                         << n22c << " >" << "\t" << coeffs.get_row(acc)
                         << std::endl;
-            } 
- 
+            }
+
   std::cout << "Reduced coefficients count: " << coeffs.size() << std::endl;
 
   // Calculate the duration

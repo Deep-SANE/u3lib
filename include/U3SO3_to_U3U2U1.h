@@ -99,17 +99,17 @@ namespace u3
     return projector;
   }
 
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> 
-    lowerM(int kappa_max, int L, int M, std::vector<u3::gelfand>& gArr,
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& transformation,
-           std::vector<int>& canoBasis, std::vector<int>& canoBasis_new)
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
+  lowerM(int kappa_max, int L, int M, std::vector<u3::gelfand>& gArr,
+         Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& transformation,
+         std::vector<int>& canoBasis, std::vector<int>& canoBasis_new)
   {
     // normalize coefficient
     double n = std::sqrt(2.0 / ((L - M) * (L + M + 1.0)));
     // input M is for the new state
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> 
-        transformation_new(canoBasis_new.size(), kappa_max);
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> transformation_new(
+        canoBasis_new.size(), kappa_max);
     transformation_new.setZero();
 
     // basis states are obtained by acting with two generators E31 and E23
@@ -117,43 +117,27 @@ namespace u3
     {
       for (int j = 0; j < canoBasis.size(); j++)
       {
-        if (u3::E13_12(gArr[canoBasis_new[i]],
-                       gArr[canoBasis[j]]))
-        {
+        if (u3::E13_12(gArr[canoBasis_new[i]], gArr[canoBasis[j]]))
           for (int k = 0; k < kappa_max; k++)
             transformation_new(i, k) +=
-                n * transformation(j, k) *
-                gArr[canoBasis[j]].e31_12();
-        }
-        else if (u3::E13_22(gArr[canoBasis_new[i]],
-                        gArr[canoBasis[j]]))
-        {
+                n * transformation(j, k) * gArr[canoBasis[j]].e31_12();
+        else if (u3::E13_22(gArr[canoBasis_new[i]], gArr[canoBasis[j]]))
           for (int k = 0; k < kappa_max; k++)
             transformation_new(i, k) +=
-                n * transformation(j, k) *
-                gArr[canoBasis[j]].e31_22();
-        }
-        else if (u3::E23_12(gArr[canoBasis[j]],
-                        gArr[canoBasis_new[i]]))
-        {
+                n * transformation(j, k) * gArr[canoBasis[j]].e31_22();
+        else if (u3::E23_12(gArr[canoBasis[j]], gArr[canoBasis_new[i]]))
           for (int k = 0; k < kappa_max; k++)
             transformation_new(i, k) +=
-                n * transformation(j, k) *
-                gArr[canoBasis[j]].e23_12();
-        }
-        else if (u3::E23_22(gArr[canoBasis[j]],
-                        gArr[canoBasis_new[i]]))
-        {
+                n * transformation(j, k) * gArr[canoBasis[j]].e23_12();
+        else if (u3::E23_22(gArr[canoBasis[j]], gArr[canoBasis_new[i]]))
           for (int k = 0; k < kappa_max; k++)
             transformation_new(i, k) +=
-                n * transformation(j, k) *
-                gArr[canoBasis[j]].e23_22();
-        }
+                n * transformation(j, k) * gArr[canoBasis[j]].e23_22();
       }
 
       for (int k = 0; k < kappa_max; k++)
-        if (std::fabs(transformation_new(i,k)) < 1e-12)
-          transformation_new(i,k) = 0.0;
+        if (std::fabs(transformation_new(i, k)) < 1e-12)
+          transformation_new(i, k) = 0.0;
     }
     return transformation_new;
   }
@@ -180,9 +164,9 @@ namespace u3
       // store new expansion
       std::vector<int> canoBasis_new = u3::expand_to_gelfand(m, gArr);
 
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> 
-          transformation_new = lowerM(physvec.kappa, physvec.L, m, gArr, 
-                                transformation, canoBasis, canoBasis_new);
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> transformation_new =
+          lowerM(physvec.kappa, physvec.L, m, gArr, transformation, canoBasis,
+                 canoBasis_new);
 
       transformation = transformation_new;
       canoBasis = canoBasis_new;
@@ -192,11 +176,16 @@ namespace u3
     {
       canoBasis = u3::expand_to_gelfand(M, gArr);
 
-      for (int j = 0; j < canoBasis.size(); j++) 
-        {
-          int phase = ((physvec.toprow.lam() + physvec.L + gArr[canoBasis[j]].n22())%2 == 0) ? 1 : -1;
-          transformation.row(j) *= phase;
-        }
+      for (int j = 0; j < canoBasis.size(); j++)
+      {
+        int phase =
+            ((physvec.toprow.lam() + physvec.L + gArr[canoBasis[j]].n22()) %
+                 2 ==
+             0)
+                ? 1
+                : -1;
+        transformation.row(j) *= phase;
+      }
     }
 
     return transformation;

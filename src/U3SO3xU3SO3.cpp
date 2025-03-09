@@ -43,26 +43,28 @@ int main()
 
   // Input angular momentum
   int l1, l2, l3;
-  std::cout << "Please enter angular momentum values 0 <= l <= (lambda + mu), (enter -1 to stop, -2 to include all)" << std::endl;
+  std::cout << "Please enter angular momentum values 0 <= l <= (lambda + mu), "
+               "(enter -1 to stop, -2 to include all)"
+            << std::endl;
 
   std::cout << "l1: ";
-  while (true) 
+  while (true)
   {
     std::cin >> l1;
 
     // Stop condition
-    if (l1 == -1) 
+    if (l1 == -1)
       break;
 
     // Include all
-    if (l1 == -2) 
+    if (l1 == -2)
     {
       pArrA = u3::physicalBasis(u3A);
       break;
     }
 
     // Normal case: Add valid values to vector
-    if (l1 >= 0) 
+    if (l1 >= 0)
     {
       u3::physicalvector p(u3A, l1);
       if (p.kappa > 0)
@@ -71,23 +73,23 @@ int main()
   }
 
   std::cout << "l2: ";
-  while (true) 
+  while (true)
   {
     std::cin >> l2;
 
     // Stop condition
-    if (l2 == -1) 
+    if (l2 == -1)
       break;
 
     // Include all
-    if (l2 == -2) 
+    if (l2 == -2)
     {
       pArrB = u3::physicalBasis(u3B);
       break;
     }
 
     // Normal case: Add valid values to vector
-    if (l2 >= 0) 
+    if (l2 >= 0)
     {
       u3::physicalvector p(u3B, l2);
       if (p.kappa > 0)
@@ -96,23 +98,23 @@ int main()
   }
 
   std::cout << "l3: ";
-  while (true) 
+  while (true)
   {
     std::cin >> l3;
 
     // Stop condition
-    if (l3 == -1) 
+    if (l3 == -1)
       break;
 
     // Include all
-    if (l3== -2) 
+    if (l3 == -2)
     {
       pArrC = u3::physicalBasis(u3C);
       break;
     }
 
     // Normal case: Add valid values to vector
-    if (l3 >= 0) 
+    if (l3 >= 0)
     {
       u3::physicalvector p(u3C, l3);
       if (p.kappa > 0)
@@ -126,49 +128,51 @@ int main()
     return 1;
   }
 
-/*
-  for (int i = 0; i < pArrA.size(); i++)
-    std::cout << pArrA[i] << std::endl;
-  for (int i = 0; i < pArrB.size(); i++)
-    std::cout << pArrB[i] << std::endl;
-  for (int i = 0; i < pArrC.size(); i++)
-    std::cout << pArrC[i] << std::endl;
-*/
+  /*
+    for (int i = 0; i < pArrA.size(); i++)
+      std::cout << pArrA[i] << std::endl;
+    for (int i = 0; i < pArrB.size(); i++)
+      std::cout << pArrB[i] << std::endl;
+    for (int i = 0; i < pArrC.size(); i++)
+      std::cout << pArrC[i] << std::endl;
+  */
 
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
 
-  std::vector<std::tuple<int,int,int>> tArr;
+  std::vector<std::tuple<int, int, int>> tArr;
 
-  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> 
-    coeffs = WigU3SO3(rhomax, pArrA, pArrB, pArrC, tArr);
+  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> coeffs =
+      WigU3SO3(rhomax, pArrA, pArrB, pArrC, tArr);
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();
 
-  // Print out 
+  // Print out
   for (int t = 0; t < tArr.size(); t++)
   {
-    int i = std::get<0>(tArr[t]),
-        j = std::get<1>(tArr[t]),
-        k = std::get<2>(tArr[t]); 
- 
-    std::cout << "Reduced coupling coefficients: < (" << lam1 << "," << mu1 << ") k1 " << pArrA[i].L 
-              << " ; (" << lam2 << "," << mu2 << ") k2 " << pArrB[j].L << " || "
-              << "(" << u3C.lam() << "," << u3C.mu() << ") k3 " << pArrC[k].L << " > "
+    int i = std::get<0>(tArr[t]), j = std::get<1>(tArr[t]),
+        k = std::get<2>(tArr[t]);
+
+    std::cout << "Reduced coupling coefficients: < (" << lam1 << "," << mu1
+              << ") k1 " << pArrA[i].L << " ; (" << lam2 << "," << mu2
+              << ") k2 " << pArrB[j].L << " || "
+              << "(" << u3C.lam() << "," << u3C.mu() << ") k3 " << pArrC[k].L
+              << " > "
               << "for rho = 1 ... " << rhomax << std::endl;
     std::cout << "k1\tk2\tk3" << std::endl;
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> 
-      coeffs_temp = coeffs[t]; 
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs_temp =
+        coeffs[t];
 
     for (int k1 = 0; k1 < pArrA[i].kappa; k1++)
       for (int k2 = 0; k2 < pArrB[j].kappa; k2++)
         for (int k3 = 0; k3 < pArrC[k].kappa; k3++)
-          std::cout << "" << k1+1 << "\t" << k2+1 << "\t" << k3+1 << "\t" 
-              << coeffs_temp.row((k1 * pArrB[j].kappa + k2) * pArrC[k].kappa + k3) << std::endl;
+          std::cout << "" << k1 + 1 << "\t" << k2 + 1 << "\t" << k3 + 1 << "\t"
+                    << coeffs_temp.row(
+                           (k1 * pArrB[j].kappa + k2) * pArrC[k].kappa + k3)
+                    << std::endl;
   }
- 
 
   // Calculate the duration
   std::chrono::duration<double> duration = t1 - t0;
@@ -178,4 +182,4 @@ int main()
             << duration.count() / 60.0 << " minutes" << std::endl;
 
   return 0;
-}  
+}
