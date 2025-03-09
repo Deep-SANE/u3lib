@@ -1,5 +1,5 @@
-#ifndef U3LIB_CGC_SO3_H
-#define U3LIB_CGC_SO3_H
+#ifndef U3LIB_SO3_CGC_H
+#define U3LIB_SO3_CGC_H
 
 #include <cmath>
 
@@ -15,26 +15,26 @@ extern "C"
 
 namespace u3
 {
-  class CGC_SO3
+  class SO3_CGC
   {
 #ifdef U3LIB_TIME_LOG
     double time_ = 0.0;
 #endif
 
   public:
-    CGC_SO3()
+    SO3_CGC()
     {
       wig_table_init(2 * 100, 9);
       wig_temp_init(2 * 100);
     }
 
-    ~CGC_SO3()
+    ~SO3_CGC()
     {
       wig_temp_free();
       wig_table_free();
 
 #ifdef U3LIB_TIME_LOG
-      std::cerr << "CGC_SO3::compute time: " << time_ << " [s]" << std::endl;
+      std::cerr << "SO3_CGC::compute time: " << time_ << " [s]" << std::endl;
 #endif
     }
 

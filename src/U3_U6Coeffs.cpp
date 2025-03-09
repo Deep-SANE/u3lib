@@ -115,9 +115,20 @@ int main()
     // Start time measurement
     auto t0 = std::chrono::high_resolution_clock::now();
 
+    std::vector<u3::gelfand> gArrA = u3::gelfandBasis(u3a);
+    std::vector<u3::gelfand> gArrB = u3::gelfandBasis(u3b);
+    std::vector<u3::gelfand> gArrC = u3::gelfandBasis(u3c);
+    std::vector<u3::gelfand> gArrAB = u3::gelfandBasis(u3ab[i_ab]);
+    std::vector<u3::gelfand> gArrBC = u3::gelfandBasis(u3bc[i_bc]);
+    std::vector<u3::gelfand> gArrABC = u3::gelfandBasis(u3ab_c[i_ab_c]);
+
+    u3::SO3_CGC cgcs;
+    u3::SO3_Racah racahs;
+
     std::vector<double> coeffs = u3::U6(
-        u3a, u3b, u3ab_c[i_ab_c], u3c, u3ab[i_ab], rhomaxsab[i_ab],
-        rhomaxsab_c[i_ab_c], u3bc[i_bc], rhomaxsbc[i_bc], rhomaxsa_bc[i_a_bc]);
+        u3a, gArrA, u3b, gArrB, u3ab_c[i_ab_c], gArrABC, u3c, gArrC, u3ab[i_ab],
+        gArrAB, rhomaxsab[i_ab], rhomaxsab_c[i_ab_c], u3bc[i_bc], gArrBC,
+        rhomaxsbc[i_bc], rhomaxsa_bc[i_a_bc], cgcs, racahs);
 
     // End time measurement
     auto t1 = std::chrono::high_resolution_clock::now();

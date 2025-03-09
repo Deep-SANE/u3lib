@@ -8,191 +8,121 @@
 #include <Eigen/Dense>
 
 #include "decomposition.h"
+#include "so3Coeffs/SO3_CGC.h"
+#include "so3Coeffs/SO3_Racah.h"
+#include "U3_U6Z6Coeffs.h"
 #include "U3basis.h"
-#include "U3U2U1xU3U2U1.h"
 
 namespace u3
 {
 
   // input by users: u3a, u3b, u3c, u3d, u3ab, u3cd, u3ac, u3bd, u3abcd
-  std::vector<double> U9(u3::irrep& u3A, u3::irrep& u3B, u3::irrep& u3C,
-                         u3::irrep& u3D, u3::irrep& u3AB, u3::irrep& u3CD,
-                         u3::irrep& u3AC, u3::irrep& u3BD, u3::irrep& u3ABCD,
+  std::vector<double> U9(u3::irrep& u3A, std::vector<u3::gelfand>& gArrA,
+                         u3::irrep& u3B, std::vector<u3::gelfand>& gArrB,
+                         u3::irrep& u3C, std::vector<u3::gelfand>& gArrC,
+                         u3::irrep& u3D, std::vector<u3::gelfand>& gArrD,
+                         u3::irrep& u3AB, std::vector<u3::gelfand>& gArrAB,
+                         u3::irrep& u3CD, std::vector<u3::gelfand>& gArrCD,
+                         u3::irrep& u3AC, std::vector<u3::gelfand>& gArrAC,
+                         u3::irrep& u3BD, std::vector<u3::gelfand>& gArrBD,
+                         u3::irrep& u3ABCD, std::vector<u3::gelfand>& gArrABCD,
                          int rhoABmax, int rhoCDmax, int rhoAB_CDmax,
-                         int rhoACmax, int rhoBDmax, int rhoAC_BDmax)
+                         int rhoACmax, int rhoBDmax, int rhoAC_BDmax,
+                         u3::SO3_CGC& cgcs, u3::SO3_Racah& racahs)
   {
-    std::vector<u3::gelfand> gArrA = u3::gelfandBasis(u3A);
-    std::vector<u3::gelfand> gArrB = u3::gelfandBasis(u3B);
-    std::vector<u3::gelfand> gArrC = u3::gelfandBasis(u3C);
-    std::vector<u3::gelfand> gArrD = u3::gelfandBasis(u3D);
-    std::vector<u3::gelfand> gArrAB = u3::gelfandBasis(u3AB);
-    std::vector<u3::gelfand> gArrCD = u3::gelfandBasis(u3CD);
-    std::vector<u3::gelfand> gArrAC = u3::gelfandBasis(u3AC);
-    std::vector<u3::gelfand> gArrBD = u3::gelfandBasis(u3BD);
-    std::vector<u3::gelfand> gArrABCD = u3::gelfandBasis(u3ABCD);
-
-    // coupling <gA;gB|gAB> rhoAB
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffsAB(
-        gArrA.size() * gArrB.size() * gArrAB.size(), rhoABmax);
-    coeffsAB.setZero();
-
-    for (int w3 = u3AB.n33(); w3 <= u3AB.n13(); w3++)
-    {
-      for (int w1 = u3AB.n13(); w1 >= u3AB.n33(); w1--)
-        if (w3 == u3AB.n33() && w1 == u3AB.n13())
-          u3::HighestWeightCoeffs(gArrA, gArrB, gArrAB, coeffsAB);
-        else
-          u3::LowerWeightCoeffs(w3, w1, gArrA, gArrB, gArrAB, coeffsAB);
-    }
-
-    // coupling <gC;gD|gCD> rhoCD
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffsCD(
-        gArrC.size() * gArrD.size() * gArrCD.size(), rhoCDmax);
-    coeffsCD.setZero();
-
-    for (int w3 = u3CD.n33(); w3 <= u3CD.n13(); w3++)
-    {
-      for (int w1 = u3CD.n13(); w1 >= u3CD.n33(); w1--)
-        if (w3 == u3CD.n33() && w1 == u3CD.n13())
-          u3::HighestWeightCoeffs(gArrC, gArrD, gArrCD, coeffsCD);
-        else
-          u3::LowerWeightCoeffs(w3, w1, gArrC, gArrD, gArrCD, coeffsCD);
-    }
-
-    // coupling <gA;gC|gAC> rhoAC
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffsAC(
-        gArrA.size() * gArrC.size() * gArrAC.size(), rhoACmax);
-    coeffsAC.setZero();
-
-    for (int w3 = u3AC.n33(); w3 <= u3AC.n13(); w3++)
-    {
-      for (int w1 = u3AC.n13(); w1 >= u3AC.n33(); w1--)
-        if (w3 == u3AC.n33() && w1 == u3AC.n13())
-          u3::HighestWeightCoeffs(gArrA, gArrC, gArrAC, coeffsAC);
-        else
-          u3::LowerWeightCoeffs(w3, w1, gArrA, gArrC, gArrAC, coeffsAC);
-    }
-
-    // coupling <gB;gD|gBD> rhoBD
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffsBD(
-        gArrB.size() * gArrD.size() * gArrBD.size(), rhoBDmax);
-    coeffsBD.setZero();
-
-    for (int w3 = u3BD.n33(); w3 <= u3BD.n13(); w3++)
-    {
-      for (int w1 = u3BD.n13(); w1 >= u3BD.n33(); w1--)
-        if (w3 == u3BD.n33() && w1 == u3BD.n13())
-          u3::HighestWeightCoeffs(gArrB, gArrD, gArrBD, coeffsBD);
-        else
-          u3::LowerWeightCoeffs(w3, w1, gArrB, gArrD, gArrBD, coeffsBD);
-    }
-
-    // coupling <gAB;gCD|hwABCD> rhoAB_CD
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffsAB_CD(
-        gArrAB.size() * gArrCD.size() * gArrABCD.size(), rhoAB_CDmax);
-    coeffsAB_CD.setZero();
-    u3::HighestWeightCoeffs(gArrAB, gArrCD, gArrABCD, coeffsAB_CD);
-
-    // coupling <gAC;gBD|hwABCD> rhoAC_BD
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffsAC_BD(
-        gArrAC.size() * gArrBD.size() * gArrABCD.size(), rhoAC_BDmax);
-    coeffsAC_BD.setZero();
-    u3::HighestWeightCoeffs(gArrAC, gArrBD, gArrABCD, coeffsAC_BD);
-
     std::vector<double> U(rhoACmax * rhoBDmax * rhoAB_CDmax * rhoABmax *
-                          rhoCDmax * rhoAC_BDmax);
-    for (int i = 0; i < U.size(); i++)
-      U[i] = 0.0;
+                              rhoCDmax * rhoAC_BDmax,
+                          0.0);
 
-    for (int gA = 0; gA < gArrA.size(); gA++)
+    // couple u3AB and u3C
+    auto [u3AB_C, rhomaxsAB_C] = u3::decomposition(u3AB, u3C);
+
+    // couple u3AC and u3B
+    auto [u3AC_B, rhomaxsAC_B] = u3::decomposition(u3AC, u3B);
+
+    std::vector<u3::irrep> u3ABC;
+    std::vector<int> rhoAB_Cmax, rhoAC_Bmax;
+
+    for (int i = 0; i < u3AB_C.size(); i++)
     {
-      for (int gB = 0; gB < gArrB.size(); gB++)
+      for (int j = 0; j < u3AC_B.size(); j++)
       {
-        for (int gC = 0; gC < gArrC.size(); gC++)
+        if (u3AB_C[i].n13() == u3AC_B[j].n13() &&
+            u3AB_C[i].n23() == u3AC_B[j].n23() &&
+            u3AB_C[i].n33() == u3AC_B[j].n33())
         {
-          for (int gD = 0; gD < gArrD.size(); gD++)
+          u3ABC.push_back(u3AB_C[i]);
+          rhoAB_Cmax.push_back(rhomaxsAB_C[i]);
+          rhoAC_Bmax.push_back(rhomaxsAC_B[j]);
+          break;
+        }
+      }
+    }
+
+    for (int i = 0; i < u3ABC.size(); i++)
+    {
+      std::vector<u3::gelfand> gArrABC = u3::gelfandBasis(u3ABC[i]);
+
+      auto [u3ABC_D, rhomaxsABC_D] = u3::decomposition(u3ABC[i], u3D);
+      int rhoABC_Dmax = 0;
+      for (int j = 0; j < u3ABC_D.size(); j++)
+      {
+        if (u3ABC_D[j].n13() == u3ABCD.n13() &&
+            u3ABC_D[j].n23() == u3ABCD.n23() &&
+            u3ABC_D[j].n33() == u3ABCD.n33())
+        {
+          rhoABC_Dmax = rhomaxsABC_D[j];
+          break;
+        }
+      }
+
+      if (rhoABC_Dmax == 0)
+        continue;
+
+      // std::cout << u3ABC[i] << rhoAB_Cmax[i] << "," << rhoAC_Bmax[i] << ","
+      // << rhoABC_Dmax << std::endl;
+
+      std::vector<double> U6_1 =
+          u3::U6(u3AC, gArrAC, u3B, gArrB, u3ABCD, gArrABCD, u3D, gArrD,
+                 u3ABC[i], gArrABC, rhoAC_Bmax[i], rhoABC_Dmax, u3BD, gArrBD,
+                 rhoBDmax, rhoAC_BDmax, cgcs, racahs);
+
+      std::vector<double> U6_2 =
+          u3::U6(u3AB, gArrAB, u3C, gArrC, u3ABCD, gArrABCD, u3D, gArrD,
+                 u3ABC[i], gArrABC, rhoAB_Cmax[i], rhoABC_Dmax, u3CD, gArrCD,
+                 rhoCDmax, rhoAB_CDmax, cgcs, racahs);
+
+      std::vector<double> Z6 =
+          u3::Z6(u3B, gArrB, u3A, gArrA, u3ABC[i], gArrABC, u3C, gArrC, u3AB,
+                 gArrAB, rhoABmax, rhoAB_Cmax[i], u3AC, gArrAC, rhoACmax,
+                 rhoAC_Bmax[i], cgcs, racahs);
+
+      for (int rAC = 0; rAC < rhoACmax; rAC++)
+      {
+        for (int rBD = 0; rBD < rhoBDmax; rBD++)
+        {
+          for (int rAB_CD = 0; rAB_CD < rhoAB_CDmax; rAB_CD++)
           {
-            for (int gAB = 0; gAB < gArrAB.size(); gAB++)
+            for (int rAB = 0; rAB < rhoABmax; rAB++)
             {
-              for (int gCD = 0; gCD < gArrCD.size(); gCD++)
+              for (int rCD = 0; rCD < rhoCDmax; rCD++)
               {
-                for (int gAC = 0; gAC < gArrAC.size(); gAC++)
+                for (int rAC_BD = 0; rAC_BD < rhoAC_BDmax; rAC_BD++)
                 {
-                  for (int gBD = 0; gBD < gArrBD.size(); gBD++)
+                  for (int rAC_B = 0; rAC_B < rhoAC_Bmax[i]; rAC_B++)
                   {
-                    if ((gArrA[gA].e22() + gArrB[gB].e22()) ==
-                            gArrAB[gAB].e22() &&
-                        (gArrA[gA].e11() + gArrB[gB].e11()) ==
-                            gArrAB[gAB].e11() &&
-                        (gArrC[gC].e22() + gArrD[gD].e22()) ==
-                            gArrCD[gCD].e22() &&
-                        (gArrC[gC].e11() + gArrD[gD].e11()) ==
-                            gArrCD[gCD].e11() &&
-                        (gArrAB[gAB].e22() + gArrCD[gCD].e22()) ==
-                            gArrABCD[0].e22() &&
-                        (gArrAB[gAB].e11() + gArrCD[gCD].e11()) ==
-                            gArrABCD[0].e11() &&
-                        (gArrA[gA].e22() + gArrC[gC].e22()) ==
-                            gArrAC[gAC].e22() &&
-                        (gArrA[gA].e11() + gArrC[gC].e11()) ==
-                            gArrAC[gAC].e11() &&
-                        (gArrB[gB].e22() + gArrD[gD].e22()) ==
-                            gArrBD[gBD].e22() &&
-                        (gArrB[gB].e11() + gArrD[gD].e11()) ==
-                            gArrBD[gBD].e11() &&
-                        (gArrAC[gAC].e22() + gArrBD[gBD].e22()) ==
-                            gArrABCD[0].e22() &&
-                        (gArrAC[gAC].e11() + gArrBD[gBD].e11()) ==
-                            gArrABCD[0].e11())
+                    for (int rAB_C = 0; rAB_C < rhoAB_Cmax[i]; rAB_C++)
                     {
-                      for (int rAC = 0; rAC < rhoACmax; rAC++)
+                      for (int rABC_D = 0; rABC_D < rhoABC_Dmax; rABC_D++)
                       {
-                        for (int rBD = 0; rBD < rhoBDmax; rBD++)
-                        {
-                          for (int rAB_CD = 0; rAB_CD < rhoAB_CDmax; rAB_CD++)
-                          {
-                            for (int rAB = 0; rAB < rhoABmax; rAB++)
-                            {
-                              for (int rCD = 0; rCD < rhoCDmax; rCD++)
-                              {
-                                for (int rAC_BD = 0; rAC_BD < rhoAC_BDmax;
-                                     rAC_BD++)
-                                {
-                                  U[((((rAC * rhoBDmax + rBD) * rhoAB_CDmax +
-                                       rAB_CD) *
-                                          rhoABmax +
-                                      rAB) *
-                                         rhoCDmax +
-                                     rCD) *
-                                        rhoAC_BDmax +
-                                    rAC_BD] +=
-                                      coeffsAB((gA * gArrB.size() + gB) *
-                                                       gArrAB.size() +
-                                                   gAB,
-                                               rAB) *
-                                      coeffsCD((gC * gArrD.size() + gD) *
-                                                       gArrCD.size() +
-                                                   gCD,
-                                               rCD) *
-                                      coeffsAB_CD((gAB * gArrCD.size() + gCD) *
-                                                      gArrABCD.size(),
-                                                  rAB_CD) *
-                                      coeffsAC((gA * gArrC.size() + gC) *
-                                                       gArrAC.size() +
-                                                   gAC,
-                                               rAC) *
-                                      coeffsBD((gB * gArrD.size() + gD) *
-                                                       gArrBD.size() +
-                                                   gBD,
-                                               rBD) *
-                                      coeffsAC_BD((gAC * gArrBD.size() + gBD) *
-                                                      gArrABCD.size(),
-                                                  rAC_BD);
-                                }
-                              }
-                            }
-                          }
-                        }
+                        U[((((rAC * rhoBDmax + rBD) * rhoAB_CDmax + rAB_CD) *
+                        rhoABmax + rAB) * rhoCDmax + rCD) * rhoAC_BDmax + rAC_BD] 
+                        += U6_1[((rAC_B * rhoABC_Dmax + rABC_D) * rhoBDmax +
+                                  rBD) * rhoAC_BDmax + rAC_BD] 
+                         * Z6[((rAB * rhoAB_Cmax[i] + rAB_C) * rhoACmax +
+                                rAC) * rhoAC_Bmax[i] + rAC_B] 
+                         * U6_2[((rAB_C * rhoABC_Dmax + rABC_D) * rhoCDmax +
+                                  rCD) * rhoAB_CDmax + rAB_CD];
                       }
                     }
                   }
@@ -203,6 +133,10 @@ namespace u3
         }
       }
     }
+
+    for (int i = 0; i < U.size(); i++)
+      if (std::fabs(U[i]) < 1e-14)
+        U[i] = 0.0;
 
     return U;
   }
