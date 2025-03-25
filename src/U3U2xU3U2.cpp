@@ -28,7 +28,7 @@ int main()
   std::cout << "Enter the second irrep [n13b,n23b,n33b]: ";
   std::cin >> n13b >> n23b >> n33b;
   u3::irrep u3b(n13b, n23b, n33b);
-  if (n33b != 0)
+  if (n33b != 0) 
   {
     u3b.normalize();
     std::cout << "Your irrep is normalized to " << u3b << std::endl;

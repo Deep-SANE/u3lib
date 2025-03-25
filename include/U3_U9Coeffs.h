@@ -47,9 +47,7 @@ namespace u3
     {
       for (int j = 0; j < u3AC_B.size(); j++)
       {
-        if (u3AB_C[i].n13() == u3AC_B[j].n13() &&
-            u3AB_C[i].n23() == u3AC_B[j].n23() &&
-            u3AB_C[i].n33() == u3AC_B[j].n33())
+        if (u3AB_C[i] == u3AC_B[j])
         {
           u3ABC.push_back(u3AB_C[i]);
           rhoAB_Cmax.push_back(rhomaxsAB_C[i]);
@@ -62,20 +60,19 @@ namespace u3
     for (int i = 0; i < u3ABC.size(); i++)
     {
       std::vector<u3::gelfand> gArrABC = u3::gelfandBasis(u3ABC[i]);
-
+/*
       auto [u3ABC_D, rhomaxsABC_D] = u3::decomposition(u3ABC[i], u3D);
       int rhoABC_Dmax = 0;
       for (int j = 0; j < u3ABC_D.size(); j++)
       {
-        if (u3ABC_D[j].n13() == u3ABCD.n13() &&
-            u3ABC_D[j].n23() == u3ABCD.n23() &&
-            u3ABC_D[j].n33() == u3ABCD.n33())
+        if (u3ABC_D[j] == u3ABCD)
         {
           rhoABC_Dmax = rhomaxsABC_D[j];
           break;
         }
       }
-
+*/
+      int rhoABC_Dmax = u3::Rho(u3ABC[i], u3D, u3ABCD);
       if (rhoABC_Dmax == 0)
         continue;
 

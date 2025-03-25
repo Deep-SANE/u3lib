@@ -43,7 +43,6 @@ namespace u3
 
     for (int i = 0; i < gArr.size(); i++)
     {
-
       for (int j = 0; j < indices.size(); j++)
       {
         // action of E13
@@ -79,7 +78,6 @@ namespace u3
     {
       for (int j = 0; j < projector.cols(); j++)
       {
-
         // action of E13
         if (u3::E13_12(gArr[indices[j]], gArr[new_indices[i]]))
           projector(i, j) = gArr[indices[j]].e13_12();

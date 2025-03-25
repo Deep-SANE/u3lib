@@ -82,6 +82,52 @@ namespace u3
     return std::make_pair(std::move(u3cs), std::move(rhomaxs));
   }
 
+  // compute the outer multiplicity directly, before normalization
+  int Rho(const u3::irrep& u3a, const u3::irrep& u3b, const u3::irrep& u3c)
+  {
+    int rho = 0, n11 = u3c.n13() - u3b.n13();
+
+    for (int n12 = u3a.n13(); n12 >= std::max(u3a.n23(), n11); n12--)
+    {
+      for (int n22 = std::min(u3a.n23(), n11); n22 >= u3a.n33(); n22--)
+      {
+        int b13 = u3a.n13() - n12, b23 = u3a.n23() - n22, b33 = u3a.n33(),
+            b12 = n12 - n11, b22 = n22, b11 = n11;
+
+        u3::irrep u3C = u3b;
+
+        u3C.n33(u3C.n33() + b13);
+        if (!u3C.check())
+          continue;
+
+        u3C.n23(u3C.n23() + b12);
+        if (!u3C.check())
+          continue;
+
+        u3C.n13(u3C.n13() + b11);
+        if (!u3C.check())
+          continue;
+
+        u3C.n33(u3C.n33() + b23);
+        if (!u3C.check())
+          continue;
+
+        u3C.n23(u3C.n23() + b22);
+        if (!u3C.check())
+          continue;
+
+        u3C.n33(u3C.n33() + b33);
+        if (!u3C.check())
+          continue;
+
+        if (u3C == u3c)
+          rho++;
+      }
+    }
+
+    return rho;
+  }
+
 } // namespace u3
 
 #endif
