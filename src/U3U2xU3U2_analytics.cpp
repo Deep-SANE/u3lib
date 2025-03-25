@@ -7,7 +7,7 @@
 #include <locale>
 #include <string>
 
-#include <decomposition.h>
+#include <U3decomposition.h>
 #include <U3basis.h>
 
 auto read_irrep(bool normalize, const std::string& nth = "")

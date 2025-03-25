@@ -7,7 +7,7 @@
 #include <tuple>
 #include <vector>
 
-#include <decomposition.h>
+#include <U3decomposition.h>
 #include <U3basis.h>
 #include <U3SO3xU3SO3.h>
 

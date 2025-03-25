@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include <decomposition.h>
+#include <U3decomposition.h>
 #include <U3_U6Z6Coeffs.h>
 #include <U3basis.h>
 

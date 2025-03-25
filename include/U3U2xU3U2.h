@@ -26,7 +26,7 @@
 #include <Eigen/Sparse>
 #endif
 
-#include "decomposition.h"
+#include "U3decomposition.h"
 #include "so3Coeffs/SO3_CGC.h"
 #include "U3basis.h"
 #include "utils/inverseSolver.h"
@@ -36,15 +36,6 @@ extern "C"
 {
 #include <wigxjpf.h>
 }
-
-// formula for mapping states to coupling coefficients
-// there are three irreps u3a, u3b, u3c
-// the coupling coefficients are stored in a matrix whose number of columns is
-// the outer multiplicity rho and number of rows is dim(u3a)*dim(u3b)*dim(u3c)
-// for matching the Gelfand states associated with each irrep to the row in the
-// coefficient matrix, use the following formula: row = (ia*dim(u3b) +
-// ib)*dim(u3c) + ic provided that the loops are nested in this order: ia -> ib
-// -> ic
 
 namespace u3
 {

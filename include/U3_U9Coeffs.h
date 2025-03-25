@@ -7,7 +7,7 @@
 
 #include <Eigen/Dense>
 
-#include "decomposition.h"
+#include "U3decomposition.h"
 #include "so3Coeffs/SO3_CGC.h"
 #include "so3Coeffs/SO3_Racah.h"
 #include "U3_U6Z6Coeffs.h"

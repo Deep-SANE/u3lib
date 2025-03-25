@@ -16,7 +16,7 @@
 
 #include <Eigen/Dense>
 
-#include "decomposition.h"
+#include "U3decomposition.h"
 #include "U3basis.h"
 #include "utils/inverseSolver.h"
 #include "utils/nullspaceSolver.h"
