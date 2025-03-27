@@ -43,8 +43,8 @@ int main()
               << u3cs[i].n23() - u3cs[i].n33() << ",0] \t rho = 1 ... "
               << rhomaxs[i] << std::endl;
   }
-
-  int index;
+ 
+  int index; 
   std::cout << "Enter the index of the coupled irrep you are interested: ";
   std::cin >> index;
 

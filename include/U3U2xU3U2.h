@@ -434,23 +434,12 @@ namespace u3
   }
 
   // we only want to store reduced U(3)->U(2) coupling coefficients,
-  // so the label n11 does not matter, thus we store the reduced coefficients
-  // in the coeffs matrix at row = (ia*dim(u3b) + ib)*dim(u3c) + ic
-  // where ia, ib, ic are positions of U(2) highest wieght Gelfand states
-  // defined as
-  // | n13 n23 n33 \
-  // |  n12  n22    >
-  // |     n12     /
-  // Given a generic Gelfand state
-  // | n13 n23 n33 \
-  // |  n12  n22    >
-  // |     n11     /
-  // at position i, the position of the U(2) highest weight state
-  // can be traced back to i_hw = i - (n12 - n11) = i - n12 + n11
+  // so the label n11 does not matter
 
   // highest-weight reduced coefficients
   // / n13a n23a n33a ; n13b n23b n33b || n13c n23c n33c \
-  // \   n12a  n22a       n12b  n22b   ||   n13c n23c    /
+  // \   n12a  n22a       n12b  n22b   ||   n13c n23c    /_rho
+
   void HighestWeightReducedCoeffs(const std::vector<u3::gelfand>& gArr1,
                                   const std::vector<u3::gelfand>& gArr2,
                                   const std::vector<u3::gelfand>& gArr3,
@@ -541,7 +530,7 @@ namespace u3
 
   // lower-weight reduced coefficients
   // / n13a n23a n33a ; n13b n23b n33b || n13c n23c n33c \
-  // \   n12a  n22a       n12b  n22b   ||   n12c n22c    /
+  // \   n12a  n22a       n12b  n22b   ||   n12c n22c    /_rho
 
   // build with E32
   void E32(int parent_g3, int& row, int rhomax,
@@ -583,16 +572,13 @@ namespace u3
           double factor = g1_n12p1.e32_12();
 
           double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+          
+          auto acc = coeffs.access(g1_n12p1.n12(), g1_n12p1.n22(), 
+                                   gArr2[g2].n12(), gArr2[g2].n22(), 
+                                   gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
 
           for (int r = 0; r < rhomax; r++)
-          {
-            auto acc =
-                coeffs.access(g1_n12p1.n12(), g1_n12p1.n22(), gArr2[g2].n12(),
-                              gArr2[g2].n22(), gArr3[parent_g3].n12(),
-                              gArr3[parent_g3].n22());
-
             E32E31[r](row, j) += coeffs.get(acc, r) * cgc * factor;
-          }
         }
       }
 
@@ -610,15 +596,12 @@ namespace u3
 
           double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
-          for (int r = 0; r < rhomax; r++)
-          {
-            auto acc =
-                coeffs.access(g1_n22p1.n12(), g1_n22p1.n22(), gArr2[g2].n12(),
-                              gArr2[g2].n22(), gArr3[parent_g3].n12(),
-                              gArr3[parent_g3].n22());
+          auto acc = coeffs.access(g1_n22p1.n12(), g1_n22p1.n22(), 
+                                   gArr2[g2].n12(), gArr2[g2].n22(), 
+                                   gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
 
+          for (int r = 0; r < rhomax; r++)
             E32E31[r](row, j) += coeffs.get(acc, r) * cgc * factor;
-          }
         }
       }
 
@@ -637,14 +620,12 @@ namespace u3
 
           double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
-          for (int r = 0; r < rhomax; r++)
-          {
-            auto acc = coeffs.access(
-                gArr1[g1].n12(), gArr1[g1].n22(), g2_n12p1.n12(),
-                g2_n12p1.n22(), gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
+          auto acc = coeffs.access(gArr1[g1].n12(), gArr1[g1].n22(), 
+                                   g2_n12p1.n12(), g2_n12p1.n22(), 
+                                   gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
 
+          for (int r = 0; r < rhomax; r++)
             E32E31[r](row, j) += coeffs.get(acc, r) * cgc * factor;
-          }
         }
       }
 
@@ -662,14 +643,12 @@ namespace u3
 
           double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
-          for (int r = 0; r < rhomax; r++)
-          {
-            auto acc = coeffs.access(
-                gArr1[g1].n12(), gArr1[g1].n22(), g2_n22p1.n12(),
-                g2_n22p1.n22(), gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
+          auto acc = coeffs.access(gArr1[g1].n12(), gArr1[g1].n22(), 
+                                   g2_n22p1.n12(), g2_n22p1.n22(), 
+                                   gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
 
+          for (int r = 0; r < rhomax; r++)
             E32E31[r](row, j) += coeffs.get(acc, r) * cgc * factor;
-          }
         }
       }
     }
@@ -719,15 +698,12 @@ namespace u3
 
           double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
-          for (int r = 0; r < rhomax; r++)
-          {
-            auto acc =
-                coeffs.access(g1_n12n11p1.n12(), g1_n12n11p1.n22(),
-                              gArr2[g2].n12(), gArr2[g2].n22(),
-                              gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
+          auto acc = coeffs.access(g1_n12n11p1.n12(), g1_n12n11p1.n22(),
+                                   gArr2[g2].n12(), gArr2[g2].n22(),
+                                   gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
 
+          for (int r = 0; r < rhomax; r++)
             E32E31[r](row, j) += coeffs.get(acc, r) * cgc * factor;
-          }
         }
       }
 
@@ -746,15 +722,12 @@ namespace u3
 
           double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
-          for (int r = 0; r < rhomax; r++)
-          {
-            auto acc =
-                coeffs.access(g1_n22n11p1.n12(), g1_n22n11p1.n22(),
-                              gArr2[g2].n12(), gArr2[g2].n22(),
-                              gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
+          auto acc = coeffs.access(g1_n22n11p1.n12(), g1_n22n11p1.n22(),
+                                   gArr2[g2].n12(), gArr2[g2].n22(),
+                                   gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
 
+          for (int r = 0; r < rhomax; r++)
             E32E31[r](row, j) += coeffs.get(acc, r) * cgc * factor;
-          }
         }
       }
 
@@ -774,15 +747,12 @@ namespace u3
 
           double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
-          for (int r = 0; r < rhomax; r++)
-          {
-            auto acc =
-                coeffs.access(gArr1[g1].n12(), gArr1[g1].n22(),
-                              g2_n12n11p1.n12(), g2_n12n11p1.n22(),
-                              gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
+          auto acc = coeffs.access(gArr1[g1].n12(), gArr1[g1].n22(),
+                                   g2_n12n11p1.n12(), g2_n12n11p1.n22(),
+                                   gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
 
+          for (int r = 0; r < rhomax; r++)
             E32E31[r](row, j) += coeffs.get(acc, r) * cgc * factor;
-          }
         }
       }
 
@@ -801,15 +771,12 @@ namespace u3
 
           double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
-          for (int r = 0; r < rhomax; r++)
-          {
-            auto acc =
-                coeffs.access(gArr1[g1].n12(), gArr1[g1].n22(),
-                              g2_n22n11p1.n12(), g2_n22n11p1.n22(),
-                              gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
+          auto acc = coeffs.access(gArr1[g1].n12(), gArr1[g1].n22(),
+                                   g2_n22n11p1.n12(), g2_n22n11p1.n22(),
+                                   gArr3[parent_g3].n12(), gArr3[parent_g3].n22());
 
+          for (int r = 0; r < rhomax; r++)
             E32E31[r](row, j) += coeffs.get(acc, r) * cgc * factor;
-          }
         }
       }
     }
@@ -1048,64 +1015,3 @@ namespace u3
 } // namespace u3
 
 #endif
-
-/*
-    // Initialize max values
-    int maxFirst = indices.back().first;
-    int maxSecond = std::numeric_limits<int>::min();
-
-    // Iterate through the vector to find the maximum
-    for (const auto& p : indices)
-      maxSecond = std::max(maxSecond, p.second); // Update maxSecond
-
-    for (int i = 0; i < maxFirst; i++)
-    {
-      for (int j = 0; j < maxSecond; j++)
-      {
-        for (int k = 0; k < indices.size(); k++)
-        {
-          int g1 = indices[k].first, g2 = indices[k].second;
-
-          // E23 and E12 act on the first state
-          if ((u3::E23_12(gArr1[g1], gArr1[i]) && g2 == j) ||
-              (u3::E23_22(gArr1[g1], gArr1[i]) && g2 == j) ||
-              (u3::E12(gArr1[g1], gArr1[i]) && g2 == j))
-            new_indices.emplace_back(i, g2);
-
-          // E23 and E12 act on the second state
-          else if ((u3::E23_12(gArr2[g2], gArr2[j]) && g1 == i) ||
-                   (u3::E23_22(gArr2[g2], gArr2[j]) && g1 == i) ||
-                   (u3::E12(gArr2[g2], gArr2[j]) && g1 == i))
-            new_indices.emplace_back(g1, j);
-        }
-      }
-    }
-*/
-
-/*
-      // loop over states that may be parent
-      for (int j = 0; j < same_weight_gArr3.back(); j++)
-      {
-        // loop over daughter states
-        for (int i = 0; i < same_weight_gArr3.size(); i++)
-        {
-          if (u3::E23_12(gArr3[same_weight_gArr3[i]], gArr3[j]) ||
-              u3::E23_22(gArr3[same_weight_gArr3[i]], gArr3[j]))
-          {
-            std::pair p(0, j);
-            auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
-            if (it == actOnParent.end())
-              actOnParent.push_back(p);
-          }
-
-          else if (u3::E13_12(gArr3[same_weight_gArr3[i]], gArr3[j]) ||
-                   u3::E13_22(gArr3[same_weight_gArr3[i]], gArr3[j]))
-          {
-            std::pair p(1, j);
-            auto it = std::find(actOnParent.begin(), actOnParent.end(), p);
-            if (it == actOnParent.end())
-              actOnParent.push_back(p);
-          }
-        }
-      }
-*/
