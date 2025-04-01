@@ -85,6 +85,53 @@ namespace u3
   // compute the outer multiplicity directly, before normalization
   int Rho(const u3::irrep& u3a, const u3::irrep& u3b, const u3::irrep& u3c)
   {
+    // Implementation based on su3lib/src/utils.cpp mult()
+    int rho = 0;
+    int phase = u3a.lam() + u3b.lam() - u3c.lam() 
+                - u3a.mu() - u3b.mu() + u3c.mu();
+
+    if (phase % 3 == 0) {
+      int redphase;
+      int l1, l2, l3, m1, m2, m3;
+
+      redphase = phase / 3;
+
+      if (phase >= 0) 
+      {
+        l1 = u3a.lam();
+        l2 = u3b.lam();
+        l3 = u3c.lam();
+        m1 = u3a.mu();
+        m2 = u3b.mu();
+        m3 = u3c.mu();
+      } 
+      else 
+      {
+        l1 = u3a.mu();
+        l2 = u3b.mu();
+        l3 = u3c.mu();
+        m1 = u3a.lam();
+        m2 = u3b.lam();
+        m3 = u3c.lam();
+        redphase = -redphase;
+      }
+
+      phase = redphase + m1 + m2 - m3;
+
+      int invl1 = std::min(l1 - redphase, m2);
+      if (invl1 < 0) {
+         return rho;
+      }
+
+      int invl2 = std::min(l2 - redphase, m1);
+      if (invl2 < 0) {
+         return rho;
+      }
+      rho = std::max(std::min(phase, invl2) - std::max(phase - invl1, 0) + 1, 0);
+    }
+    return rho;
+
+    /* This implementation is based on the decomposition above
     int rho = 0, n11 = u3c.n13() - u3b.n13();
 
     for (int n12 = u3a.n13(); n12 >= std::max(u3a.n23(), n11); n12--)
@@ -124,8 +171,8 @@ namespace u3
           rho++;
       }
     }
-
     return rho;
+    */
   }
 
 } // namespace u3
