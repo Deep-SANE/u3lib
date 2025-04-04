@@ -790,6 +790,7 @@ namespace u3
                                 int rhomax, std::vector<int>& same_weight_gArr3,
                                 u3::SO3_CGC& cgcs, WigU3U2_coeffs& coeffs)
   {
+    // trace states with the same [w2,w1] (z-weight)
     for (int i = 0; i < same_weight_gArr3.size(); i++)
     {
       same_weight_gArr3[i] += gArr3[same_weight_gArr3[i]].n11() -
@@ -918,22 +919,15 @@ namespace u3
               i2 = uncoupled_same_weight_gArr3[j].second,
               i3 = same_weight_gArr3[i];
 
-          int i1_hw = i1 - gArr1[i1].n12() + gArr1[i1].n11(),
-              i2_hw = i2 - gArr2[i2].n12() + gArr2[i2].n11(),
-              i3_hw = i3 - gArr3[i3].n12() + gArr3[i3].n11();
-
-          const auto& gA = gArr1[i1_hw];
-          const auto& gB = gArr2[i2_hw];
-          const auto& gC = gArr3[i3_hw];
-
-          auto acc = coeffs.access(gA.n12(), gA.n22(), gB.n12(), gB.n22(),
-                                   gC.n12(), gC.n22());
-
+          auto acc = coeffs.access(gArr1[i1].n12(), gArr1[i1].n22(), 
+                                   gArr2[i2].n12(), gArr2[i2].n22(),
+                                   gArr3[i3].n12(), gArr3[i3].n22());
+                                       
           if (acc.computed == false)
           {
-            int jj1 = gArr1[i1].Lambdax2(), jj2 = gArr2[i2].Lambdax2(),
-                jj3 = gArr3[i3].Lambdax2(), mm1 = gArr1[i1].MLambdax2(),
-                mm2 = gArr2[i2].MLambdax2(), mm3 = gArr3[i3].MLambdax2();
+            int jj1 = gArr1[i1].Lambdax2(), mm1 = gArr1[i1].MLambdax2(),
+                jj2 = gArr2[i2].Lambdax2(), mm2 = gArr2[i2].MLambdax2(),
+                jj3 = gArr3[i3].Lambdax2(), mm3 = gArr3[i3].MLambdax2();
 
             if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
                 (jj1 + jj2) >= jj3)
@@ -960,7 +954,7 @@ namespace u3
     return;
   }
 
-  // all coupling coefficients
+  // all reduced coupling coefficients
   auto WigU3U2(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C,
                int rhomax, int w2min, std::vector<u3::gelfand>& gArrA,
                std::vector<u3::gelfand>& gArrB, std::vector<u3::gelfand>& gArrC)
