@@ -492,26 +492,17 @@ namespace u3
 
     for (int i = 0; i < indices.size(); i++)
     {
-      int i1 = indices[i].first - gArr1[indices[i].first].n12() +
-               gArr1[indices[i].first].n11();
-      int i2 = indices[i].second - gArr2[indices[i].second].n12() +
-               gArr2[indices[i].second].n11();
+      int i1 = indices[i].first, i2 = indices[i].second;
 
-      const auto& gA = gArr1[i1];
-      const auto& gB = gArr2[i2];
-      const auto& gC = gArr3[0];
-
-      auto acc = coeffs.access(gA.n12(), gA.n22(), gB.n12(), gB.n22(), gC.n12(),
-                               gC.n22());
+      auto acc = coeffs.access(gArr1[i1].n12(), gArr1[i1].n22(), 
+                               gArr2[i2].n12(), gArr2[i2].n22(), 
+                               gArr3[0].n12(), gArr3[0].n22());
 
       if (acc.computed == false)
       {
-        int jj1 = gArr1[indices[i].first].Lambdax2(),
-            jj2 = gArr2[indices[i].second].Lambdax2(),
-            jj3 = gArr3[0].Lambdax2(),
-            mm1 = gArr1[indices[i].first].MLambdax2(),
-            mm2 = gArr2[indices[i].second].MLambdax2(),
-            mm3 = gArr3[0].MLambdax2();
+        int jj1 = gArr1[i1].Lambdax2(), mm1 = gArr1[i1].MLambdax2(),
+            jj2 = gArr2[i2].Lambdax2(), mm2 = gArr2[i2].MLambdax2(),
+            jj3 = gArr3[0].Lambdax2(), mm3 = gArr3[0].MLambdax2();
 
         if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
             (jj1 + jj2) >= jj3)
