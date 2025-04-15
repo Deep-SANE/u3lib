@@ -1,15 +1,37 @@
 # Copy this file to 'config.mk' and update it according to your system.
 
+U34UTILS_DIR=../u34utils
+
 # set if needed:
 #EIGEN_DIR=
 #WIGXJPF_DIR=
 
-CXX = g++
+# SLEPc support:
+#USE_SLEPC=1
 
-# include (if needed):
+ifdef $(USE_SLEPC)
+#PETSC_DIR=
+#SLEPC_DIR=
+endif
+
+# compiler specification:
+ifdef $(USE_SLEPC)
+CXX = mpicxx
+else
+CXX = g++
+endif
+
+# header file inclusion paths:
+INC += -I$(U34UTILS_DIR)/include
 INC += -I$(EIGEN_DIR)
 INC += -I$(WIGXJPF_DIR)/inc
 
+ifdef $(USE_SLEPC)
+INC += -I$(PETSC_DIR)/include
+INC += -I$(SLEPC_DIR)/include
+endif
+
+# generic compiler options:
 CXXFLAGS += -std=c++17
 CXXFLAGS += $(INC)
 
@@ -20,8 +42,15 @@ CXXFLAGS += -DNDEBUG
 #CXXFLAGS += -g 
 #CXXFLAGS += -fsanitize=address
 
+# SLEPc related options
+ifdef $(USE_SLEPC)
+CXXFLAGS += -DU3LIB_USE_SLEPC
+CXXFLAGS += -DU3LIB_SPARSE_MAT
+endif
+
+# linking options:
 LDFLAGS += -L$(WIGXJPF_DIR)/lib -lwigxjpf
 
-# OpenMP (if applicable):
-#CXXFLAGS += -fopenmp
-#LDFLAGS += -fopenmp
+ifdef $(USE_SLEPC)
+LDFLAGS += -lpetsc -lslepc 
+endif
