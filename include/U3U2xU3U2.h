@@ -16,11 +16,11 @@
 #include <Eigen/Sparse>
 #endif
 
-#include "U3decomposition.h"
 #include "so3Coeffs/SO3_CGC.h"
 #include "U3basis.h"
-#include "utils/inverseSolver.h"
-#include "utils/nullspaceSolver.h"
+#include "U3decomposition.h"
+
+#include <nullspace_solver_qr.h>
 
 extern "C"
 {
@@ -342,7 +342,7 @@ namespace u3
 #ifdef U3LIB_SPARSE_MAT
     std::vector<Eigen::Triplet<double>> ija;
 #else
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> mat(row_num, col_num);
+    Eigen::MatrixXd mat(row_num, col_num);
 #endif
 
     for (int i = 0; i < row_num; i++)
@@ -403,21 +403,6 @@ namespace u3
 #ifdef U3LIB_SPARSE_MAT
     Eigen::SparseMatrix<double> mat(row_num, col_num);
     mat.setFromTriplets(ija.begin(), ija.end());
-
-#ifdef U3LIB_SAVE_MAT
-    {
-      std::ofstream fmat("mat.ija");
-
-      fmat << row_num << std::endl;
-      fmat << col_num << std::endl;
-      fmat << ija.size() << std::endl;
-
-      for (const auto& elem : ija)
-        fmat << elem.row() << " " << elem.col() << " " << std::setprecision(12)
-             << elem.value() << std::endl;
-    }
-#endif
-
 #endif
 
     return mat;
@@ -440,8 +425,7 @@ namespace u3
 
     auto mat = E23E12(gArr1, gArr2, indices);
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> nullspace =
-        null_space(mat);
+    Eigen::MatrixXd nullspace = u34utils::null_space(mat);
 
     for (int i = 0; i < indices.size(); i++)
     {
