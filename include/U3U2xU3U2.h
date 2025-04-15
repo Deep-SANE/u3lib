@@ -10,16 +10,6 @@
 #include <utility>
 #include <vector>
 
-#ifdef U3LIB_TIME_LOG
-#include <chrono>
-#include <iostream>
-#endif
-
-#ifdef U3LIB_SAVE_MAT
-#include <fstream>
-#include <iomanip>
-#endif
-
 #include <Eigen/Dense>
 
 #ifdef U3LIB_SPARSE_MAT
@@ -450,45 +440,8 @@ namespace u3
 
     auto mat = E23E12(gArr1, gArr2, indices);
 
-#ifdef U3LIB_TIME_LOG
-    auto t0 = std::chrono::high_resolution_clock::now();
-#endif
-
-#ifdef U3LIB_NULLSPACE_LOG
-    std::cout << "mat: " << mat.rows() << " x " << mat.cols() << std::endl;
-    std::cout << "\telements: " << mat.rows() * mat.cols() << std::endl;
-
-#ifdef U3LIB_SPARSE_MAT
-    long nnz = mat.nonZeros();
-#else
-    long nnz = 0;
-    for (auto x : mat.reshaped())
-      if (x != 0.0)
-        nnz++;
-#endif
-    std::cout << "\tnonzero elements: " << nnz << std::endl;
-#endif
-
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> nullspace =
         null_space(mat);
-
-#ifdef U3LIB_NULLSPACE_LOG
-    std::cout << "nullspace: " << nullspace.rows() << " x " << nullspace.cols()
-              << std::endl;
-    std::cout << "\telements: " << nullspace.rows() * nullspace.cols()
-              << std::endl;
-    nnz = 0;
-    for (auto x : nullspace.reshaped())
-      if (x != 0.0)
-        nnz++;
-    std::cout << "\tnonzero elements: " << nnz << std::endl;
-#endif
-
-#ifdef U3LIB_TIME_LOG
-    auto t1 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> duration = t1 - t0;
-    std::cerr << "null_space time: " << duration.count() << " [s]" << std::endl;
-#endif
 
     for (int i = 0; i < indices.size(); i++)
     {
@@ -956,10 +909,6 @@ namespace u3
 
     u3::HighestWeightReducedCoeffs(gArrA, gArrB, gArrC, cgcs, coeffs);
 
-#ifdef U3LIB_TIME_LOG
-    auto t0 = std::chrono::high_resolution_clock::now();
-#endif
-
     int w2max = u3C.n13() + u3C.n23();
     if (w2min < w2max)
     {
@@ -979,13 +928,6 @@ namespace u3
                                      coeffs);
       }
     }
-
-#ifdef U3LIB_TIME_LOG
-    auto t1 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> duration = t1 - t0;
-    std::cerr << "LowerWeightReducedCoeffs total time: " << duration.count()
-              << " [s]" << std::endl;
-#endif
 
     u3C.normalize();
     for (int i = 0; i < gArrC.size(); i++)
