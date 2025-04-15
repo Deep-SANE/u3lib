@@ -11,7 +11,8 @@
 #include <Eigen/Sparse>
 
 #include "U3basis.h"
-#include "utils/nullspaceSolver.h"
+
+#include <nullspace_solver_qr.h>
 
 namespace u3
 {
@@ -148,11 +149,9 @@ namespace u3
     canoBasis = u3::expand_to_gelfand(physvec.L, gArr);
 
     // Building the projection matrix
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Lproj =
-        u3::Lprojection(physvec, gArr, canoBasis);
+    Eigen::MatrixXd Lproj = u3::Lprojection(physvec, gArr, canoBasis);
     // and solving its null space
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> transformation =
-        null_space(Lproj);
+    Eigen::MatrixXd transformation = u34utils::null_space(Lproj);
 
     // ensure the nullspace is solved correctly
     assert(physvec.kappa == transformation.cols());
