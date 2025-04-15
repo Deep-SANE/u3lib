@@ -21,6 +21,9 @@
 #include "U3decomposition.h"
 
 #include <nullspace_solver_qr.h>
+#ifdef U3LIB_USE_SLEPC
+#include <nullspace_solver_slepc.h>
+#endif
 
 extern "C"
 {
@@ -223,6 +226,8 @@ namespace u3
     }
 
     std::size_t size() const { return coeffs_.rows(); }
+
+    int rhomax() const { return rhomax_; }
   };
 
   // expansion of a coupled gelfand basis state (u3c) in terms of those
@@ -425,7 +430,11 @@ namespace u3
 
     auto mat = E23E12(gArr1, gArr2, indices);
 
+#ifdef U3LIB_USE_SLEPC
+    Eigen::MatrixXd nullspace = u34utils::null_space_slepc(mat, coeffs.rhomax());
+#else
     Eigen::MatrixXd nullspace = u34utils::null_space(mat);
+#endif
 
     for (int i = 0; i < indices.size(); i++)
     {

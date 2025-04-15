@@ -11,8 +11,15 @@
 #include <U3basis.h>
 #include <U3U2xU3U2.h>
 
-int main()
+#ifdef U3LIB_USE_SLEPC
+#include <slepcsys.h>
+#endif
+
+int main(int argc, char* argv[])
 {
+#ifdef U3LIB_USE_SLEPC
+  SlepcInitialize(&argc, &argv, NULL, NULL);
+#endif
 
   int n13a, n23a, n33a;
   std::cout << "Enter the first irrep [n13a,n23a,n33a]: ";
@@ -94,5 +101,7 @@ int main()
   std::cout << "Elapsed time: " << duration.count() << " seconds or "
             << duration.count() / 60.0 << " minutes" << std::endl;
 
-  return 0;
+#ifdef U3LIB_USE_SLEPC
+  SlepcFinalize();
+#endif
 }
