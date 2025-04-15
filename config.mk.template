@@ -9,6 +9,7 @@ U34UTILS_DIR=../u34utils
 # SLEPc support:
 #USE_SLEPC=1
 
+# set if needed:
 ifdef USE_SLEPC
 #PETSC_DIR=
 #SLEPC_DIR=
@@ -52,5 +53,6 @@ endif
 LDFLAGS += -L$(WIGXJPF_DIR)/lib -lwigxjpf
 
 ifdef USE_SLEPC
+LDFLAGS += -L$(PETSC_DIR)/lib -L$(SLEPC_DIR)/lib
 LDFLAGS += -lpetsc -lslepc 
 endif
