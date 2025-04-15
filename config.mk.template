@@ -9,13 +9,13 @@ U34UTILS_DIR=../u34utils
 # SLEPc support:
 #USE_SLEPC=1
 
-ifdef $(USE_SLEPC)
+ifdef USE_SLEPC
 #PETSC_DIR=
 #SLEPC_DIR=
 endif
 
 # compiler specification:
-ifdef $(USE_SLEPC)
+ifdef USE_SLEPC
 CXX = mpicxx
 else
 CXX = g++
@@ -26,7 +26,7 @@ INC += -I$(U34UTILS_DIR)/include
 INC += -I$(EIGEN_DIR)
 INC += -I$(WIGXJPF_DIR)/inc
 
-ifdef $(USE_SLEPC)
+ifdef USE_SLEPC
 INC += -I$(PETSC_DIR)/include
 INC += -I$(SLEPC_DIR)/include
 endif
@@ -43,7 +43,7 @@ CXXFLAGS += -DNDEBUG
 #CXXFLAGS += -fsanitize=address
 
 # SLEPc related options
-ifdef $(USE_SLEPC)
+ifdef USE_SLEPC
 CXXFLAGS += -DU3LIB_USE_SLEPC
 CXXFLAGS += -DU3LIB_SPARSE_MAT
 endif
@@ -51,6 +51,6 @@ endif
 # linking options:
 LDFLAGS += -L$(WIGXJPF_DIR)/lib -lwigxjpf
 
-ifdef $(USE_SLEPC)
+ifdef USE_SLEPC
 LDFLAGS += -lpetsc -lslepc 
 endif
