@@ -4,8 +4,15 @@
 #include <U3basis.h>
 #include <U3generatorsRME.h>
 
-int main()
+#ifdef U3LIB_USE_SLEPC
+#include <slepcsys.h>
+#endif 
+
+int main(int argc, char* argv[])
 {
+#ifdef U3LIB_USE_SLEPC
+  SlepcInitialize(&argc, &argv, NULL, NULL);
+#endif
 
   int lambda, mu;
   std::cout << "Please enter SU(3) quantum numbers (lambda,mu): ";
@@ -42,7 +49,7 @@ int main()
   std::cin >> i_ket;
 
   std::vector<int> bra_kappa, ket_kappa;
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> RME;
+  Eigen::MatrixXd RME;
 
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
@@ -70,5 +77,9 @@ int main()
   std::cout << "Elapsed time: " << duration.count() << " seconds or "
             << duration.count() / 60.0 << " minutes" << std::endl;
 
+#ifdef U3LIB_USE_SLEPC 
+  SlepcFinalize();
+#endif
+  
   return 0;
 }

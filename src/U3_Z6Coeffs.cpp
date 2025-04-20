@@ -10,8 +10,15 @@
 #include <U3_U6Z6Coeffs.h>
 #include <U3basis.h>
 
-int main()
+#ifdef U3LIB_USE_SLEPC
+#include <slepcsys.h>
+#endif
+
+int main(int argc, char* argv[])
 {
+#ifdef U3LIB_USE_SLEPC
+  SlepcInitialize(&argc, &argv, NULL, NULL);
+#endif
 
   std::cout
       << "This program compute Z6-recoupling coefficients of three U(3) irreps"
@@ -121,8 +128,8 @@ int main()
     std::vector<u3::gelfand> gArrAC = u3::gelfandBasis(u3ac[i_ac]);
     std::vector<u3::gelfand> gArrABC = u3::gelfandBasis(u3ab_c[i_ab_c]);
 
-    u3::SO3_CGC cgcs;
-    u3::SO3_Racah racahs;
+    u34utils::SO3_CGC cgcs;
+    u34utils::SO3_Racah racahs;
 
     std::vector<double> coeffs = u3::Z6(
         u3b, gArrB, u3a, gArrA, u3ab_c[i_ab_c], gArrABC, u3c, gArrC, u3ab[i_ab],
@@ -176,5 +183,9 @@ int main()
     std::cout << "Recoupling does not exist" << std::endl;
   }
 
+#ifdef U3LIB_USE_SLEPC 
+  SlepcFinalize();
+#endif
+  
   return 0;
 }

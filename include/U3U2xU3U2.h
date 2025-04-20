@@ -16,19 +16,15 @@
 #include <Eigen/Sparse>
 #endif
 
-#include "so3Coeffs/SO3_CGC.h"
 #include "U3basis.h"
 #include "U3decomposition.h"
+
+#include <so3Coeffs/SO3_CGC.h>
 
 #include <nullspace_solver_qr.h>
 #ifdef U3LIB_USE_SLEPC
 #include <nullspace_solver_slepc.h>
 #endif
-
-extern "C"
-{
-#include <wigxjpf.h>
-}
 
 namespace u3
 {
@@ -234,7 +230,7 @@ namespace u3
   // uncoupled ones based on the weight selection rule; hence, this expansion is
   // the same for those other coupled states that have the same weight with the
   // state being expanded. Here indices of the uncoupled states are stored.
-  std::vector<std::pair<int, int>>
+  inline std::vector<std::pair<int, int>>
   expand_to_uncoupled(const u3::gelfand& g3,
                       const std::vector<u3::gelfand>& gArr1,
                       const std::vector<u3::gelfand>& gArr2)
@@ -257,7 +253,7 @@ namespace u3
   // build the matrix representating a system of linear equations resulting from
   // the action two generators E23 and E12 that annihiliate the highest weight
   // state
-  auto E23E12(const std::vector<u3::gelfand>& gArr1,
+  inline auto E23E12(const std::vector<u3::gelfand>& gArr1,
               const std::vector<u3::gelfand>& gArr2,
               std::vector<std::pair<int, int>>& indices)
   {
@@ -420,10 +416,10 @@ namespace u3
   // / n13a n23a n33a ; n13b n23b n33b || n13c n23c n33c \
   // \   n12a  n22a       n12b  n22b   ||   n13c n23c    /_rho
 
-  void HighestWeightReducedCoeffs(const std::vector<u3::gelfand>& gArr1,
+  inline void HighestWeightReducedCoeffs(const std::vector<u3::gelfand>& gArr1,
                                   const std::vector<u3::gelfand>& gArr2,
                                   const std::vector<u3::gelfand>& gArr3,
-                                  u3::SO3_CGC& cgcs, WigU3U2_coeffs& coeffs)
+                                  u34utils::SO3_CGC& cgcs, WigU3U2_coeffs& coeffs)
   {
     std::vector<std::pair<int, int>> indices =
         expand_to_uncoupled(gArr3[0], gArr1, gArr2);
@@ -470,13 +466,13 @@ namespace u3
   // \   n12a  n22a       n12b  n22b   ||   n12c n22c    /_rho
 
   // build with E32
-  void E32(int parent_g3, int& row, int rhomax,
+  inline void E32(int parent_g3, int& row, int rhomax,
            std::vector<int>& same_weight_gArr3,
            std::vector<std::pair<int, int>>& uncoupled_same_weight_gArr3,
            const std::vector<u3::gelfand>& gArr1,
            const std::vector<u3::gelfand>& gArr2,
            const std::vector<u3::gelfand>& gArr3, Eigen::MatrixXd& b,
-           u3::SO3_CGC& cgcs, std::vector<Eigen::MatrixXd>& E32E31,
+           u34utils::SO3_CGC& cgcs, std::vector<Eigen::MatrixXd>& E32E31,
            WigU3U2_coeffs& coeffs)
   {
     int jj3 = gArr3[parent_g3].Lambdax2(), mm3 = gArr3[parent_g3].MLambdax2();
@@ -594,13 +590,13 @@ namespace u3
   }
 
   // build with E31
-  void E31(int parent_g3, int& row, int rhomax,
+  inline void E31(int parent_g3, int& row, int rhomax,
            std::vector<int>& same_weight_gArr3,
            std::vector<std::pair<int, int>>& uncoupled_same_weight_gArr3,
            const std::vector<u3::gelfand>& gArr1,
            const std::vector<u3::gelfand>& gArr2,
            const std::vector<u3::gelfand>& gArr3, Eigen::MatrixXd& b,
-           u3::SO3_CGC& cgcs, std::vector<Eigen::MatrixXd>& E32E31,
+           u34utils::SO3_CGC& cgcs, std::vector<Eigen::MatrixXd>& E32E31,
            WigU3U2_coeffs& coeffs)
   {
     int jj3 = gArr3[parent_g3].Lambdax2(), mm3 = gArr3[parent_g3].MLambdax2();
@@ -721,11 +717,11 @@ namespace u3
     return;
   }
 
-  void LowerWeightReducedCoeffs(const std::vector<u3::gelfand>& gArr1,
+  inline void LowerWeightReducedCoeffs(const std::vector<u3::gelfand>& gArr1,
                                 const std::vector<u3::gelfand>& gArr2,
                                 const std::vector<u3::gelfand>& gArr3,
                                 int rhomax, std::vector<int>& same_weight_gArr3,
-                                u3::SO3_CGC& cgcs, WigU3U2_coeffs& coeffs)
+                                u34utils::SO3_CGC& cgcs, WigU3U2_coeffs& coeffs)
   {
     // trace states with the same [w2,w1] (z-weight)
     for (int i = 0; i < same_weight_gArr3.size(); i++)
@@ -892,13 +888,13 @@ namespace u3
   }
 
   // all reduced coupling coefficients
-  auto WigU3U2(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C,
+  inline auto WigU3U2(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C,
                int rhomax, int w2min, std::vector<u3::gelfand>& gArrA,
                std::vector<u3::gelfand>& gArrB, std::vector<u3::gelfand>& gArrC)
   {
     WigU3U2_coeffs coeffs(u3A, u3B, u3C, rhomax);
 
-    u3::SO3_CGC cgcs;
+    u34utils::SO3_CGC cgcs;
 
     u3::HighestWeightReducedCoeffs(gArrA, gArrB, gArrC, cgcs, coeffs);
 

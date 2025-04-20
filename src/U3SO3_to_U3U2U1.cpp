@@ -4,10 +4,17 @@
 #include <vector>
 
 #include <U3basis.h>
-#include <U3SO3_to_U3U2U1.h>
+#include <U3SO3_to_U3U2U1.h> 
 
-int main()
+#ifdef U3LIB_USE_SLEPC
+#include <slepcsys.h>
+#endif
+
+int main(int argc, char* argv[])
 {
+#ifdef U3LIB_USE_SLEPC
+  SlepcInitialize(&argc, &argv, NULL, NULL);
+#endif
 
   int lambda, mu;
   std::cout << "Please enter SU(3) quantum numbers (lambda,mu): ";
@@ -67,6 +74,10 @@ int main()
 
   // Print error
   // std::cout << "Error: " << error(Lproj,nullspace) << std::endl;
+
+#ifdef U3LIB_USE_SLEPC
+  SlepcFinalize();
+#endif
 
   return 0;
 }

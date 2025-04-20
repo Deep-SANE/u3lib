@@ -8,16 +8,17 @@
 #include <Eigen/Dense>
 
 #include "U3decomposition.h"
-#include "so3Coeffs/SO3_CGC.h"
-#include "so3Coeffs/SO3_Racah.h"
 #include "U3_U6Z6Coeffs.h"
 #include "U3basis.h"
+
+#include <so3Coeffs/SO3_CGC.h>
+#include <so3Coeffs/SO3_Racah.h>
 
 namespace u3
 {
 
   // input by users: u3a, u3b, u3c, u3d, u3ab, u3cd, u3ac, u3bd, u3abcd
-  std::vector<double> U9(u3::irrep& u3A, std::vector<u3::gelfand>& gArrA,
+  inline std::vector<double> U9(u3::irrep& u3A, std::vector<u3::gelfand>& gArrA,
                          u3::irrep& u3B, std::vector<u3::gelfand>& gArrB,
                          u3::irrep& u3C, std::vector<u3::gelfand>& gArrC,
                          u3::irrep& u3D, std::vector<u3::gelfand>& gArrD,
@@ -28,7 +29,7 @@ namespace u3
                          u3::irrep& u3ABCD, std::vector<u3::gelfand>& gArrABCD,
                          int rhoABmax, int rhoCDmax, int rhoAB_CDmax,
                          int rhoACmax, int rhoBDmax, int rhoAC_BDmax,
-                         u3::SO3_CGC& cgcs, u3::SO3_Racah& racahs)
+                         u34utils::SO3_CGC& cgcs, u34utils::SO3_Racah& racahs)
   {
     std::vector<double> U(rhoACmax * rhoBDmax * rhoAB_CDmax * rhoABmax *
                               rhoCDmax * rhoAC_BDmax,

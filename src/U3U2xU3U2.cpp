@@ -6,14 +6,14 @@
 #include <string>
 #include <tuple>
 #include <vector>
-
+ 
 #include <U3decomposition.h>
 #include <U3basis.h>
 #include <U3U2xU3U2.h>
 
 #ifdef U3LIB_USE_SLEPC
 #include <slepcsys.h>
-#endif
+#endif 
 
 int main(int argc, char* argv[])
 {
@@ -101,7 +101,9 @@ int main(int argc, char* argv[])
   std::cout << "Elapsed time: " << duration.count() << " seconds or "
             << duration.count() / 60.0 << " minutes" << std::endl;
 
-#ifdef U3LIB_USE_SLEPC
+#ifdef U3LIB_USE_SLEPC 
   SlepcFinalize();
 #endif
+
+  return 0;
 }

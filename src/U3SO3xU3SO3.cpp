@@ -11,8 +11,15 @@
 #include <U3basis.h>
 #include <U3SO3xU3SO3.h>
 
-int main()
+#ifdef U3LIB_USE_SLEPC
+#include <slepcsys.h>
+#endif 
+
+int main(int argc, char* argv[])
 {
+#ifdef U3LIB_USE_SLEPC
+  SlepcInitialize(&argc, &argv, NULL, NULL);
+#endif
 
   int lam1, mu1, lam2, mu2;
   std::cout << "Please enter lambda1, mu1: ";
@@ -121,7 +128,7 @@ int main()
         pArrC.push_back(p);
     }
   }
-
+ 
   if (pArrA.empty() || pArrB.empty() || pArrC.empty())
   {
     std::cout << "Your angular momentum values are valid" << std::endl;
@@ -135,15 +142,14 @@ int main()
       std::cout << pArrB[i] << std::endl;
     for (int i = 0; i < pArrC.size(); i++)
       std::cout << pArrC[i] << std::endl;
-  */
+  */ 
 
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
 
   std::vector<std::tuple<int, int, int>> tArr;
 
-  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> coeffs =
-      WigU3SO3(rhomax, pArrA, pArrB, pArrC, tArr);
+  std::vector<Eigen::MatrixXd> coeffs = WigU3SO3(rhomax, pArrA, pArrB, pArrC, tArr);
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();
@@ -162,8 +168,7 @@ int main()
               << "for rho = 1 ... " << rhomax << std::endl;
     std::cout << "k1\tk2\tk3" << std::endl;
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs_temp =
-        coeffs[t];
+    Eigen::MatrixXd coeffs_temp = coeffs[t];
 
     for (int k1 = 0; k1 < pArrA[i].kappa; k1++)
       for (int k2 = 0; k2 < pArrB[j].kappa; k2++)
@@ -180,6 +185,10 @@ int main()
   // Output the time in seconds
   std::cout << "Elapsed time: " << duration.count() << " seconds or "
             << duration.count() / 60.0 << " minutes" << std::endl;
+
+#ifdef U3LIB_USE_SLEPC 
+  SlepcFinalize();
+#endif
 
   return 0;
 }

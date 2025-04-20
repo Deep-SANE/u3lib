@@ -8,11 +8,17 @@
 #include <vector>
 
 #include <Eigen/Dense>
+
+#ifdef U3LIB_SPARSE_MAT
 #include <Eigen/Sparse>
+#endif
 
 #include "U3basis.h"
 
 #include <nullspace_solver_qr.h>
+#ifdef U3LIB_USE_SLEPC
+#include <nullspace_solver_slepc.h>
+#endif
 
 namespace u3
 {
@@ -20,7 +26,7 @@ namespace u3
   // construction of the canonical basis: the canonical basis vectors will be
   // stored in an array
 
-  std::vector<int> expand_to_gelfand(int M, std::vector<u3::gelfand>& gArr)
+  inline std::vector<int> expand_to_gelfand(int M, std::vector<u3::gelfand>& gArr)
   {
     std::vector<int> indices;
 
@@ -35,9 +41,8 @@ namespace u3
   Finding the transformation by solving a system of linear equations resulted
   from acting L+ = sqrt(2)*(E13+E32)
   */
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-  Lprojection(u3::physicalvector& physvec, std::vector<u3::gelfand>& gArr,
-              std::vector<int>& indices)
+  inline auto Lprojection(u3::physicalvector& physvec, 
+    std::vector<u3::gelfand>& gArr, std::vector<int>& indices)
   {
 
     std::vector<int> new_indices;
@@ -72,43 +77,73 @@ namespace u3
       }
     }
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> projector(
-        new_indices.size(), indices.size());
+    int row_num = new_indices.size(), col_num = indices.size();
 
-    for (int i = 0; i < projector.rows(); i++)
+#ifdef U3LIB_SPARSE_MAT
+    std::vector<Eigen::Triplet<double>> ija;
+#else
+    Eigen::MatrixXd projector(row_num, col_num);
+#endif
+
+    for (int i = 0; i < row_num; i++)
     {
-      for (int j = 0; j < projector.cols(); j++)
+      for (int j = 0; j < col_num; j++)
       {
         // action of E13
         if (u3::E13_12(gArr[indices[j]], gArr[new_indices[i]]))
+#ifdef U3LIB_SPARSE_MAT
+          ija.emplace_back(i, j, gArr[indices[j]].e13_12());
+#else
           projector(i, j) = gArr[indices[j]].e13_12();
+#endif
         else if (u3::E13_22(gArr[indices[j]], gArr[new_indices[i]]))
+#ifdef U3LIB_SPARSE_MAT
+          ija.emplace_back(i, j, gArr[indices[j]].e13_22());
+#else
           projector(i, j) = gArr[indices[j]].e13_22();
+#endif
 
         // action of E32
         else if (u3::E23_12(gArr[new_indices[i]], gArr[indices[j]]))
+
+#ifdef U3LIB_SPARSE_MAT
+          ija.emplace_back(i, j, gArr[indices[j]].e32_12());
+#else
           projector(i, j) = gArr[indices[j]].e32_12();
+#endif          
         else if (u3::E23_22(gArr[new_indices[i]], gArr[indices[j]]))
+#ifdef U3LIB_SPARSE_MAT
+          ija.emplace_back(i, j, gArr[indices[j]].e32_22());
+#else
           projector(i, j) = gArr[indices[j]].e32_22();
+#endif 
 
         else
+#ifdef U3LIB_SPARSE_MAT
+          ;
+#else
           projector(i, j) = 0.0;
+#endif
       }
     }
+
+#ifdef U3LIB_SPARSE_MAT
+    Eigen::SparseMatrix<double> projector(row_num, col_num);
+    projector.setFromTriplets(ija.begin(), ija.end());
+#endif
+
     return projector;
   }
 
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-  lowerM(int kappa_max, int L, int M, std::vector<u3::gelfand>& gArr,
-         Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& transformation,
-         std::vector<int>& canoBasis, std::vector<int>& canoBasis_new)
+  inline Eigen::MatrixXd lowerM(int kappa_max, int L, int M, 
+    std::vector<u3::gelfand>& gArr, Eigen::MatrixXd& transformation,
+    std::vector<int>& canoBasis, std::vector<int>& canoBasis_new)
   {
     // normalize coefficient
     double n = std::sqrt(2.0 / ((L - M) * (L + M + 1.0)));
     // input M is for the new state
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> transformation_new(
-        canoBasis_new.size(), kappa_max);
+    Eigen::MatrixXd transformation_new(canoBasis_new.size(), kappa_max);
     transformation_new.setZero();
 
     // basis states are obtained by acting with two generators E31 and E23
@@ -142,16 +177,19 @@ namespace u3
   }
 
   // get the transformation for M <= L
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-  phys_to_cano(u3::physicalvector& physvec, int M, std::vector<int>& canoBasis,
-               std::vector<u3::gelfand>& gArr)
+  inline Eigen::MatrixXd phys_to_cano(u3::physicalvector& physvec, int M, 
+    std::vector<int>& canoBasis, std::vector<u3::gelfand>& gArr)
   {
     canoBasis = u3::expand_to_gelfand(physvec.L, gArr);
 
     // Building the projection matrix
-    Eigen::MatrixXd Lproj = u3::Lprojection(physvec, gArr, canoBasis);
+    auto Lproj = u3::Lprojection(physvec, gArr, canoBasis);
     // and solving its null space
+#ifdef U3LIB_USE_SLEPC
+    Eigen::MatrixXd transformation = u34utils::null_space_slepc(Lproj, physvec.kappa);
+#else
     Eigen::MatrixXd transformation = u34utils::null_space(Lproj);
+#endif
 
     // ensure the nullspace is solved correctly
     assert(physvec.kappa == transformation.cols());
@@ -161,7 +199,7 @@ namespace u3
       // store new expansion
       std::vector<int> canoBasis_new = u3::expand_to_gelfand(m, gArr);
 
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> transformation_new =
+      Eigen::MatrixXd transformation_new =
           lowerM(physvec.kappa, physvec.L, m, gArr, transformation, canoBasis,
                  canoBasis_new);
 
@@ -177,10 +215,7 @@ namespace u3
       {
         int phase =
             ((physvec.toprow.lam() + physvec.L + gArr[canoBasis[j]].n22()) %
-                 2 ==
-             0)
-                ? 1
-                : -1;
+                 2 == 0) ? 1 : -1;
         transformation.row(j) *= phase;
       }
     }

@@ -1,24 +1,21 @@
-#ifndef U3LIB_U3GENERATORSME_H
-#define U3LIB_U3GENERATORSME_H
+#ifndef U3LIB_U3GENERATORSRME_H
+#define U3LIB_U3GENERATORSRME_H
 
 #include <cmath>
 #include <iostream>
 #include <vector>
 
 #include <Eigen/Dense>
-#include <Eigen/Sparse>
 
 #include "U3basis.h"
 #include "U3SO3_to_U3U2U1.h"
 
 namespace u3
 {
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-  RME_L(u3::physicalvector& bra, u3::physicalvector& ket,
+  inline Eigen::MatrixXd RME_L(u3::physicalvector& bra, u3::physicalvector& ket,
         std::vector<int>& bra_kappa, std::vector<int>& ket_kappa)
   {
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> RME(bra.kappa,
-                                                              ket.kappa);
+    Eigen::MatrixXd RME(bra.kappa, ket.kappa);
 
     // running through the multiplicity labels
     for (int i = 1; i <= bra.kappa; i++)
@@ -47,12 +44,10 @@ namespace u3
     return RME;
   }
 
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-  RME_Q(u3::physicalvector& bra, u3::physicalvector& ket,
+  inline Eigen::MatrixXd RME_Q(u3::physicalvector& bra, u3::physicalvector& ket,
         std::vector<int>& bra_kappa, std::vector<int>& ket_kappa)
   {
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> RME(bra.kappa,
-                                                              ket.kappa);
+    Eigen::MatrixXd RME(bra.kappa, ket.kappa);
     RME.setZero();
 
     // Getting the tensor component of Q
@@ -74,13 +69,11 @@ namespace u3
       // Expanding in canonical basis
       std::vector<u3::gelfand> bra_gArr = u3::gelfandBasis(bra.toprow);
       std::vector<int> bra_indices;
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> bra_coeffs =
-          u3::phys_to_cano(bra, bra.L, bra_indices, bra_gArr);
+      Eigen::MatrixXd bra_coeffs = u3::phys_to_cano(bra, bra.L, bra_indices, bra_gArr);
 
       std::vector<u3::gelfand> ket_gArr = u3::gelfandBasis(ket.toprow);
       std::vector<int> ket_indices;
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> ket_coeffs =
-          u3::phys_to_cano(ket, ket.L, ket_indices, ket_gArr);
+      Eigen::MatrixXd ket_coeffs = u3::phys_to_cano(ket, ket.L, ket_indices, ket_gArr);
 
       double factor = std::sqrt(2.0 * bra.L + 1.0);
 
@@ -105,13 +98,11 @@ namespace u3
       // Expanding in canonical basis
       std::vector<u3::gelfand> bra_gArr = u3::gelfandBasis(bra.toprow);
       std::vector<int> bra_indices;
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> bra_coeffs =
-          u3::phys_to_cano(bra, bra.L, bra_indices, bra_gArr);
+      Eigen::MatrixXd bra_coeffs = u3::phys_to_cano(bra, bra.L, bra_indices, bra_gArr);
 
       std::vector<u3::gelfand> ket_gArr = u3::gelfandBasis(ket.toprow);
       std::vector<int> ket_indices;
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> ket_coeffs =
-          u3::phys_to_cano(ket, ket.L, ket_indices, ket_gArr);
+      Eigen::MatrixXd ket_coeffs = u3::phys_to_cano(ket, ket.L, ket_indices, ket_gArr);
 
       double factor =
           std::sqrt((ket.L + 2.0) * (2.0 * bra.L + 1.0) / (2.0 * ket.L));
@@ -164,8 +155,7 @@ namespace u3
       // Expanding in canonical basis
       std::vector<u3::gelfand> ket_gArr = u3::gelfandBasis(ket.toprow);
       std::vector<int> ket_indices;
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> ket_coeffs =
-          u3::phys_to_cano(ket, ket.L, ket_indices, ket_gArr);
+      Eigen::MatrixXd ket_coeffs = u3::phys_to_cano(ket, ket.L, ket_indices, ket_gArr);
 
       double factor =
           std::sqrt((ket.L + 1.0) * (2.0 * ket.L + 1.0) * (2.0 * ket.L + 3.0) /

@@ -7,23 +7,24 @@
 
 #include <Eigen/Dense>
 
-#include "so3Coeffs/SO3_CGC.h"
-#include "so3Coeffs/SO3_Racah.h"
 #include "U3basis.h"
 #include "U3U2xU3U2.h"
+
+#include <so3Coeffs/SO3_CGC.h>
+#include <so3Coeffs/SO3_Racah.h>
 
 namespace u3
 {
   // input by users: u3A, u3B, u3ABC, u3C, u3AB, u3BC
-  std::vector<double> U6(u3::irrep& u3A, std::vector<u3::gelfand>& gArrA,
+  inline std::vector<double> U6(u3::irrep& u3A, std::vector<u3::gelfand>& gArrA,
                          u3::irrep& u3B, std::vector<u3::gelfand>& gArrB,
                          u3::irrep& u3ABC, std::vector<u3::gelfand>& gArrABC,
                          u3::irrep& u3C, std::vector<u3::gelfand>& gArrC,
                          u3::irrep& u3AB, std::vector<u3::gelfand>& gArrAB,
                          int rhoABmax, int rhoAB_Cmax, u3::irrep& u3BC,
                          std::vector<u3::gelfand>& gArrBC, int rhoBCmax,
-                         int rhoA_BCmax, u3::SO3_CGC& cgcs,
-                         u3::SO3_Racah& racahs)
+                         int rhoA_BCmax, u34utils::SO3_CGC& cgcs,
+                         u34utils::SO3_Racah& racahs)
   {
     // coupling <gA;hwBC|hwABC> rhoA_BC
     u3::WigU3U2_coeffs coeffsA_BC(u3A, u3BC, u3ABC, rhoA_BCmax);
@@ -146,15 +147,15 @@ namespace u3
   }
 
   // input by users: u3B, u3B, u3ABC, u3C, u3AB, u3AC
-  std::vector<double> Z6(u3::irrep& u3B, std::vector<u3::gelfand>& gArrB,
+  inline std::vector<double> Z6(u3::irrep& u3B, std::vector<u3::gelfand>& gArrB,
                          u3::irrep& u3A, std::vector<u3::gelfand>& gArrA,
                          u3::irrep& u3ABC, std::vector<u3::gelfand>& gArrABC,
                          u3::irrep& u3C, std::vector<u3::gelfand>& gArrC,
                          u3::irrep& u3AB, std::vector<u3::gelfand>& gArrAB,
                          int rhoABmax, int rhoAB_Cmax, u3::irrep& u3AC,
                          std::vector<u3::gelfand>& gArrAC, int rhoACmax,
-                         int rhoAC_Bmax, u3::SO3_CGC& cgcs,
-                         u3::SO3_Racah& racahs)
+                         int rhoAC_Bmax, u34utils::SO3_CGC& cgcs,
+                         u34utils::SO3_Racah& racahs)
   {
     // coupling <hwAC;gB|hwABC> rhoAC_B
     u3::WigU3U2_coeffs coeffsAC_B(u3AC, u3B, u3ABC, rhoAC_Bmax);

@@ -10,7 +10,7 @@
 namespace u3
 {
 
-  std::pair<std::vector<u3::irrep>, std::vector<int>>
+  inline std::pair<std::vector<u3::irrep>, std::vector<int>>
   decomposition(const u3::irrep& u31, const u3::irrep& u32)
   {
     std::vector<u3::irrep> u3cs;
@@ -83,7 +83,7 @@ namespace u3
   }
 
   // compute the outer multiplicity directly, before normalization
-  int Rho(const u3::irrep& u3a, const u3::irrep& u3b, const u3::irrep& u3c)
+  inline int Rho(const u3::irrep& u3a, const u3::irrep& u3b, const u3::irrep& u3c)
   {
     // Implementation based on su3lib/src/utils.cpp mult()
     int rho = 0;

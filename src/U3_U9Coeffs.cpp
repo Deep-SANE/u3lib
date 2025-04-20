@@ -7,11 +7,18 @@
 #include <vector>
 
 #include <U3decomposition.h>
-#include <U3_U9Coeffs.h>
+#include <U3_U9Coeffs.h> 
 #include <U3basis.h>
 
-int main()
+#ifdef U3LIB_USE_SLEPC
+#include <slepcsys.h>
+#endif
+
+int main(int argc, char* argv[])
 {
+#ifdef U3LIB_USE_SLEPC
+  SlepcInitialize(&argc, &argv, NULL, NULL);
+#endif
 
   std::cout
       << "This program compute U9-recoupling coefficients of four U(3) irreps"
@@ -164,8 +171,8 @@ int main()
     std::vector<u3::gelfand> gArrBD = u3::gelfandBasis(u3bd[i_bd]);
     std::vector<u3::gelfand> gArrABCD = u3::gelfandBasis(u3ab_cd[i_ab_cd]);
 
-    u3::SO3_CGC cgcs;
-    u3::SO3_Racah racahs;
+    u34utils::SO3_CGC cgcs;
+    u34utils::SO3_Racah racahs;
 
     std::vector<double> coeffs =
         u3::U9(u3a, gArrA, u3b, gArrB, u3c, gArrC, u3d, gArrD, u3ab[i_ab],
@@ -234,6 +241,10 @@ int main()
   {
     std::cout << "Recoupling does not exist" << std::endl;
   }
+
+#ifdef U3LIB_USE_SLEPC 
+  SlepcFinalize();
+#endif
 
   return 0;
 }

@@ -8,21 +8,21 @@
 #include <vector>
 
 #include <Eigen/Dense>
-#include <Eigen/Sparse>
 
-#include "so3Coeffs/SO3_CGC.h"
 #include "U3basis.h"
 #include "U3SO3_to_U3U2U1.h"
 #include "U3U2xU3U2.h"
 
+#include <so3Coeffs/SO3_CGC.h>
+
 namespace u3
 {
   // generate Wigner U3->SO(3) coefficients for multiple values of l1, l2, l3
-  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>
-  WigU3SO3(int& rhomax, std::vector<u3::physicalvector>& pArrA,
-           std::vector<u3::physicalvector>& pArrB,
-           std::vector<u3::physicalvector>& pArrC,
-           std::vector<std::tuple<int, int, int>>& tArr)
+  inline std::vector<Eigen::MatrixXd>  WigU3SO3(int& rhomax, 
+    std::vector<u3::physicalvector>& pArrA,
+    std::vector<u3::physicalvector>& pArrB,
+    std::vector<u3::physicalvector>& pArrC,
+    std::vector<std::tuple<int, int, int>>& tArr)
   {
 
     // build Gelfand basis
@@ -32,8 +32,7 @@ namespace u3
 
     // find transformation for physical states belong to the 2nd irrep
     std::vector<std::vector<int>> canoBasisB(pArrB.size());
-    std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>
-        transformationB(pArrB.size());
+    std::vector<Eigen::MatrixXd> transformationB(pArrB.size());
     for (int i = 0; i < pArrB.size(); i++)
       transformationB[i] =
           u3::phys_to_cano(pArrB[i], pArrB[i].L, canoBasisB[i], gArrB);
@@ -41,8 +40,7 @@ namespace u3
     // find transformation for physical states belong to the 3rd irrep
     std::vector<int> w2mins(pArrC.size());
     std::vector<std::vector<int>> canoBasisC(pArrC.size());
-    std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>
-        transformationC(pArrC.size());
+    std::vector<Eigen::MatrixXd> transformationC(pArrC.size());
     for (int i = 0; i < pArrC.size(); i++)
     {
       transformationC[i] =
@@ -58,7 +56,7 @@ namespace u3
                     w2min, gArrA, gArrB, gArrC);
     // note that u3C and all gelfand states are already normalized here
 
-    u3::SO3_CGC cgcs;
+    u34utils::SO3_CGC cgcs;
 
     std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> coeffs;
 
@@ -66,8 +64,7 @@ namespace u3
     for (i = 0; i < pArrA.size(); i++)
     {
       std::vector<std::vector<int>> canoBasisA(1);
-      std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>
-          transformationA(1);
+      std::vector<Eigen::MatrixXd> transformationA(1);
       transformationA[0] =
           u3::phys_to_cano(pArrA[i], pArrA[i].L, canoBasisA[0], gArrA);
 
@@ -80,8 +77,8 @@ namespace u3
           {
             tArr.emplace_back(i, j, k);
 
-            Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coeffs_temp(
-                pArrA[i].kappa * pArrB[j].kappa * pArrC[k].kappa, rhomax);
+            Eigen::MatrixXd coeffs_temp(pArrA[i].kappa * pArrB[j].kappa 
+                                                * pArrC[k].kappa, rhomax);
             coeffs_temp.setZero();
 
             int mA = pArrC[k].L - pArrB[j].L, mA_abs;
@@ -96,11 +93,9 @@ namespace u3
               std::vector<int> canoBasisA_new =
                   u3::expand_to_gelfand(m_new, gArrA);
 
-              Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-                  transformationA_new =
-                      lowerM(pArrA[i].kappa, pArrA[i].L, m_new, gArrA,
-                             transformationA.back(), canoBasisA.back(),
-                             canoBasisA_new);
+              Eigen::MatrixXd transformationA_new = lowerM(pArrA[i].kappa, 
+                pArrA[i].L, m_new, gArrA, transformationA.back(), 
+                canoBasisA.back(), canoBasisA_new);
 
               canoBasisA.push_back(canoBasisA_new);
               transformationA.push_back(transformationA_new);

@@ -1,18 +1,20 @@
 # Copy this file to 'config.mk' and update it according to your system.
 
-U34UTILS_DIR=../u34utils
+U34UTILS_DIR=
 
 # set if needed:
-#EIGEN_DIR=
-#WIGXJPF_DIR=
+EIGEN_DIR=
+WIGXJPF_DIR=
 
 # SLEPc support:
 #USE_SLEPC=1
 
 # set if needed:
 ifdef USE_SLEPC
-#PETSC_DIR=
-#SLEPC_DIR=
+PETSC_DIR=
+PETSC_ARCH=
+SLEPC_DIR=
+SLEPC_ARCH=
 endif
 
 # compiler specification:
@@ -29,7 +31,9 @@ INC += -I$(WIGXJPF_DIR)/inc
 
 ifdef USE_SLEPC
 INC += -I$(PETSC_DIR)/include
+INC += -I$(PETSC_DIR)/$(PETSC_ARCH)/include
 INC += -I$(SLEPC_DIR)/include
+INC += -I$(SLEPC_DIR)/$(SLEPC_ARCH)/include
 endif
 
 # generic compiler options:
@@ -53,6 +57,7 @@ endif
 LDFLAGS += -L$(WIGXJPF_DIR)/lib -lwigxjpf
 
 ifdef USE_SLEPC
-LDFLAGS += -L$(PETSC_DIR)/lib -L$(SLEPC_DIR)/lib
+LDFLAGS += -L$(PETSC_DIR)/$(PETSC_ARCH)/lib 
+LDFLAGS += -L$(SLEPC_DIR)/$(SLEPC_ARCH)/lib
 LDFLAGS += -lpetsc -lslepc 
 endif
