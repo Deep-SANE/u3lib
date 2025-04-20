@@ -1,5 +1,5 @@
 #ifndef U3_U3LIB_U9COEFFS_H
-#define U3_U3LIB_U9COEFFS_H
+#define U3_U3LIB_U9COEFFS_H 
 
 #include <cmath>
 #include <iostream>
@@ -77,8 +77,8 @@ namespace u3
       if (rhoABC_Dmax == 0)
         continue;
 
-      // std::cout << u3ABC[i] << rhoAB_Cmax[i] << "," << rhoAC_Bmax[i] << ","
-      // << rhoABC_Dmax << std::endl;
+      std::cout << u3ABC[i] << rhoAB_Cmax[i] << "," << rhoAC_Bmax[i] << ","
+       << rhoABC_Dmax << std::endl;
 
       std::vector<double> U6_1 =
           u3::U6(u3AC, gArrAC, u3B, gArrB, u3ABCD, gArrABCD, u3D, gArrD,

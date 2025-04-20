@@ -121,6 +121,8 @@ namespace u3
           r++;
         }
       }
+      if (r == rhoA_BCmax)
+        break;
     }
 
     // std::cout << A << std::endl;
@@ -193,6 +195,7 @@ namespace u3
 
     int r = 0;
 
+    std::cout << "u3AC: " << u3AC << ", u3B: " << u3B << ", u3ABC: " << u3ABC << std::endl;
     for (int n12B = u3B.n13(); n12B >= u3B.n23(); n12B--)
     {
       for (int n22B = u3B.n23(); n22B >= u3B.n33(); n22B--)
@@ -254,6 +257,8 @@ namespace u3
           r++;
         }
       }
+      if (r == rhoAC_Bmax)
+        break;
     }
 
     // std::cout << A << std::endl;

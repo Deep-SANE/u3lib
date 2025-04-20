@@ -1,16 +1,16 @@
 #include <chrono>
-#include <fstream>
+#include <fstream> 
 #include <iomanip>
 #include <iostream>
-#include <sstream>
+#include <sstream> 
 #include <string>
-#include <vector>
+#include <vector> 
 
 #include <U3decomposition.h>
 #include <U3_U9Coeffs.h> 
 #include <U3basis.h>
 
-#ifdef U3LIB_USE_SLEPC
+#ifdef U3LIB_USE_SLEPC 
 #include <slepcsys.h>
 #endif
 
@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
   std::cin >> n13a >> n23a >> n33a;
   u3::irrep u3a(n13a, n23a, n33a);
   if (n33a != 0)
-  {
+  {  
     u3a.normalize();
     std::cout << "Your irrep is normalized to " << u3a << std::endl;
   }
