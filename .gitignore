@@ -21,7 +21,7 @@
 
 # system-local configuration file in root directory:
 
-./config.local.mk
+config.local.mk
 
 # all built executable binary files:
 
