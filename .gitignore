@@ -9,7 +9,6 @@
 *.fdb_latexmk
 *.fls
 *.log
-*.mk 
 *.o
 *.out
 *.pdf
@@ -22,7 +21,7 @@
 
 # system-local configuration file in root directory:
 
-./config.mk
+./config.local.mk
 
 # all built executable binary files:
 
