@@ -1,6 +1,4 @@
-ifndef U3LIB_DIR
 U3LIB_DIR:=$(abspath $(dir $(lastword $(MAKEFILE_LIST))))
-endif
 
 include $(U3LIB_DIR)/config.local.mk
 
