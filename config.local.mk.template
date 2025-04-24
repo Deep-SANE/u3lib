@@ -1,0 +1,28 @@
+# Copy this file to 'config.local.mk' and update it according to your system.
+
+# All set paths should be absolute!
+
+#U34UTILS_DIR=
+#EIGEN_DIR=
+#WIGXJPF_DIR=
+
+# set USE_SLEPC to 1 to enable SLEPc support:
+USE_SLEPC=0
+#PETSC_DIR=
+#PETSC_ARCH=
+#SLEPC_DIR=
+#SLEPC_ARCH=
+
+# compiler specification:
+CXX = g++ 
+MPICXX = mpicxx  # relevant for SLEPc
+
+# generic compiler options:
+CXXFLAGS += -std=c++17
+
+# optimization / debugging options:
+CXXFLAGS += -O3 
+CXXFLAGS += -DNDEBUG 
+#CXXFLAGS += -O0 
+#CXXFLAGS += -g 
+#CXXFLAGS += -fsanitize=address
