@@ -888,13 +888,14 @@ namespace u3
   }
 
   // all reduced coupling coefficients
-  inline auto WigU3U2(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C,
-               int rhomax, int w2min, std::vector<u3::gelfand>& gArrA,
-               std::vector<u3::gelfand>& gArrB, std::vector<u3::gelfand>& gArrC)
+  inline auto WigU3U2(const u3::irrep& u3A, const u3::irrep& u3B, 
+                      u3::irrep& u3C, int rhomax, int w2min, 
+                      const std::vector<u3::gelfand>& gArrA,
+                      std::vector<u3::gelfand>& gArrB, 
+                      std::vector<u3::gelfand>& gArrC,
+                      u34utils::SO3_CGC& cgcs)
   {
     WigU3U2_coeffs coeffs(u3A, u3B, u3C, rhomax);
-
-    u34utils::SO3_CGC cgcs;
 
     u3::HighestWeightReducedCoeffs(gArrA, gArrB, gArrC, cgcs, coeffs);
 

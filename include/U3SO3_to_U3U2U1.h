@@ -26,7 +26,7 @@ namespace u3
   // construction of the canonical basis: the canonical basis vectors will be
   // stored in an array
 
-  inline std::vector<int> expand_to_gelfand(int M, std::vector<u3::gelfand>& gArr)
+  inline std::vector<int> expand_to_gelfand(int M, const std::vector<u3::gelfand>& gArr)
   {
     std::vector<int> indices;
 
@@ -136,8 +136,10 @@ namespace u3
   }
 
   inline Eigen::MatrixXd lowerM(int kappa_max, int L, int M, 
-    std::vector<u3::gelfand>& gArr, Eigen::MatrixXd& transformation,
-    std::vector<int>& canoBasis, std::vector<int>& canoBasis_new)
+    const std::vector<u3::gelfand>& gArr, 
+    const Eigen::MatrixXd& transformation,
+    const std::vector<int>& canoBasis, 
+    const std::vector<int>& canoBasis_new)
   {
     // normalize coefficient
     double n = std::sqrt(2.0 / ((L - M) * (L + M + 1.0)));
@@ -154,24 +156,32 @@ namespace u3
         if (u3::E13_12(gArr[canoBasis_new[i]], gArr[canoBasis[j]]))
           for (int k = 0; k < kappa_max; k++)
             transformation_new(i, k) +=
-                n * transformation(j, k) * gArr[canoBasis[j]].e31_12();
+                transformation(j, k) * gArr[canoBasis[j]].e31_12();
         else if (u3::E13_22(gArr[canoBasis_new[i]], gArr[canoBasis[j]]))
           for (int k = 0; k < kappa_max; k++)
             transformation_new(i, k) +=
-                n * transformation(j, k) * gArr[canoBasis[j]].e31_22();
+                transformation(j, k) * gArr[canoBasis[j]].e31_22();
         else if (u3::E23_12(gArr[canoBasis[j]], gArr[canoBasis_new[i]]))
           for (int k = 0; k < kappa_max; k++)
             transformation_new(i, k) +=
-                n * transformation(j, k) * gArr[canoBasis[j]].e23_12();
+                transformation(j, k) * gArr[canoBasis[j]].e23_12();
         else if (u3::E23_22(gArr[canoBasis[j]], gArr[canoBasis_new[i]]))
           for (int k = 0; k < kappa_max; k++)
             transformation_new(i, k) +=
-                n * transformation(j, k) * gArr[canoBasis[j]].e23_22();
+                transformation(j, k) * gArr[canoBasis[j]].e23_22();
       }
 
       for (int k = 0; k < kappa_max; k++)
-        if (std::fabs(transformation_new(i, k)) < 1e-12)
+      {
+        transformation_new(i, k) *= n;
+#ifdef U3LIB_USE_SLEPC
+        double tol = 1e-12;
+#else
+        double tol = 1e-12
+#endif
+        if (std::fabs(transformation_new(i, k)) < tol)
           transformation_new(i, k) = 0.0;
+      }
     }
     return transformation_new;
   }

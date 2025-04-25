@@ -9,7 +9,7 @@
 #ifdef U3LIB_USE_SLEPC
 #include <slepcsys.h>
 #endif
-
+  
 int main(int argc, char* argv[])
 {
 #ifdef U3LIB_USE_SLEPC
@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
     std::cout << "(" << i << "): |" << "(" << pArr[i].toprow.lam() << ","
               << pArr[i].toprow.mu() << "), kappa_max=" << pArr[i].kappa
               << ", L=" << pArr[i].L << ">" << std::endl;
-  }
+  } 
 
   int index;
   std::cout << "Please enter the index of the state that you are interested: ";

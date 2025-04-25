@@ -4,13 +4,13 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <tuple>
-#include <vector>
+#include <tuple> 
+#include <vector> 
 
 #include <U3decomposition.h>
 #include <U3basis.h>
-#include <U3SO3xU3SO3.h>
-
+#include <U3SO3xU3SO3.h> 
+ 
 #ifdef U3LIB_USE_SLEPC
 #include <slepcsys.h>
 #endif 
@@ -148,8 +148,9 @@ int main(int argc, char* argv[])
   auto t0 = std::chrono::high_resolution_clock::now();
 
   std::vector<std::tuple<int, int, int>> tArr;
+  u34utils::SO3_CGC cgcs;
 
-  std::vector<Eigen::MatrixXd> coeffs = WigU3SO3(rhomax, pArrA, pArrB, pArrC, tArr);
+  std::vector<Eigen::MatrixXd> coeffs = WigU3SO3(rhomax, pArrA, pArrB, pArrC, tArr, cgcs);
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();

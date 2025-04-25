@@ -22,7 +22,8 @@ namespace u3
     std::vector<u3::physicalvector>& pArrA,
     std::vector<u3::physicalvector>& pArrB,
     std::vector<u3::physicalvector>& pArrC,
-    std::vector<std::tuple<int, int, int>>& tArr)
+    std::vector<std::tuple<int, int, int>>& tArr,
+    u34utils::SO3_CGC& cgcs)
   {
 
     // build Gelfand basis
@@ -53,10 +54,8 @@ namespace u3
     int w2min = *std::min_element(w2mins.begin(), w2mins.end());
     auto canoCoeffs =
         u3::WigU3U2(pArrA[0].toprow, pArrB[0].toprow, pArrC[0].toprow, rhomax,
-                    w2min, gArrA, gArrB, gArrC);
+                    w2min, gArrA, gArrB, gArrC, cgcs);
     // note that u3C and all gelfand states are already normalized here
-
-    u34utils::SO3_CGC cgcs;
 
     std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> coeffs;
 
