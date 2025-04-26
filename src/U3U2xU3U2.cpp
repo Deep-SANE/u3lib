@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
   u34utils::SO3_CGC cgcs;
                            
   auto coeffs = u3::WigU3U2(u3a, u3b, u3cs[index], rhomaxs[index], -1, gArrA,
-                            gArrB, gArrC, cgcs);
+                            gArrB, gArrC, cgcs); 
   // after this, u3cs[index] is normalized, all gelfand states in gArrC are also
   // normalized
 

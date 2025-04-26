@@ -907,9 +907,12 @@ namespace u3
 
       std::vector<std::vector<int>> all_same_weight_gArrC(w2max - w2min + 1);
       for (int i = 0; i < gArrC.size(); i++)
-        if (gArrC[i].n12() == gArrC[i].n11())
-          all_same_weight_gArrC[w2max - gArrC[i].n12() - gArrC[i].n22()]
-              .push_back(i);
+      {
+        int index = w2max - gArrC[i].n12() - gArrC[i].n22();
+        if (gArrC[i].n12() == gArrC[i].n11() && index >= 0 
+            && index < all_same_weight_gArrC.size())
+          all_same_weight_gArrC[index].push_back(i);
+      }
 
       for (int w2 = w2max - 1; w2 >= w2min; w2--)
       {
