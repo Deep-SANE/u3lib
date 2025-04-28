@@ -177,7 +177,7 @@ namespace u3
 #ifdef U3LIB_USE_SLEPC
         double tol = 1e-12;
 #else
-        double tol = 1e-12
+        double tol = 1e-12;
 #endif
         if (std::fabs(transformation_new(i, k)) < tol)
           transformation_new(i, k) = 0.0;
