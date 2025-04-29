@@ -180,9 +180,9 @@ namespace u3
       if ((k1 < rec.kmin) || (k1 > rec.kmax))
         return {false, false, 0};
 
-      assert(rec.first_row + k1 < coeffs_.rows());
-
       std::size_t row = rec.first_row + k1 - rec.kmin;
+
+      assert(row < coeffs_.rows());
 
       return {true, computed_[row] == rhomax_, row};
     }
