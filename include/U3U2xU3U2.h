@@ -447,15 +447,15 @@ namespace u3
             jj2 = gArr2[i2].Lambdax2(), mm2 = gArr2[i2].MLambdax2(),
             jj3 = gArr3[0].Lambdax2(), mm3 = gArr3[0].MLambdax2();
 
+        double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+
+        if (std::fabs(cgc) != 0.0)
+          coeffs.set_row(acc, nullspace.row(i) / cgc);
+/*
         if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
             (jj1 + jj2) >= jj3)
-        {
-          double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
-
-          assert(cgc != 0.0);
-
           coeffs.set_row(acc, nullspace.row(i) / cgc);
-        }
+*/
       }
     }
 
@@ -848,7 +848,6 @@ namespace u3
       {
         for (int j = 0; j < uncoupled_same_weight_gArr3.size(); j++)
         {
-
           int i1 = uncoupled_same_weight_gArr3[j].first,
               i2 = uncoupled_same_weight_gArr3[j].second,
               i3 = same_weight_gArr3[i];
@@ -863,19 +862,18 @@ namespace u3
                 jj2 = gArr2[i2].Lambdax2(), mm2 = gArr2[i2].MLambdax2(),
                 jj3 = gArr3[i3].Lambdax2(), mm3 = gArr3[i3].MLambdax2();
 
-            if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
-                (jj1 + jj2) >= jj3)
-            {
-              double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+            double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
+            //if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
+                //(jj1 + jj2) >= jj3)
+            if (std::fabs(cgc) != 0.0)
+            {             
               for (int r = 0; r < rhomax; r++)
               {
-                if (std::fabs(coeffs_temp[r](i, j)) < 1e-15)
-                  coeffs_temp[r](i, j) = 0.0;
-
-                assert(cgc != 0.0);
-
-                coeffs_row(r) = coeffs_temp[r](i, j) / cgc;
+                if (std::fabs(coeffs_temp[r](i, j)) < 1e-14)
+                  coeffs_row(r) = 0.0;
+                else
+                  coeffs_row(r) = coeffs_temp[r](i, j) / cgc;
               }
 
               coeffs.set_row(acc, coeffs_row);
@@ -892,7 +890,7 @@ namespace u3
   inline auto WigU3U2(const u3::irrep& u3A, const u3::irrep& u3B, 
                       u3::irrep& u3C, int rhomax, int w2min, 
                       const std::vector<u3::gelfand>& gArrA,
-                      std::vector<u3::gelfand>& gArrB, 
+                      const std::vector<u3::gelfand>& gArrB, 
                       std::vector<u3::gelfand>& gArrC,
                       u34utils::SO3_CGC& cgcs)
   {
@@ -932,7 +930,7 @@ namespace u3
 
     return coeffs;
   }
-
+ 
   class WigU3U2_db
   {
     using key_type = std::array<int, 9>;
@@ -941,21 +939,22 @@ namespace u3
   public:
     ~WigU3U2_db()
     {
-      std::cout << "WigU3U2_db stats:" << std::endl;
+      //std::cout << "WigU3U2_db stats:" << std::endl;
 
-      for (const auto& [k, v] : map_)
-        std::cout << "(" << k[0] << "," << k[1] << "," << k[2] << ";" << k[3]
-                  << "," << k[4] << "," << k[5] << ";" << k[6] << "," << k[7]
-                  << "," << k[8] << "): " << v << std::endl;
+      //for (const auto& [k, v] : map_)
+        //std::cout << "(" << k[0] << "," << k[1] << "," << k[2] << ";" << k[3]
+                  //<< "," << k[4] << "," << k[5] << ";" << k[6] << "," << k[7]
+                 // << "," << k[8] << "): " << v << std::endl;
     }
 
     auto get(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C,
              int rhomax, int w2min, const std::vector<u3::gelfand>& gArrA,
-             std::vector<u3::gelfand>& gArrB, std::vector<u3::gelfand>& gArrC,
+             const std::vector<u3::gelfand>& gArrB, std::vector<u3::gelfand>& gArrC,
              u34utils::SO3_CGC& cgcs)
     {
-      key_type key = {u3A.n13(), u3A.n23(), u3A.n33(), u3B.n13(), u3B.n23(),
-                      u3B.n33(), u3C.n13(), u3C.n23(), u3C.n33()};
+      key_type key = {u3A.n13(), u3A.n23(), u3A.n33(), 
+                      u3B.n13(), u3B.n23(), u3B.n33(), 
+                      u3C.n13(), u3C.n23(), u3C.n33()};
 
       map_[key]++;
 
