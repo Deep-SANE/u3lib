@@ -26,7 +26,8 @@ namespace u3
   // construction of the canonical basis: the canonical basis vectors will be
   // stored in an array
 
-  inline std::vector<int> expand_to_gelfand(int M, const std::vector<u3::gelfand>& gArr)
+  inline std::vector<int> 
+  expand_to_gelfand(int M, const std::vector<u3::gelfand>& gArr)
   {
     std::vector<int> indices;
 
@@ -42,7 +43,7 @@ namespace u3
   from acting L+ = sqrt(2)*(E13+E32)
   */
   inline auto Lprojection(u3::physicalvector& physvec, 
-    std::vector<u3::gelfand>& gArr, std::vector<int>& indices)
+    const std::vector<u3::gelfand>& gArr, std::vector<int>& indices)
   {
 
     std::vector<int> new_indices;
@@ -188,7 +189,7 @@ namespace u3
 
   // get the transformation for M <= L
   inline Eigen::MatrixXd phys_to_cano(u3::physicalvector& physvec, int M, 
-    std::vector<int>& canoBasis, std::vector<u3::gelfand>& gArr)
+    std::vector<int>& canoBasis, const std::vector<u3::gelfand>& gArr)
   {
     canoBasis = u3::expand_to_gelfand(physvec.L, gArr);
 
