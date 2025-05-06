@@ -938,7 +938,7 @@ namespace u3
 
   public:
     auto& get(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C,
-              int rhomax, int w2min, const std::vector<u3::gelfand>& gArrA,
+              int rhomax, const std::vector<u3::gelfand>& gArrA,
               const std::vector<u3::gelfand>& gArrB,
               std::vector<u3::gelfand>& gArrC, u34utils::SO3_CGC& cgcs)
     {
@@ -949,7 +949,7 @@ namespace u3
       auto iter = map_.find(key);
       if (iter == map_.end())
       {
-        auto p = map_.try_emplace(key, WigU3U2(u3A, u3B, u3C, rhomax, w2min, gArrA, gArrB, gArrC, cgcs));
+        auto p = map_.try_emplace(key, WigU3U2(u3A, u3B, u3C, rhomax, -1, gArrA, gArrB, gArrC, cgcs));
         assert(p.second);
         iter = p.first;
       }
