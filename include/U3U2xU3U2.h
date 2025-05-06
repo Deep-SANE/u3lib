@@ -934,31 +934,27 @@ namespace u3
   class WigU3U2_db
   {
     using key_type = std::array<int, 9>;
-    std::map<key_type, std::size_t> map_;
+    std::map<key_type, WigU3U2_coeffs> map_;
 
   public:
-    ~WigU3U2_db()
-    {
-      //std::cout << "WigU3U2_db stats:" << std::endl;
-
-      //for (const auto& [k, v] : map_)
-        //std::cout << "(" << k[0] << "," << k[1] << "," << k[2] << ";" << k[3]
-                  //<< "," << k[4] << "," << k[5] << ";" << k[6] << "," << k[7]
-                 // << "," << k[8] << "): " << v << std::endl;
-    }
-
-    auto get(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C,
-             int rhomax, int w2min, const std::vector<u3::gelfand>& gArrA,
-             const std::vector<u3::gelfand>& gArrB, std::vector<u3::gelfand>& gArrC,
-             u34utils::SO3_CGC& cgcs)
+    auto& get(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C,
+              int rhomax, int w2min, const std::vector<u3::gelfand>& gArrA,
+              const std::vector<u3::gelfand>& gArrB,
+              std::vector<u3::gelfand>& gArrC, u34utils::SO3_CGC& cgcs)
     {
       key_type key = {u3A.n13(), u3A.n23(), u3A.n33(), 
                       u3B.n13(), u3B.n23(), u3B.n33(), 
                       u3C.n13(), u3C.n23(), u3C.n33()};
 
-      map_[key]++;
+      auto iter = map_.find(key);
+      if (iter == map_.end())
+      {
+        auto p = map_.try_emplace(key, WigU3U2(u3A, u3B, u3C, rhomax, w2min, gArrA, gArrB, gArrC, cgcs));
+        assert(p.second);
+        iter = p.first;
+      }
 
-      return WigU3U2(u3A, u3B, u3C, rhomax, w2min, gArrA, gArrB, gArrC, cgcs);
+      return iter->second;
     }
   };
 } // namespace u3
