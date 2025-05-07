@@ -931,17 +931,26 @@ namespace u3
     return coeffs;
   }
  
+#define U3LIB_ENABLE_WIGU3U2_CACHE
   class WigU3U2_db
   {
+#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
     using key_type = std::array<int, 9>;
     std::map<key_type, WigU3U2_coeffs> map_;
+#endif
 
   public:
-    auto& get(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C,
-              int rhomax, const std::vector<u3::gelfand>& gArrA,
-              const std::vector<u3::gelfand>& gArrB,
-              std::vector<u3::gelfand>& gArrC, u34utils::SO3_CGC& cgcs)
+#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
+    auto&
+#else
+    auto
+#endif
+    get(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C, int rhomax,
+        const std::vector<u3::gelfand>& gArrA,
+        const std::vector<u3::gelfand>& gArrB, std::vector<u3::gelfand>& gArrC,
+        u34utils::SO3_CGC& cgcs)
     {
+#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
       key_type key = {u3A.n13(), u3A.n23(), u3A.n33(), 
                       u3B.n13(), u3B.n23(), u3B.n33(), 
                       u3C.n13(), u3C.n23(), u3C.n33()};
@@ -955,6 +964,9 @@ namespace u3
       }
 
       return iter->second;
+#else
+      return WigU3U2(u3A, u3B, u3C, rhomax, -1, gArrA, gArrB, gArrC, cgcs);
+#endif
     }
   };
 } // namespace u3
