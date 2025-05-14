@@ -150,7 +150,7 @@ int main(int argc, char* argv[])
   std::vector<std::tuple<int, int, int>> tArr;
   u34utils::SO3_CGC cgcs;
 
-  std::vector<Eigen::MatrixXd> coeffs = WigU3SO3(rhomax, pArrA, pArrB, pArrC, tArr, cgcs);
+  std::vector<Eigen::MatrixXd> coeffs = u3::WigU3SO3(rhomax, pArrA, pArrB, pArrC, tArr, cgcs);
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();

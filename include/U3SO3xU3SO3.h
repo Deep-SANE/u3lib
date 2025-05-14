@@ -57,7 +57,7 @@ namespace u3
                     w2min, gArrA, gArrB, gArrC, cgcs);
     // note that u3C and all gelfand states are already normalized here
 
-    std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> coeffs;
+    std::vector<Eigen::MatrixXd> coeffs;
 
     int i, j, k;
     for (i = 0; i < pArrA.size(); i++)
@@ -92,7 +92,7 @@ namespace u3
               std::vector<int> canoBasisA_new =
                   u3::expand_to_gelfand(m_new, gArrA);
 
-              Eigen::MatrixXd transformationA_new = lowerM(pArrA[i].kappa, 
+              Eigen::MatrixXd transformationA_new = u3::lowerM(pArrA[i].kappa, 
                 pArrA[i].L, m_new, gArrA, transformationA.back(), 
                 canoBasisA.back(), canoBasisA_new);
 
@@ -143,10 +143,7 @@ namespace u3
                   int phase =
                       ((pArrA[i].toprow.lam() + pArrA[i].L +
                         gArrA[canoBasisA[pArrA[i].L - mA_abs][iA]].n22()) %
-                           2 ==
-                       0)
-                          ? 1
-                          : -1;
+                           2 == 0) ? 1 : -1;
 
                   for (int r = 0; r < rhomax; r++)
                     for (int k1 = 0; k1 < pArrA[i].kappa; k1++)
@@ -154,18 +151,13 @@ namespace u3
                         for (int k3 = 0; k3 < pArrC[k].kappa; k3++)
                           if (mA >= 0)
                             coeffs_temp((k1 * pArrB[j].kappa + k2) *
-                                                pArrC[k].kappa +
-                                            k3,
-                                        r) +=
+                                         pArrC[k].kappa + k3, r) +=
                                 transformationA[pArrA[i].L - mA_abs](iA, k1) *
                                 transformationB[j](iB, k2) *
                                 transformationC[k](iC, k3) * wigU3U2U1(0, r);
                           else
                             coeffs_temp((k1 * pArrB[j].kappa + k2) *
-                                                pArrC[k].kappa +
-                                            k3,
-                                        r) +=
-                                phase *
+                                         pArrC[k].kappa + k3, r) += phase *
                                 transformationA[pArrA[i].L - mA_abs](iA, k1) *
                                 transformationB[j](iB, k2) *
                                 transformationC[k](iC, k3) * wigU3U2U1(0, r);
