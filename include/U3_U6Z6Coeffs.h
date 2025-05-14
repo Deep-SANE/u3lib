@@ -15,46 +15,33 @@
 
 namespace u3
 {
-  // input by users: u3A, u3B, u3ABC, u3C, u3AB, u3BC
-  inline std::vector<double> U6(u3::irrep& u3A, std::vector<u3::gelfand>& gArrA,
-                         u3::irrep& u3B, std::vector<u3::gelfand>& gArrB,
-                         u3::irrep& u3ABC, std::vector<u3::gelfand>& gArrABC,
-                         u3::irrep& u3C, std::vector<u3::gelfand>& gArrC,
-                         u3::irrep& u3AB, std::vector<u3::gelfand>& gArrAB,
-                         int rhoABmax, int rhoAB_Cmax, u3::irrep& u3BC,
-                         std::vector<u3::gelfand>& gArrBC, int rhoBCmax,
-                         int rhoA_BCmax, u34utils::SO3_CGC& cgcs,
-                         u34utils::SO3_Racah& racahs)
+  // input by users: u3A, u3B, u3ABC, u3C, u3AB, u3BC, all normalized
+  inline std::vector<double> 
+    U6(const u3::irrep& u3A, const std::vector<u3::gelfand>& gArrA,
+       const u3::irrep& u3B, const std::vector<u3::gelfand>& gArrB,
+       const u3::irrep& u3ABC, const std::vector<u3::gelfand>& gArrABC,
+       const u3::irrep& u3C, const std::vector<u3::gelfand>& gArrC,
+       const u3::irrep& u3AB, const std::vector<u3::gelfand>& gArrAB,
+       int rhoABmax, int rhoAB_Cmax, 
+       const u3::irrep& u3BC, const std::vector<u3::gelfand>& gArrBC, 
+       int rhoBCmax, int rhoA_BCmax, 
+       u34utils::SO3_CGC& cgcs, u34utils::SO3_Racah& racahs)
   {
     // coupling <gA;hwBC|hwABC> rhoA_BC
-    u3::WigU3U2_coeffs coeffsA_BC(u3A, u3BC, u3ABC, rhoA_BCmax);
-    u3::HighestWeightReducedCoeffs(gArrA, gArrBC, gArrABC, cgcs, coeffsA_BC);
+    auto coeffsA_BC = u3::WigU3U2(u3A, u3BC, u3ABC, rhoA_BCmax, 
+      u3ABC.n13() + u3ABC.n23(), gArrA, gArrBC, gArrABC, cgcs); 
 
     // coupling <gAB;gC|hwABC> rhoAB_C
-    u3::WigU3U2_coeffs coeffsAB_C(u3AB, u3C, u3ABC, rhoAB_Cmax);
-    u3::HighestWeightReducedCoeffs(gArrAB, gArrC, gArrABC, cgcs, coeffsAB_C);
+    auto coeffsAB_C = u3::WigU3U2(u3AB, u3C, u3ABC, rhoAB_Cmax, 
+      u3ABC.n13() + u3ABC.n23(), gArrAB, gArrC, gArrABC, cgcs); 
 
     // coupling <gB;gC|hwBC> rhoBC
-    u3::WigU3U2_coeffs coeffsBC(u3B, u3C, u3BC, rhoBCmax);
-    u3::HighestWeightReducedCoeffs(gArrB, gArrC, gArrBC, cgcs, coeffsBC);
+    auto coeffsBC = u3::WigU3U2(u3B, u3C, u3BC, rhoBCmax, 
+      u3BC.n13() + u3BC.n23(), gArrB, gArrC, gArrBC, cgcs); 
 
     // coupling <gA;gB|gAB> rhoAB
-    u3::WigU3U2_coeffs coeffsAB(u3A, u3B, u3AB, rhoABmax);
-    u3::HighestWeightReducedCoeffs(gArrA, gArrB, gArrAB, cgcs, coeffsAB);
-
-    int w2max = u3AB.n13() + u3AB.n23(), w2min = u3AB.n23() + u3AB.n33();
-    std::vector<std::vector<int>> all_same_weight_gArrAB(w2max - w2min + 1);
-    for (int i = 0; i < gArrAB.size(); i++)
-      if (gArrAB[i].n12() == gArrAB[i].n11())
-        all_same_weight_gArrAB[w2max - gArrAB[i].n12() - gArrAB[i].n22()]
-            .push_back(i);
-
-    for (int w2 = w2max - 1; w2 >= w2min; w2--)
-    {
-      u3::LowerWeightReducedCoeffs(gArrA, gArrB, gArrAB, rhoABmax,
-                                   all_same_weight_gArrAB[w2max - w2], cgcs,
-                                   coeffsAB);
-    }
+    auto coeffsAB = u3::WigU3U2(u3A, u3B, u3AB, rhoABmax, -1, 
+      gArrA, gArrB, gArrAB, cgcs); 
 
     Eigen::MatrixXd A(rhoA_BCmax, rhoA_BCmax);
     Eigen::MatrixXd B(rhoA_BCmax, rhoABmax * rhoAB_Cmax * rhoBCmax);
@@ -149,45 +136,32 @@ namespace u3
   }
 
   // input by users: u3B, u3B, u3ABC, u3C, u3AB, u3AC
-  inline std::vector<double> Z6(u3::irrep& u3B, std::vector<u3::gelfand>& gArrB,
-                         u3::irrep& u3A, std::vector<u3::gelfand>& gArrA,
-                         u3::irrep& u3ABC, std::vector<u3::gelfand>& gArrABC,
-                         u3::irrep& u3C, std::vector<u3::gelfand>& gArrC,
-                         u3::irrep& u3AB, std::vector<u3::gelfand>& gArrAB,
-                         int rhoABmax, int rhoAB_Cmax, u3::irrep& u3AC,
-                         std::vector<u3::gelfand>& gArrAC, int rhoACmax,
-                         int rhoAC_Bmax, u34utils::SO3_CGC& cgcs,
-                         u34utils::SO3_Racah& racahs)
+  inline std::vector<double> 
+    Z6(const u3::irrep& u3B, const std::vector<u3::gelfand>& gArrB,
+       const u3::irrep& u3A, const std::vector<u3::gelfand>& gArrA,
+       const u3::irrep& u3ABC, const std::vector<u3::gelfand>& gArrABC,
+       const u3::irrep& u3C, const std::vector<u3::gelfand>& gArrC,
+       const u3::irrep& u3AB, const std::vector<u3::gelfand>& gArrAB,
+       int rhoABmax, int rhoAB_Cmax, 
+       const u3::irrep& u3AC, const std::vector<u3::gelfand>& gArrAC, 
+       int rhoACmax, int rhoAC_Bmax, 
+       u34utils::SO3_CGC& cgcs, u34utils::SO3_Racah& racahs)
   {
     // coupling <hwAC;gB|hwABC> rhoAC_B
-    u3::WigU3U2_coeffs coeffsAC_B(u3AC, u3B, u3ABC, rhoAC_Bmax);
-    u3::HighestWeightReducedCoeffs(gArrAC, gArrB, gArrABC, cgcs, coeffsAC_B);
+    auto coeffsAC_B = u3::WigU3U2(u3AC, u3B, u3ABC, rhoAC_Bmax, 
+      u3ABC.n13() + u3ABC.n23(), gArrAC, gArrB, gArrABC, cgcs);
 
     // coupling <gAB;gC|hwABC> rhoAB_C
-    u3::WigU3U2_coeffs coeffsAB_C(u3AB, u3C, u3ABC, rhoAB_Cmax);
-    u3::HighestWeightReducedCoeffs(gArrAB, gArrC, gArrABC, cgcs, coeffsAB_C);
+    auto coeffsAB_C = u3::WigU3U2(u3AB, u3C, u3ABC, rhoAB_Cmax, 
+      u3ABC.n13() + u3ABC.n23(), gArrAB, gArrC, gArrABC, cgcs);
 
     // coupling <gA;gC|hwAC> rhoAC
-    u3::WigU3U2_coeffs coeffsAC(u3A, u3C, u3AC, rhoACmax);
-    u3::HighestWeightReducedCoeffs(gArrA, gArrC, gArrAC, cgcs, coeffsAC);
+    auto coeffsAC = u3::WigU3U2(u3A, u3C, u3AC, rhoACmax, 
+      u3AC.n13() + u3AC.n23(), gArrA, gArrC, gArrAC, cgcs);
 
     // coupling <gA;gB|gAB> rhoAB
-    u3::WigU3U2_coeffs coeffsAB(u3A, u3B, u3AB, rhoABmax);
-    u3::HighestWeightReducedCoeffs(gArrA, gArrB, gArrAB, cgcs, coeffsAB);
-
-    int w2max = u3AB.n13() + u3AB.n23(), w2min = u3AB.n23() + u3AB.n33();
-    std::vector<std::vector<int>> all_same_weight_gArrAB(w2max - w2min + 1);
-    for (int i = 0; i < gArrAB.size(); i++)
-      if (gArrAB[i].n12() == gArrAB[i].n11())
-        all_same_weight_gArrAB[w2max - gArrAB[i].n12() - gArrAB[i].n22()]
-            .push_back(i);
-
-    for (int w2 = w2max - 1; w2 >= w2min; w2--)
-    {
-      u3::LowerWeightReducedCoeffs(gArrA, gArrB, gArrAB, rhoABmax,
-                                   all_same_weight_gArrAB[w2max - w2], cgcs,
-                                   coeffsAB);
-    }
+    auto coeffsAB = u3::WigU3U2(u3A, u3B, u3AB, rhoABmax, -1, 
+      gArrA, gArrB, gArrAB, cgcs);
 
     Eigen::MatrixXd A(rhoAC_Bmax, rhoAC_Bmax);
     Eigen::MatrixXd B(rhoAC_Bmax, rhoABmax * rhoAB_Cmax * rhoACmax);
@@ -195,7 +169,7 @@ namespace u3
 
     int r = 0;
 
-    std::cout << "u3AC: " << u3AC << ", u3B: " << u3B << ", u3ABC: " << u3ABC << std::endl;
+    //std::cout << "u3AC: " << u3AC << ", u3B: " << u3B << ", u3ABC: " << u3ABC << std::endl;
     for (int n12B = u3B.n13(); n12B >= u3B.n23(); n12B--)
     {
       for (int n22B = u3B.n23(); n22B >= u3B.n33(); n22B--)

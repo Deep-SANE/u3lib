@@ -18,22 +18,22 @@ namespace u3
 {
 
   // input by users: u3a, u3b, u3c, u3d, u3ab, u3cd, u3ac, u3bd, u3abcd
-  inline std::vector<double> U9(u3::irrep& u3A, std::vector<u3::gelfand>& gArrA,
-                         u3::irrep& u3B, std::vector<u3::gelfand>& gArrB,
-                         u3::irrep& u3C, std::vector<u3::gelfand>& gArrC,
-                         u3::irrep& u3D, std::vector<u3::gelfand>& gArrD,
-                         u3::irrep& u3AB, std::vector<u3::gelfand>& gArrAB,
-                         u3::irrep& u3CD, std::vector<u3::gelfand>& gArrCD,
-                         u3::irrep& u3AC, std::vector<u3::gelfand>& gArrAC,
-                         u3::irrep& u3BD, std::vector<u3::gelfand>& gArrBD,
-                         u3::irrep& u3ABCD, std::vector<u3::gelfand>& gArrABCD,
-                         int rhoABmax, int rhoCDmax, int rhoAB_CDmax,
-                         int rhoACmax, int rhoBDmax, int rhoAC_BDmax,
-                         u34utils::SO3_CGC& cgcs, u34utils::SO3_Racah& racahs)
+  inline std::vector<double> 
+    U9(const u3::irrep& u3A, const std::vector<u3::gelfand>& gArrA,
+       const u3::irrep& u3B, const std::vector<u3::gelfand>& gArrB,
+       const u3::irrep& u3C, const std::vector<u3::gelfand>& gArrC,
+       const u3::irrep& u3D, const std::vector<u3::gelfand>& gArrD,
+       const u3::irrep& u3AB, const std::vector<u3::gelfand>& gArrAB,
+       const u3::irrep& u3CD, const std::vector<u3::gelfand>& gArrCD,
+       const u3::irrep& u3AC, const std::vector<u3::gelfand>& gArrAC,
+       const u3::irrep& u3BD, const std::vector<u3::gelfand>& gArrBD,
+       const u3::irrep& u3ABCD, const std::vector<u3::gelfand>& gArrABCD,
+       int rhoABmax, int rhoCDmax, int rhoAB_CDmax,
+       int rhoACmax, int rhoBDmax, int rhoAC_BDmax,
+       u34utils::SO3_CGC& cgcs, u34utils::SO3_Racah& racahs)
   {
     std::vector<double> U(rhoACmax * rhoBDmax * rhoAB_CDmax * rhoABmax *
-                              rhoCDmax * rhoAC_BDmax,
-                          0.0);
+                              rhoCDmax * rhoAC_BDmax, 0.0);
 
     // couple u3AB and u3C
     auto [u3AB_C, rhomaxsAB_C] = u3::decomposition(u3AB, u3C);
@@ -77,8 +77,8 @@ namespace u3
       if (rhoABC_Dmax == 0)
         continue;
 
-      std::cout << u3ABC[i] << rhoAB_Cmax[i] << "," << rhoAC_Bmax[i] << ","
-       << rhoABC_Dmax << std::endl;
+      //std::cout << u3ABC[i] << rhoAB_Cmax[i] << "," << rhoAC_Bmax[i] << ","
+      // << rhoABC_Dmax << std::endl;
 
       std::vector<double> U6_1 =
           u3::U6(u3AC, gArrAC, u3B, gArrB, u3ABCD, gArrABCD, u3D, gArrD,

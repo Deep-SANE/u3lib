@@ -48,8 +48,7 @@ int main(int argc, char* argv[])
   std::cout << "The normalized coupled irreps are: " << std::endl;
   for (int i = 0; i < u3cs.size(); i++)
   {
-    std::cout << "(" << i << "): [" << u3cs[i].n13() - u3cs[i].n33() << ","
-              << u3cs[i].n23() - u3cs[i].n33() << ",0] \t rho = 1 ... "
+    std::cout << "(" << i << "): " << u3cs[i] << "\t rho = 1 ... "
               << rhomaxs[i] << std::endl;
   }
 
@@ -57,24 +56,22 @@ int main(int argc, char* argv[])
   std::cout << "Enter the index of the coupled irrep you are interested: ";
   std::cin >> index;
 
+  u3::irrep u3c = u3cs[index];
+
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
 
   std::vector<u3::gelfand> gArrA = u3::gelfandBasis(u3a),
                            gArrB = u3::gelfandBasis(u3b),
-                           gArrC = u3::gelfandBasis(u3cs[index]);
+                           gArrC = u3::gelfandBasis(u3c);
   
   u34utils::SO3_CGC cgcs;  
                            
-  auto coeffs = u3::WigU3U2(u3a, u3b, u3cs[index], rhomaxs[index], -1, gArrA,
-                            gArrB, gArrC, cgcs); 
-  // after this, u3cs[index] is normalized, all gelfand states in gArrC are also
-  // normalized
+  auto coeffs = u3::WigU3U2(u3a, u3b, u3c, rhomaxs[index], -1, 
+                            gArrA, gArrB, gArrC, cgcs); 
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();
-
-  const auto& u3c = u3cs[index];
 
   for (int n12a = u3a.n13(); n12a >= u3a.n23(); n12a--)
     for (int n22a = u3a.n23(); n22a >= u3a.n33(); n22a--)
