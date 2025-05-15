@@ -948,7 +948,47 @@ namespace u3
 
     return coeffs;
   }
-/* 
+
+  class WigU3U2_db
+  {
+    u34utils::SO3_CGC& cgcs_;
+
+  public:
+    WigU3U2_db(u34utils::SO3_CGC& cgcs) : cgcs_(cgcs) { }
+
+    auto get(int n13a, int n23a, int n33a, int n12a, int n22a, int n13b,
+             int n23b, int n33b, int n12b, int n22b, int n13c, int n23c,
+             int n33c, int n12c, int n22c)
+    {
+      // normalized irreps:
+      irrep u3a(n13a - n33a, n23a - n33a, 0);
+      irrep u3b(n13b - n33b, n23b - n33b, 0);
+      irrep u3c(n13c - n33c, n23c - n33c, 0);
+
+      auto rhomax = Rho(u3a, u3b, u3c);
+
+      auto gArrA = u3::gelfandBasis(u3a);
+      auto gArrB = u3::gelfandBasis(u3b);
+      auto gArrC = u3::gelfandBasis(u3c);
+
+      auto coeffs =
+          WigU3U2(u3a, u3b, u3c, rhomax, -1, gArrA, gArrB, gArrC, cgcs_);
+
+      auto acc = coeffs.access(n12a - n33a, n22a - n33a, n12b - n33b,
+                               n22b - n33b, n12c - n33c, n22c - n33c);
+
+      assert(acc.allowed);
+      assert(acc.computed);
+
+      Eigen::RowVectorXd row = coeffs.get_row(acc);
+
+      assert(row.cols() == rhomax);
+
+      return row;
+    }
+  };
+
+/*
 #define U3LIB_ENABLE_WIGU3U2_CACHE
   class WigU3U2_db
   {
