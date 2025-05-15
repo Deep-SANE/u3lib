@@ -244,10 +244,14 @@ namespace u3
                       const std::vector<u3::gelfand>& gArr1,
                       const std::vector<u3::gelfand>& gArr2)
   {
-    int x = (gArr1[0].n13() + gArr1[0].n23() +
-             gArr2[0].n13() + gArr2[0].n23() -
-             g3.n13() - g3.n23()) / 3;
+    int x = (gArr1[0].n13() + gArr1[0].n23() + gArr2[0].n13() + gArr2[0].n23() -
+             g3.n13() - g3.n23());
+
+    assert(x % 3 == 0);
+
+    x /= 3;
     //std::cout << x << std::endl;
+
     std::vector<std::pair<int, int>> indices;
     for (int i = 0; i < gArr1.size(); i++)
     {
