@@ -96,6 +96,10 @@ namespace u3
     {
       assert(rhomax > 0);
 
+      assert(u3a.n33() == 0);
+      assert(u3b.n33() == 0);
+      assert(u3c.n33() == 0);
+
       D1_ = u3a.lam() + 1;
       D2_ = u3a.mu() + 1;
       D3_ = u3b.lam() + 1;
@@ -151,12 +155,14 @@ namespace u3
       computed_.resize(row, 0);
     }
 
+    /*
     void normalize()
     {
       u3a_.normalize();
       u3b_.normalize();
       u3c_.normalize();
     }
+    */
 
     Accessor access(int n12a, int n22a, int n12b, int n22b, int n12c,
                     int n22c) const
