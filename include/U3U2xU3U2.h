@@ -964,14 +964,14 @@ namespace u3
         u34utils::SO3_CGC& cgcs)
     {
 #ifdef U3LIB_ENABLE_WIGU3U2_CACHE
-      key_type key = {u3A.n13(), u3A.n23(), u3A.n33(), 
-                      u3B.n13(), u3B.n23(), u3B.n33(), 
-                      u3C.n13(), u3C.n23(), u3C.n33()};
+      key_type key = {u3A.n13(), u3A.n23(), u3A.n33(), u3B.n13(), u3B.n23(),
+                      u3B.n33(), u3C.n13(), u3C.n23(), u3C.n33()};
 
       auto iter = map_.find(key);
       if (iter == map_.end())
       {
-        auto p = map_.try_emplace(key, WigU3U2(u3A, u3B, u3C, rhomax, -1, gArrA, gArrB, gArrC, cgcs));
+        auto p = map_.try_emplace(
+            key, WigU3U2(u3A, u3B, u3C, rhomax, -1, gArrA, gArrB, gArrC, cgcs));
         assert(p.second);
         iter = p.first;
       }
