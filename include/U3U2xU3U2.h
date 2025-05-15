@@ -949,9 +949,26 @@ namespace u3
     return coeffs;
   }
 
+//#define U3LIB_ENABLE_WIGU3U2_CACHE
   class WigU3U2_db
   {
+#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
+    using key_type = std::array<int, 6>;
+    std::map<key_type, WigU3U2_coeffs> map_;
+#endif
+
     u34utils::SO3_CGC& cgcs_;
+
+    auto calculate(const irrep& u3a, const irrep& u3b, const irrep& u3c)
+    {
+      auto rhomax = Rho(u3a, u3b, u3c);
+
+      auto gArrA = u3::gelfandBasis(u3a);
+      auto gArrB = u3::gelfandBasis(u3b);
+      auto gArrC = u3::gelfandBasis(u3c);
+
+      return WigU3U2(u3a, u3b, u3c, rhomax, -1, gArrA, gArrB, gArrC, cgcs_);
+    }
 
   public:
     WigU3U2_db(u34utils::SO3_CGC& cgcs) : cgcs_(cgcs) { }
@@ -965,24 +982,33 @@ namespace u3
       irrep u3b(n13b - n33b, n23b - n33b, 0);
       irrep u3c(n13c - n33c, n23c - n33c, 0);
 
-      auto rhomax = Rho(u3a, u3b, u3c);
+#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
+      key_type key = {u3a.n13(), u3a.n23(), u3b.n13(),
+                      u3b.n23(), u3c.n13(), u3c.n23()};
 
-      auto gArrA = u3::gelfandBasis(u3a);
-      auto gArrB = u3::gelfandBasis(u3b);
-      auto gArrC = u3::gelfandBasis(u3c);
+      auto iter = map_.find(key);
+      if (iter == map_.end())
+      {
+        auto p = map_.try_emplace(key, calculate(u3a, u3b, u3c));
+        assert(p.second);
+        iter = p.first;
+      }
 
-      auto coeffs =
-          WigU3U2(u3a, u3b, u3c, rhomax, -1, gArrA, gArrB, gArrC, cgcs_);
+      const auto& coeffs_ref = iter->second;
+#else
+      auto coeffs = calculate(u3a, u3b, u3c);
+      const auto& coeffs_ref = coeffs;
+#endif
 
-      auto acc = coeffs.access(n12a - n33a, n22a - n33a, n12b - n33b,
-                               n22b - n33b, n12c - n33c, n22c - n33c);
+      auto acc = coeffs_ref.access(n12a - n33a, n22a - n33a, n12b - n33b,
+                                   n22b - n33b, n12c - n33c, n22c - n33c);
 
       assert(acc.allowed);
       assert(acc.computed);
 
-      Eigen::RowVectorXd row = coeffs.get_row(acc);
+      Eigen::RowVectorXd row = coeffs_ref.get_row(acc);
 
-      assert(row.cols() == rhomax);
+      assert(row.cols() == Rho(u3a, u3b, u3c));
 
       return row;
     }
