@@ -980,6 +980,18 @@ namespace u3
         assert(p.second);
         iter = p.first;
       }
+//#define U3LIB_WIGU3U2_CACHE_CHECK
+#ifdef U3LIB_WIGU3U2_CACHE_CHECK
+      else
+      {
+        auto coeffs =
+            WigU3U2(u3A, u3B, u3C, rhomax, -1, gArrA, gArrB, gArrC, cgcs);
+
+        auto max_diff =
+            (iter->second.matrix() - coeffs.matrix()).cwiseAbs().maxCoeff();
+        assert(max_diff < 1e-6);
+      }
+#endif
 
       return iter->second;
 #else
