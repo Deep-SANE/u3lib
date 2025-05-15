@@ -71,8 +71,7 @@ int main(int argc, char* argv[])
             << std::endl;
   for (int i = 0; i < u3ab.size(); i++)
   {
-    std::cout << "(" << i << "): [" << u3ab[i].n13() - u3ab[i].n33() << ","
-              << u3ab[i].n23() - u3ab[i].n33() << ",0] \t rho = 1 ... "
+    std::cout << "(" << i << "): " << u3ab[i] << "\t rho = 1 ... "
               << rhomaxsab[i] << std::endl;
   }
 
@@ -83,8 +82,7 @@ int main(int argc, char* argv[])
             << std::endl;
   for (int i = 0; i < u3ac.size(); i++)
   {
-    std::cout << "(" << i << "): [" << u3ac[i].n13() - u3ac[i].n33() << ","
-              << u3ac[i].n23() - u3ac[i].n33() << ",0] \t rho = 1 ... "
+    std::cout << "(" << i << "): " << u3ac[i]<< "\t rho = 1 ... "
               << rhomaxsac[i] << std::endl;
   }
 
@@ -95,8 +93,7 @@ int main(int argc, char* argv[])
             << std::endl;
   for (int i = 0; i < u3bd.size(); i++)
   {
-    std::cout << "(" << i << "): [" << u3bd[i].n13() - u3bd[i].n33() << ","
-              << u3bd[i].n23() - u3bd[i].n33() << ",0] \t rho = 1 ... "
+    std::cout << "(" << i << "): " << u3bd[i] << "\t rho = 1 ... "
               << rhomaxsbd[i] << std::endl;
   }
 
@@ -107,8 +104,7 @@ int main(int argc, char* argv[])
             << std::endl;
   for (int i = 0; i < u3cd.size(); i++)
   {
-    std::cout << "(" << i << "): [" << u3cd[i].n13() - u3cd[i].n33() << ","
-              << u3cd[i].n23() - u3cd[i].n33() << ",0] \t rho = 1 ... "
+    std::cout << "(" << i << "): " << u3cd[i] << "\t rho = 1 ... "
               << rhomaxscd[i] << std::endl;
   }
 
@@ -132,9 +128,8 @@ int main(int argc, char* argv[])
   std::cout << "The coupled irreps of the I, II, III and IV are: " << std::endl;
   for (int i = 0; i < u3ab_cd.size(); i++)
   {
-    std::cout << "(" << i << "): [" << u3ab_cd[i].n13() - u3ab_cd[i].n33()
-              << "," << u3ab_cd[i].n23() - u3ab_cd[i].n33()
-              << ",0] \t rho = 1 ... " << rhomaxsab_cd[i] << std::endl;
+    std::cout << "(" << i << "): " << u3ab_cd[i] << "\t rho = 1 ... " 
+              << rhomaxsab_cd[i] << std::endl;
   }
   std::cout << "Please enter the index of the I-II-III-IV coupled irrep you "
                "are interested: ";
@@ -183,12 +178,6 @@ int main(int argc, char* argv[])
 
     // End time measurement
     auto t1 = std::chrono::high_resolution_clock::now();
-
-    u3ab[i_ab].normalize();
-    u3cd[i_cd].normalize();
-    u3ac[i_ac].normalize();
-    u3bd[i_bd].normalize();
-    u3ab_cd[i_ab_cd].normalize();
 
     std::cout << u3a << "\t" << u3b << "\t" << u3ab[i_ab] << "\trhoab"
               << std::endl;

@@ -63,7 +63,8 @@ namespace u3
           u3c.n33(u3c.n33() + b33);
           if (!u3c.check())
             continue;
-
+            
+          u3c.normalize();
           auto iter = std::find(u3cs.begin(), u3cs.end(), u3c);
           if (iter == u3cs.end())
           {
@@ -130,49 +131,6 @@ namespace u3
       rho = std::max(std::min(phase, invl2) - std::max(phase - invl1, 0) + 1, 0);
     }
     return rho;
-
-    /* This implementation is based on the decomposition above
-    int rho = 0, n11 = u3c.n13() - u3b.n13();
-
-    for (int n12 = u3a.n13(); n12 >= std::max(u3a.n23(), n11); n12--)
-    {
-      for (int n22 = std::min(u3a.n23(), n11); n22 >= u3a.n33(); n22--)
-      {
-        int b13 = u3a.n13() - n12, b23 = u3a.n23() - n22, b33 = u3a.n33(),
-            b12 = n12 - n11, b22 = n22, b11 = n11;
-
-        u3::irrep u3C = u3b;
-
-        u3C.n33(u3C.n33() + b13);
-        if (!u3C.check())
-          continue;
-
-        u3C.n23(u3C.n23() + b12);
-        if (!u3C.check())
-          continue;
-
-        u3C.n13(u3C.n13() + b11);
-        if (!u3C.check())
-          continue;
-
-        u3C.n33(u3C.n33() + b23);
-        if (!u3C.check())
-          continue;
-
-        u3C.n23(u3C.n23() + b22);
-        if (!u3C.check())
-          continue;
-
-        u3C.n33(u3C.n33() + b33);
-        if (!u3C.check())
-          continue;
-
-        if (u3C == u3c)
-          rho++;
-      }
-    }
-    return rho;
-    */
   }
 
 } // namespace u3

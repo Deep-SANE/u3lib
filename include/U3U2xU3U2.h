@@ -96,6 +96,10 @@ namespace u3
     {
       assert(rhomax > 0);
 
+      assert(u3a.n33() == 0);
+      assert(u3b.n33() == 0);
+      assert(u3c.n33() == 0);
+
       D1_ = u3a.lam() + 1;
       D2_ = u3a.mu() + 1;
       D3_ = u3b.lam() + 1;
@@ -151,12 +155,14 @@ namespace u3
       computed_.resize(row, 0);
     }
 
+    /*
     void normalize()
     {
       u3a_.normalize();
       u3b_.normalize();
       u3c_.normalize();
     }
+    */
 
     Accessor access(int n12a, int n22a, int n12b, int n22b, int n12c,
                     int n22c) const
@@ -236,13 +242,17 @@ namespace u3
                       const std::vector<u3::gelfand>& gArr1,
                       const std::vector<u3::gelfand>& gArr2)
   {
+    int x = (gArr1[0].n13() + gArr1[0].n23() +
+             gArr2[0].n13() + gArr2[0].n23() -
+             g3.n13() - g3.n23()) / 3;
+    //std::cout << x << std::endl;
     std::vector<std::pair<int, int>> indices;
     for (int i = 0; i < gArr1.size(); i++)
     {
       for (int j = 0; j < gArr2.size(); j++)
       {
-        if ((gArr1[i].e22() + gArr2[j].e22()) == g3.e22() &&
-            (gArr1[i].e11() + gArr2[j].e11()) == g3.e11())
+        if ((gArr1[i].e22() + gArr2[j].e22()) == (g3.e22() + x) &&
+            (gArr1[i].e11() + gArr2[j].e11()) == (g3.e11() + x))
         {
           indices.emplace_back(i, j);
         }
@@ -432,6 +442,8 @@ namespace u3
 #else
     Eigen::MatrixXd nullspace = u34utils::null_space(mat);
 #endif
+
+    //std::cout << nullspace << std::endl;
 
     for (int i = 0; i < indices.size(); i++)
     {
@@ -887,11 +899,12 @@ namespace u3
   }
 
   // all reduced coupling coefficients
+  // u3A, u3B, u3C are all normalized prior to being passed
   inline auto WigU3U2(const u3::irrep& u3A, const u3::irrep& u3B, 
-                      u3::irrep& u3C, int rhomax, int w2min, 
+                      const u3::irrep& u3C, int rhomax, int w2min, 
                       const std::vector<u3::gelfand>& gArrA,
                       const std::vector<u3::gelfand>& gArrB, 
-                      std::vector<u3::gelfand>& gArrC,
+                      const std::vector<u3::gelfand>& gArrC,
                       u34utils::SO3_CGC& cgcs)
   {
     WigU3U2_coeffs coeffs(u3A, u3B, u3C, rhomax);
@@ -920,17 +933,17 @@ namespace u3
                                      coeffs);
       }
     }
-
+/*
     u3C.normalize();
     for (int i = 0; i < gArrC.size(); i++)
       gArrC[i].normalize();
 
     // once bases are normalized, coeffs needs to be as well:
     coeffs.normalize();
-
+*/
     return coeffs;
   }
-
+/* 
 #define U3LIB_ENABLE_WIGU3U2_CACHE
   class WigU3U2_db
   {
@@ -969,6 +982,7 @@ namespace u3
 #endif
     }
   };
+*/
 } // namespace u3
 
 #endif
