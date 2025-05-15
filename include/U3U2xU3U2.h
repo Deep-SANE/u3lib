@@ -231,6 +231,8 @@ namespace u3
     std::size_t size() const { return coeffs_.rows(); }
 
     int rhomax() const { return rhomax_; }
+
+    const auto& matrix() const { return coeffs_; }
   };
 
   // expansion of a coupled gelfand basis state (u3c) in terms of those
@@ -921,8 +923,8 @@ namespace u3
       for (int i = 0; i < gArrC.size(); i++)
       {
         int index = w2max - gArrC[i].n12() - gArrC[i].n22();
-        if (gArrC[i].n12() == gArrC[i].n11() && index >= 0 
-            && index < all_same_weight_gArrC.size())
+        if (gArrC[i].n12() == gArrC[i].n11() && index >= 0 &&
+            index < all_same_weight_gArrC.size())
           all_same_weight_gArrC[index].push_back(i);
       }
 
@@ -941,6 +943,9 @@ namespace u3
     // once bases are normalized, coeffs needs to be as well:
     coeffs.normalize();
 */
+
+    assert(coeffs.matrix().hasNaN() == false);
+
     return coeffs;
   }
 /* 
