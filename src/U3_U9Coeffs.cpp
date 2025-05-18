@@ -168,13 +168,14 @@ int main(int argc, char* argv[])
 
     u34utils::SO3_CGC cgcs;
     u34utils::SO3_Racah racahs;
+    u3::WigU3U2_db wigU3U2db(cgcs);
 
     std::vector<double> coeffs =
-        u3::U9(u3a, gArrA, u3b, gArrB, u3c, gArrC, u3d, gArrD, u3ab[i_ab],
-               gArrAB, u3cd[i_cd], gArrCD, u3ac[i_ac], gArrAC, u3bd[i_bd],
-               gArrBD, u3ab_cd[i_ab_cd], gArrABCD, rhomaxsab[i_ab],
-               rhomaxscd[i_cd], rhomaxsab_cd[i_ab_cd], rhomaxsac[i_ac],
-               rhomaxsbd[i_bd], rhomaxsac_bd[i_ac_bd], cgcs, racahs);
+      u3::U9(u3a, gArrA, u3b, gArrB, u3c, gArrC, u3d, gArrD, u3ab[i_ab],
+             gArrAB, u3cd[i_cd], gArrCD, u3ac[i_ac], gArrAC, u3bd[i_bd],
+             gArrBD, u3ab_cd[i_ab_cd], gArrABCD, rhomaxsab[i_ab],
+             rhomaxscd[i_cd], rhomaxsab_cd[i_ab_cd], rhomaxsac[i_ac],
+             rhomaxsbd[i_bd], rhomaxsac_bd[i_ac_bd], cgcs, racahs, wigU3U2db);
 
     // End time measurement
     auto t1 = std::chrono::high_resolution_clock::now();

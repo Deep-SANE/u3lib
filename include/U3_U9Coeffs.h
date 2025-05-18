@@ -30,7 +30,8 @@ namespace u3
        const u3::irrep& u3ABCD, const std::vector<u3::gelfand>& gArrABCD,
        int rhoABmax, int rhoCDmax, int rhoAB_CDmax,
        int rhoACmax, int rhoBDmax, int rhoAC_BDmax,
-       u34utils::SO3_CGC& cgcs, u34utils::SO3_Racah& racahs)
+       u34utils::SO3_CGC& cgcs, u34utils::SO3_Racah& racahs,
+       u3::WigU3U2_db& wigU3U2db)
   {
     std::vector<double> U(rhoACmax * rhoBDmax * rhoAB_CDmax * rhoABmax *
                               rhoCDmax * rhoAC_BDmax, 0.0);
@@ -83,17 +84,17 @@ namespace u3
       std::vector<double> U6_1 =
           u3::U6(u3AC, gArrAC, u3B, gArrB, u3ABCD, gArrABCD, u3D, gArrD,
                  u3ABC[i], gArrABC, rhoAC_Bmax[i], rhoABC_Dmax, u3BD, gArrBD,
-                 rhoBDmax, rhoAC_BDmax, cgcs, racahs);
+                 rhoBDmax, rhoAC_BDmax, cgcs, racahs, wigU3U2db);
 
       std::vector<double> U6_2 =
           u3::U6(u3AB, gArrAB, u3C, gArrC, u3ABCD, gArrABCD, u3D, gArrD,
                  u3ABC[i], gArrABC, rhoAB_Cmax[i], rhoABC_Dmax, u3CD, gArrCD,
-                 rhoCDmax, rhoAB_CDmax, cgcs, racahs);
+                 rhoCDmax, rhoAB_CDmax, cgcs, racahs, wigU3U2db);
 
       std::vector<double> Z6 =
           u3::Z6(u3B, gArrB, u3A, gArrA, u3ABC[i], gArrABC, u3C, gArrC, u3AB,
                  gArrAB, rhoABmax, rhoAB_Cmax[i], u3AC, gArrAC, rhoACmax,
-                 rhoAC_Bmax[i], cgcs, racahs);
+                 rhoAC_Bmax[i], cgcs, racahs, wigU3U2db);
 
       for (int rAC = 0; rAC < rhoACmax; rAC++)
       {
