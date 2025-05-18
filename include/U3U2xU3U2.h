@@ -1014,7 +1014,7 @@ namespace u3
 
       assert(row.cols() == Rho(u3a, u3b, u3c));
 
-      return row;
+      return std::make_pair(acc.allowed, row);
     }
   };
 
