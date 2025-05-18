@@ -25,8 +25,10 @@ namespace u3
        int rhoABmax, int rhoAB_Cmax, 
        const u3::irrep& u3BC, const std::vector<u3::gelfand>& gArrBC, 
        int rhoBCmax, int rhoA_BCmax, 
-       u34utils::SO3_CGC& cgcs, u34utils::SO3_Racah& racahs)
+       u34utils::SO3_CGC& cgcs, u34utils::SO3_Racah& racahs,
+       u3::WigU3U2_db& wigU3U2db)
   {
+/*
     // coupling <gA;hwBC|hwABC> rhoA_BC
     auto coeffsA_BC = u3::WigU3U2(u3A, u3BC, u3ABC, rhoA_BCmax, 
       u3ABC.n13() + u3ABC.n23(), gArrA, gArrBC, gArrABC, cgcs); 
@@ -42,7 +44,7 @@ namespace u3
     // coupling <gA;gB|gAB> rhoAB
     auto coeffsAB = u3::WigU3U2(u3A, u3B, u3AB, rhoABmax, -1, 
       gArrA, gArrB, gArrAB, cgcs); 
-
+*/
     Eigen::MatrixXd A(rhoA_BCmax, rhoA_BCmax);
     Eigen::MatrixXd B(rhoA_BCmax, rhoABmax * rhoAB_Cmax * rhoBCmax);
     B.setZero();
@@ -53,11 +55,14 @@ namespace u3
     {
       for (int n22A = u3A.n23(); n22A >= u3A.n33(); n22A--)
       {
-        auto accA_BC = coeffsA_BC.access(n12A, n22A, u3BC.n13(), u3BC.n23(),
-                                         u3ABC.n13(), u3ABC.n23());
-        if (accA_BC.allowed == true)
+        auto [allowA_BC, accA_BC] = wigU3U2db.get(
+            u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A,
+            u3BC.n13(), u3BC.n23(), u3BC.n33(), u3BC.n13(), u3BC.n23(),
+            u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
+
+        if (allowA_BC == true)
         {
-          A.row(r) = coeffsA_BC.get_row(accA_BC);
+          A.row(r) = accA_BC;
 
           for (int n12B = u3B.n13(); n12B >= u3B.n23(); n12B--)
           {
@@ -67,36 +72,40 @@ namespace u3
               {
                 for (int n22AB = u3AB.n23(); n22AB >= u3AB.n33(); n22AB--)
                 {
-                  auto accAB =
-                      coeffsAB.access(n12A, n22A, n12B, n22B, n12AB, n22AB);
-                  if (accAB.allowed == true)
+                  auto [allowAB, accAB] = wigU3U2db.get(
+                      u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A,
+                      u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B,
+                      u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB);
+                  
+                  if (allowAB == true)
                   {
                     for (int n12C = u3C.n13(); n12C >= u3C.n23(); n12C--)
                     {
                       for (int n22C = u3C.n23(); n22C >= u3C.n33(); n22C--)
                       {
-                        auto accAB_C = coeffsAB_C.access(
-                            n12AB, n22AB, n12C, n22C, u3ABC.n13(), u3ABC.n23());
-                        auto accBC = coeffsBC.access(n12B, n22B, n12C, n22C,
-                                                     u3BC.n13(), u3BC.n23());
-                        if (accAB_C.allowed == true && accBC.allowed == true)
-                        {
-                          int llA = n12A - n22A, llB = n12B - n22B,
-                              ll = u3ABC.n13() - u3ABC.n23(), llC = n12C - n22C,
-                              llAB = n12AB - n22AB,
-                              llBC = u3BC.n13() - u3BC.n23();
+                        auto [allowAB_C, accAB_C] = wigU3U2db.get(
+                          u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB,
+                          u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C,
+                          u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
 
+                        auto [allowBC, accBC] = wigU3U2db.get(
+                          u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B,
+                          u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C,
+                          u3BC.n13(), u3BC.n23(), u3BC.n33(), u3BC.n13(), u3BC.n23());
+
+                        if (allowAB_C == true && allowBC == true)
+                        {
+                          int llA = n12A - n22A, ll = u3ABC.n13() - u3ABC.n23(), 
+                              llBC = u3BC.n13() - u3BC.n23(), llB = n12B - n22B, 
+                              llAB = n12AB - n22AB, llC = n12C - n22C;
                           double racah =
                               racahs.compute(llA, llB, ll, llC, llAB, llBC);
 
                           for (int rAB = 0; rAB < rhoABmax; rAB++)
                             for (int rAB_C = 0; rAB_C < rhoAB_Cmax; rAB_C++)
                               for (int rBC = 0; rBC < rhoBCmax; rBC++)
-                                B(r, (rAB * rhoAB_Cmax + rAB_C) * rhoBCmax +
-                                         rBC) +=
-                                    racah * coeffsAB.get(accAB, rAB) *
-                                    coeffsAB_C.get(accAB_C, rAB_C) *
-                                    coeffsBC.get(accBC, rBC);
+                                B(r, (rAB * rhoAB_Cmax + rAB_C) * rhoBCmax + rBC) 
+                                  += racah * accAB(rAB) * accAB_C(rAB_C) * accBC(rBC);
                         }
                       }
                     }
@@ -145,8 +154,10 @@ namespace u3
        int rhoABmax, int rhoAB_Cmax, 
        const u3::irrep& u3AC, const std::vector<u3::gelfand>& gArrAC, 
        int rhoACmax, int rhoAC_Bmax, 
-       u34utils::SO3_CGC& cgcs, u34utils::SO3_Racah& racahs)
+       u34utils::SO3_CGC& cgcs, u34utils::SO3_Racah& racahs,
+       u3::WigU3U2_db& wigU3U2db)
   {
+/*
     // coupling <hwAC;gB|hwABC> rhoAC_B
     auto coeffsAC_B = u3::WigU3U2(u3AC, u3B, u3ABC, rhoAC_Bmax, 
       u3ABC.n13() + u3ABC.n23(), gArrAC, gArrB, gArrABC, cgcs);
@@ -162,23 +173,25 @@ namespace u3
     // coupling <gA;gB|gAB> rhoAB
     auto coeffsAB = u3::WigU3U2(u3A, u3B, u3AB, rhoABmax, -1, 
       gArrA, gArrB, gArrAB, cgcs);
-
+*/
     Eigen::MatrixXd A(rhoAC_Bmax, rhoAC_Bmax);
     Eigen::MatrixXd B(rhoAC_Bmax, rhoABmax * rhoAB_Cmax * rhoACmax);
     B.setZero();
 
     int r = 0;
 
-    //std::cout << "u3AC: " << u3AC << ", u3B: " << u3B << ", u3ABC: " << u3ABC << std::endl;
     for (int n12B = u3B.n13(); n12B >= u3B.n23(); n12B--)
     {
       for (int n22B = u3B.n23(); n22B >= u3B.n33(); n22B--)
       {
-        auto accAC_B = coeffsAC_B.access(u3AC.n13(), u3AC.n23(), n12B, n22B,
-                                         u3ABC.n13(), u3ABC.n23());
-        if (accAC_B.allowed == true)
+        auto [allowAC_B, accAC_B] = wigU3U2db.get(
+          u3AC.n13(), u3AC.n23(), u3AC.n33(), u3AC.n13(), u3AC.n23(), 
+          u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B,
+          u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
+
+        if (allowAC_B == true)
         {
-          A.row(r) = coeffsAC_B.get_row(accAC_B);
+          A.row(r) = accAC_B;
 
           for (int n12A = u3A.n13(); n12A >= u3A.n23(); n12A--)
           {
@@ -188,19 +201,28 @@ namespace u3
               {
                 for (int n22AB = u3AB.n23(); n22AB >= u3AB.n33(); n22AB--)
                 {
-                  auto accAB =
-                      coeffsAB.access(n12A, n22A, n12B, n22B, n12AB, n22AB);
-                  if (accAB.allowed == true)
+                  auto [allowAB, accAB] = wigU3U2db.get(
+                    u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A, 
+                    u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B, 
+                    u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB);
+
+                  if (allowAB == true)
                   {
                     for (int n12C = u3C.n13(); n12C >= u3C.n23(); n12C--)
                     {
                       for (int n22C = u3C.n23(); n22C >= u3C.n33(); n22C--)
                       {
-                        auto accAB_C = coeffsAB_C.access(
-                            n12AB, n22AB, n12C, n22C, u3ABC.n13(), u3ABC.n23());
-                        auto accAC = coeffsAC.access(n12A, n22A, n12C, n22C,
-                                                     u3AC.n13(), u3AC.n23());
-                        if (accAB_C.allowed == true && accAC.allowed == true)
+                        auto [allowAB_C, accAB_C] = wigU3U2db.get(
+                            u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB, 
+                            u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C, 
+                            u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
+                        
+                        auto [allowAC, accAC] = wigU3U2db.get(
+                          u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A, 
+                          u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C,
+                          u3AC.n13(), u3AC.n23(), u3AC.n33(), u3AC.n13(), u3AC.n23());
+
+                        if (allowAB_C == true && allowAC == true)
                         {
                           int llA = n12A - n22A, llB = n12B - n22B,
                               ll = u3ABC.n13() - u3ABC.n23(), llC = n12C - n22C,
@@ -215,11 +237,9 @@ namespace u3
                           for (int rAB = 0; rAB < rhoABmax; rAB++)
                             for (int rAB_C = 0; rAB_C < rhoAB_Cmax; rAB_C++)
                               for (int rAC = 0; rAC < rhoACmax; rAC++)
-                                B(r, (rAB * rhoAB_Cmax + rAB_C) * rhoACmax +
-                                         rAC) +=
-                                    phase * racah * coeffsAB.get(accAB, rAB) *
-                                    coeffsAB_C.get(accAB_C, rAB_C) *
-                                    coeffsAC.get(accAC, rAC);
+                                B(r, (rAB * rhoAB_Cmax + rAB_C) * rhoACmax + rAC) 
+                                  += phase * racah * accAB(rAB) * accAB_C(rAB_C) 
+                                  * accAC(rAC);
                         }
                       }
                     }

@@ -126,11 +126,12 @@ int main(int argc, char* argv[])
 
     u34utils::SO3_CGC cgcs;
     u34utils::SO3_Racah racahs;
+    u3::WigU3U2_db wigU3U2db(cgcs);
 
     std::vector<double> coeffs = u3::U6(
         u3a, gArrA, u3b, gArrB, u3ab_c[i_ab_c], gArrABC, u3c, gArrC, u3ab[i_ab],
         gArrAB, rhomaxsab[i_ab], rhomaxsab_c[i_ab_c], u3bc[i_bc], gArrBC,
-        rhomaxsbc[i_bc], rhomaxsa_bc[i_a_bc], cgcs, racahs);
+        rhomaxsbc[i_bc], rhomaxsa_bc[i_a_bc], cgcs, racahs, wigU3U2db);
 
     // End time measurement
     auto t1 = std::chrono::high_resolution_clock::now();
