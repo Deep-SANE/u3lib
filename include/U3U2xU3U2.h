@@ -985,36 +985,45 @@ namespace u3
       irrep u3a(n13a - n33a, n23a - n33a, 0);
       irrep u3b(n13b - n33b, n23b - n33b, 0);
       irrep u3c(n13c - n33c, n23c - n33c, 0);
+      int rhomax = Rho(u3a, u3b, u3c);
 
-#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
-      key_type key = {u3a.n13(), u3a.n23(), u3b.n13(),
-                      u3b.n23(), u3c.n13(), u3c.n23()};
+      bool flag = false;
 
-      auto iter = map_.find(key);
-      if (iter == map_.end())
+      Eigen::RowVectorXd row;
+
+      if (rhomax > 0)
       {
-        auto p = map_.try_emplace(key, calculate(u3a, u3b, u3c));
-        assert(p.second);
-        iter = p.first;
-      }
+#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
+        key_type key = {u3a.n13(), u3a.n23(), u3b.n13(),
+                        u3b.n23(), u3c.n13(), u3c.n23()};
 
-      const auto& coeffs_ref = iter->second;
+        auto iter = map_.find(key);
+        if (iter == map_.end())
+        {
+          auto p = map_.try_emplace(key, calculate(u3a, u3b, u3c));
+          assert(p.second);
+          iter = p.first;
+        }
+
+        const auto& coeffs_ref = iter->second;
 #else
-      auto coeffs = calculate(u3a, u3b, u3c);
-      const auto& coeffs_ref = coeffs;
+        auto coeffs = calculate(u3a, u3b, u3c);
+        const auto& coeffs_ref = coeffs;
 #endif
 
-      auto acc = coeffs_ref.access(n12a - n33a, n22a - n33a, n12b - n33b,
-                                   n22b - n33b, n12c - n33c, n22c - n33c);
+        auto acc = coeffs_ref.access(n12a - n33a, n22a - n33a, n12b - n33b,
+                                     n22b - n33b, n12c - n33c, n22c - n33c);
+        
+        assert(acc.allowed);
+        assert(acc.computed);
 
-      assert(acc.allowed);
-      assert(acc.computed);
+        flag = acc.allowed;
+        row = coeffs_ref.get_row(acc);
 
-      Eigen::RowVectorXd row = coeffs_ref.get_row(acc);
+        assert(row.cols() == rhomax);
+      }
 
-      assert(row.cols() == Rho(u3a, u3b, u3c));
-
-      return std::make_pair(acc.allowed, row);
+      return std::make_pair(flag, row);
     }
   };
 
