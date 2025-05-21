@@ -50,10 +50,10 @@ namespace u3
     B.setZero();
 
     int r = 0;
-
-    for (int n12A = u3A.n13(); n12A >= u3A.n23(); n12A--)
+    bool done = false;
+    for (int n12A = u3A.n13(); n12A >= u3A.n23() && !done; n12A--)
     {
-      for (int n22A = u3A.n23(); n22A >= u3A.n33(); n22A--)
+      for (int n22A = u3A.n23(); n22A >= u3A.n33() && !done; n22A--)
       {
         auto [allowA_BC, accA_BC] = wigU3U2db.get(
             u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A,
@@ -115,10 +115,11 @@ namespace u3
             }
           }
           r++;
+
+          if (r == rhoA_BCmax)
+            done = true;
         }
       }
-      if (r == rhoA_BCmax)
-        break;
     }
 
     // std::cout << A << std::endl;
@@ -133,12 +134,12 @@ namespace u3
         for (int rBC = 0; rBC < rhoBCmax; rBC++)
           for (int rA_BC = 0; rA_BC < rhoA_BCmax; rA_BC++)
           {
-            if (std::fabs(X(rA_BC, (rAB * rhoAB_Cmax + rAB_C) * rhoBCmax +
-                                       rBC)) < 1e-14)
-              X(rA_BC, (rAB * rhoAB_Cmax + rAB_C) * rhoBCmax + rBC) = 0.0;
+            int col = (rAB * rhoAB_Cmax + rAB_C) * rhoBCmax + rBC;
+            if (std::fabs(X(rA_BC, col)) < 1e-14)
+              X(rA_BC, col) = 0.0;
 
             U[((rAB * rhoAB_Cmax + rAB_C) * rhoBCmax + rBC) * rhoA_BCmax +
-              rA_BC] = X(rA_BC, (rAB * rhoAB_Cmax + rAB_C) * rhoBCmax + rBC);
+              rA_BC] = X(rA_BC, col);
           }
 
     return U;
@@ -179,10 +180,10 @@ namespace u3
     B.setZero();
 
     int r = 0;
-
-    for (int n12B = u3B.n13(); n12B >= u3B.n23(); n12B--)
+    bool done = false;
+    for (int n12B = u3B.n13(); n12B >= u3B.n23() && !done; n12B--)
     {
-      for (int n22B = u3B.n23(); n22B >= u3B.n33(); n22B--)
+      for (int n22B = u3B.n23(); n22B >= u3B.n33() && !done; n22B--)
       {
         auto [allowAC_B, accAC_B] = wigU3U2db.get(
           u3AC.n13(), u3AC.n23(), u3AC.n33(), u3AC.n13(), u3AC.n23(), 
@@ -249,10 +250,11 @@ namespace u3
             }
           }
           r++;
+
+          if (r == rhoAC_Bmax)
+            done = true;
         }
       }
-      if (r == rhoAC_Bmax)
-        break;
     }
 
     // std::cout << A << std::endl;
@@ -267,12 +269,12 @@ namespace u3
         for (int rAC = 0; rAC < rhoACmax; rAC++)
           for (int rAC_B = 0; rAC_B < rhoAC_Bmax; rAC_B++)
           {
-            if (std::fabs(X(rAC_B, (rAB * rhoAB_Cmax + rAB_C) * rhoACmax +
-                                       rAC)) < 1e-14)
-              X(rAC_B, (rAB * rhoAB_Cmax + rAB_C) * rhoACmax + rAC) = 0.0;
+            int col = (rAB * rhoAB_Cmax + rAB_C) * rhoACmax + rAC;
+            if (std::fabs(X(rAC_B, col)) < 1e-14)
+              X(rAC_B, col) = 0.0;
 
             Z[((rAB * rhoAB_Cmax + rAB_C) * rhoACmax + rAC) * rhoAC_Bmax +
-              rAC_B] = X(rAC_B, (rAB * rhoAB_Cmax + rAB_C) * rhoACmax + rAC);
+              rAC_B] = X(rAC_B, col);
           }
 
     return Z;
