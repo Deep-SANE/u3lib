@@ -1,5 +1,5 @@
-#ifndef U3_U3LIB_U9COEFFS_H
-#define U3_U3LIB_U9COEFFS_H 
+#ifndef U3LIB_U3_U9COEFFS_H
+#define U3LIB_U3_U9COEFFS_H 
 
 #include <cmath>
 #include <iostream>
@@ -18,6 +18,7 @@ namespace u3
 {
 
   // input by users: u3a, u3b, u3c, u3d, u3ab, u3cd, u3ac, u3bd, u3abcd
+  // all normalized
   inline std::vector<double> 
     U9(const u3::irrep& u3A, const std::vector<u3::gelfand>& gArrA,
        const u3::irrep& u3B, const std::vector<u3::gelfand>& gArrB,
