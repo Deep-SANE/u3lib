@@ -141,9 +141,7 @@ int main(int argc, char* argv[])
   int flag = 0;
   for (i_ac_bd = 0; i_ac_bd < u3ac_bd.size(); i_ac_bd++)
   {
-    if (u3ab_cd[i_ab_cd].n13() == u3ac_bd[i_ac_bd].n13() &&
-        u3ab_cd[i_ab_cd].n23() == u3ac_bd[i_ac_bd].n23() &&
-        u3ab_cd[i_ab_cd].n33() == u3ac_bd[i_ac_bd].n33())
+    if (u3ab_cd[i_ab_cd] == u3ac_bd[i_ac_bd])
     {
       flag++;
       break;
@@ -152,7 +150,6 @@ int main(int argc, char* argv[])
 
   if (flag > 0)
   {
-
     // Start time measurement
     auto t0 = std::chrono::high_resolution_clock::now();
 
@@ -193,32 +190,20 @@ int main(int argc, char* argv[])
     std::cout << "rhoac\trhobd\trhoab_cd\trhoab\trhocd\trhoac_bd" << std::endl;
 
     for (int rac = 0; rac < rhomaxsac[i_ac]; rac++)
-    {
       for (int rbd = 0; rbd < rhomaxsbd[i_bd]; rbd++)
-      {
         for (int rab_cd = 0; rab_cd < rhomaxsab_cd[i_ab_cd]; rab_cd++)
-        {
           for (int rab = 0; rab < rhomaxsab[i_ab]; rab++)
-          {
             for (int rcd = 0; rcd < rhomaxscd[i_cd]; rcd++)
               for (int rac_bd = 0; rac_bd < rhomaxsac_bd[i_ac_bd]; rac_bd++)
                 std::cout << "  " << rac + 1 << "\t  " << rbd + 1 << "\t  "
                           << rab_cd + 1 << "\t\t  " << rab + 1 << "\t  "
                           << rcd + 1 << "\t  " << rac_bd + 1 << "\t\t  ->  "
                           << coeffs[((((rac * rhomaxsbd[i_bd] + rbd) *
-                                           rhomaxsab_cd[i_ab_cd] +
-                                       rab_cd) *
-                                          rhomaxsab[i_ab] +
-                                      rab) *
-                                         rhomaxscd[i_cd] +
-                                     rcd) *
-                                        rhomaxsac_bd[i_ac_bd] +
-                                    rac_bd]
+                                        rhomaxsab_cd[i_ab_cd] + rab_cd) *
+                                        rhomaxsab[i_ab] + rab) *
+                                        rhomaxscd[i_cd] + rcd) *
+                                        rhomaxsac_bd[i_ac_bd] + rac_bd]
                           << std::endl;
-          }
-        }
-      }
-    }
 
     // Calculate the duration
     std::chrono::duration<double> duration = t1 - t0;
