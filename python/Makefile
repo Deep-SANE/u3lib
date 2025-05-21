@@ -3,9 +3,12 @@
 SRCS = $(wildcard *.cpp)
 #PRGS = $(addprefix $(BIN)/,$(basename $(SRCS)))
 
+CXXFLAGS += -shared -fPIC
+CXXFLAGS += $(shell python -m pybind11 --includes)
+
 .PHONY: all
 all: $(SRCS)
-	$(CXX) $(CXXFLAGS) -fPIC -shared -o libu3lib.so $(SRCS)
+	$(CXX) $(CXXFLAGS) -o u3lib.so $(SRCS)
 
 #.PHONY: clean
 #clean:
