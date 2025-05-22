@@ -8,7 +8,7 @@ CXXFLAGS += $(shell python -m pybind11 --includes)
 
 .PHONY: all
 all: $(SRCS)
-	$(CXX) $(CXXFLAGS) -o u3lib.so $(SRCS)
+	$(CXX) $(CXXFLAGS) -o u3lib.so $(SRCS) $(LDFLAGS)
 
 #.PHONY: clean
 #clean:
