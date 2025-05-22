@@ -2,11 +2,6 @@
 
 #include <U3decomposition.h>
 
-#include <pybind11/pybind11.h>
-
-//extern "C"
-//{
-
 int rhomax(int n31a, int n32a, int n33a, int n31b, int n32b, int n33b, int n31c,
            int n32c, int n33c)
 {
@@ -20,7 +15,3 @@ int rhomax(int n31a, int n32a, int n33a, int n31b, int n32b, int n33b, int n31c,
 
   return u3::Rho(u3a, u3b, u3c);
 }
-
-//}
-
-PYBIND11_MODULE(u3lib, m) { m.def("rhomax", &rhomax); }
