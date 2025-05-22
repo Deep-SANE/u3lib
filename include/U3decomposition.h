@@ -9,7 +9,6 @@
 
 namespace u3
 {
-
   inline std::pair<std::vector<u3::irrep>, std::vector<int>>
   decomposition(const u3::irrep& u31, const u3::irrep& u32)
   {

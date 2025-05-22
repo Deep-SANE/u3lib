@@ -11,42 +11,42 @@
 namespace u3
 {
   // compare two gelfand patterns of the same irrep
-  bool E11(const u3::gelfand& i, const u3::gelfand& f)
+  inline bool E11(const u3::gelfand& i, const u3::gelfand& f)
   {
     return i.n12() == f.n12() && i.n22() == f.n22() && i.n11() == f.n11();
   }
 
   // define action of the raising generators, that of the lowering generators
   // is simply swapping the initial and final states
-  bool E12(const u3::gelfand& i, const u3::gelfand& f)
+  inline bool E12(const u3::gelfand& i, const u3::gelfand& f)
   {
     return i.n12() == f.n12() && i.n22() == f.n22() && (i.n11() + 1) == f.n11();
   }
 
-  bool E23_12(const u3::gelfand& i, const u3::gelfand& f)
+  inline bool E23_12(const u3::gelfand& i, const u3::gelfand& f)
   {
     return (i.n12() + 1) == f.n12() && i.n22() == f.n22() && i.n11() == f.n11();
   }
 
-  bool E23_22(const u3::gelfand& i, const u3::gelfand& f)
+  inline bool E23_22(const u3::gelfand& i, const u3::gelfand& f)
   {
     return i.n12() == f.n12() && (i.n22() + 1) == f.n22() && i.n11() == f.n11();
   }
 
-  bool E13_12(const u3::gelfand& i, const u3::gelfand& f)
+  inline bool E13_12(const u3::gelfand& i, const u3::gelfand& f)
   {
     return (i.n12() + 1) == f.n12() && i.n22() == f.n22() &&
            (i.n11() + 1) == f.n11();
   }
 
-  bool E13_22(const u3::gelfand& i, const u3::gelfand& f)
+  inline bool E13_22(const u3::gelfand& i, const u3::gelfand& f)
   {
     return i.n12() == f.n12() && (i.n22() + 1) == f.n22() &&
            (i.n11() + 1) == f.n11();
   }
 
   // find all Gelfand states associated with an irrep
-  std::vector<u3::gelfand> gelfandBasis(const u3::irrep& x)
+  inline std::vector<u3::gelfand> gelfandBasis(const u3::irrep& x)
   {
     std::vector<u3::gelfand> gArr;
 
@@ -59,8 +59,8 @@ namespace u3
   }
 
   // find the location (index) of a Gelfand state within the Gelfand basis above
-  std::size_t findGelfand(const u3::gelfand& g,
-                          const std::vector<u3::gelfand>& gArr)
+  inline std::size_t findGelfand(const u3::gelfand& g,
+                                 const std::vector<u3::gelfand>& gArr)
   {
     std::size_t i;
 
@@ -78,7 +78,7 @@ namespace u3
   */
 
   // IntP(x) function, see Eq. (35) of Pan et al., Nucl. Phys. A (2016)
-  int IntP(double x)
+  inline int IntP(double x)
   {
     if (x >= 0)
       return (int)std::floor(x);
@@ -87,7 +87,7 @@ namespace u3
   }
 
   // Multiplicity of L
-  int Kappa(u3::irrep& u3, int l)
+  inline int Kappa(u3::irrep& u3, int l)
   {
     return IntP((u3.n13() - u3.n33() - l + 0.0) / 2) -
            IntP((u3.n13() - u3.n23() + 1.0 - l) / 2) -
@@ -129,7 +129,7 @@ namespace u3
   }
 
   // find all physical states associated with an irrep
-  std::vector<u3::physicalvector> physicalBasis(const u3::irrep& u3)
+  inline std::vector<u3::physicalvector> physicalBasis(const u3::irrep& u3)
   {
     std::vector<u3::physicalvector> basis;
     int l;
