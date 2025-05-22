@@ -8,14 +8,14 @@
 #include <vector>
 
 #include <so3Coeffs/SO3_CGC.h>
- 
-#include <U3decomposition.h>
+
 #include <U3basis.h>
+#include <U3decomposition.h>
 #include <U3U2xU3U2.h>
 
 #ifdef U3LIB_USE_SLEPC
 #include <slepcsys.h>
-#endif 
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
   std::cout << "Enter the second irrep [n13b,n23b,n33b]: ";
   std::cin >> n13b >> n23b >> n33b;
   u3::irrep u3b(n13b, n23b, n33b);
-  if (n33b != 0) 
+  if (n33b != 0)
   {
     u3b.normalize();
     std::cout << "Your irrep is normalized to " << u3b << std::endl;
@@ -48,11 +48,11 @@ int main(int argc, char* argv[])
   std::cout << "The normalized coupled irreps are: " << std::endl;
   for (int i = 0; i < u3cs.size(); i++)
   {
-    std::cout << "(" << i << "): " << u3cs[i] << "\t rho = 1 ... "
-              << rhomaxs[i] << std::endl;
+    std::cout << "(" << i << "): " << u3cs[i] << "\t rho = 1 ... " << rhomaxs[i]
+              << std::endl;
   }
 
-  int index; 
+  int index;
   std::cout << "Enter the index of the coupled irrep you are interested: ";
   std::cin >> index;
 
@@ -64,11 +64,11 @@ int main(int argc, char* argv[])
   std::vector<u3::gelfand> gArrA = u3::gelfandBasis(u3a),
                            gArrB = u3::gelfandBasis(u3b),
                            gArrC = u3::gelfandBasis(u3c);
-  
-  u34utils::SO3_CGC cgcs;  
-                           
-  auto coeffs = u3::WigU3U2(u3a, u3b, u3c, rhomaxs[index], -1, 
-                            gArrA, gArrB, gArrC, cgcs); 
+
+  u34utils::SO3_CGC cgcs;
+
+  auto coeffs =
+      u3::WigU3U2(u3a, u3b, u3c, rhomaxs[index], -1, gArrA, gArrB, gArrC, cgcs);
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();
@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
   std::cout << "Elapsed time: " << duration.count() << " seconds or "
             << duration.count() / 60.0 << " minutes" << std::endl;
 
-#ifdef U3LIB_USE_SLEPC 
+#ifdef U3LIB_USE_SLEPC
   SlepcFinalize();
 #endif
 
