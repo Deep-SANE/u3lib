@@ -136,19 +136,9 @@ int main(int argc, char* argv[])
   std::cin >> i_ab_cd;
 
   // couple the 4 irreps in scheme (I-III)-(II-IV)
-  auto [u3ac_bd, rhomaxsac_bd] = u3::decomposition(u3ac[i_ac], u3bd[i_bd]);
+  auto rhomaxac_bd = u3::Rho(u3ac[i_ac], u3bd[i_bd], u3ab_cd[i_ab_cd]);
 
-  int flag = 0;
-  for (i_ac_bd = 0; i_ac_bd < u3ac_bd.size(); i_ac_bd++)
-  {
-    if (u3ab_cd[i_ab_cd] == u3ac_bd[i_ac_bd])
-    {
-      flag++;
-      break;
-    }
-  }
-
-  if (flag > 0)
+  if (rhomaxac_bd > 0)
   {
     // Start time measurement
     auto t0 = std::chrono::high_resolution_clock::now();
@@ -172,7 +162,7 @@ int main(int argc, char* argv[])
              gArrAB, u3cd[i_cd], gArrCD, u3ac[i_ac], gArrAC, u3bd[i_bd],
              gArrBD, u3ab_cd[i_ab_cd], gArrABCD, rhomaxsab[i_ab],
              rhomaxscd[i_cd], rhomaxsab_cd[i_ab_cd], rhomaxsac[i_ac],
-             rhomaxsbd[i_bd], rhomaxsac_bd[i_ac_bd], cgcs, racahs, wigU3U2db);
+             rhomaxsbd[i_bd], rhomaxac_bd, cgcs, racahs, wigU3U2db);
 
     // End time measurement
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -194,7 +184,7 @@ int main(int argc, char* argv[])
         for (int rab_cd = 0; rab_cd < rhomaxsab_cd[i_ab_cd]; rab_cd++)
           for (int rab = 0; rab < rhomaxsab[i_ab]; rab++)
             for (int rcd = 0; rcd < rhomaxscd[i_cd]; rcd++)
-              for (int rac_bd = 0; rac_bd < rhomaxsac_bd[i_ac_bd]; rac_bd++)
+              for (int rac_bd = 0; rac_bd < rhomaxac_bd; rac_bd++)
                 std::cout << "  " << rac + 1 << "\t  " << rbd + 1 << "\t  "
                           << rab_cd + 1 << "\t\t  " << rab + 1 << "\t  "
                           << rcd + 1 << "\t  " << rac_bd + 1 << "\t\t  ->  "
@@ -202,7 +192,7 @@ int main(int argc, char* argv[])
                                         rhomaxsab_cd[i_ab_cd] + rab_cd) *
                                         rhomaxsab[i_ab] + rab) *
                                         rhomaxscd[i_cd] + rcd) *
-                                        rhomaxsac_bd[i_ac_bd] + rac_bd]
+                                        rhomaxac_bd + rac_bd]
                           << std::endl;
 
     // Calculate the duration

@@ -40,26 +40,20 @@ namespace u3
     // couple u3AB and u3C
     auto [u3AB_C, rhomaxsAB_C] = u3::decomposition(u3AB, u3C);
 
-    // couple u3AC and u3B
-    auto [u3AC_B, rhomaxsAC_B] = u3::decomposition(u3AC, u3B);
-
     std::vector<u3::irrep> u3ABC;
     std::vector<int> rhoAB_Cmax, rhoAC_Bmax;
 
     for (int i = 0; i < u3AB_C.size(); i++)
     {
-      for (int j = 0; j < u3AC_B.size(); j++)
+      int rhomaxAC_B = u3::Rho(u3AC, u3B, u3AB_C[i]);
+      if (rhomaxAC_B > 0)
       {
-        if (u3AB_C[i] == u3AC_B[j])
-        {
-          u3ABC.push_back(u3AB_C[i]);
-          rhoAB_Cmax.push_back(rhomaxsAB_C[i]);
-          rhoAC_Bmax.push_back(rhomaxsAC_B[j]);
-          break;
-        }
+        u3ABC.push_back(u3AB_C[i]);
+        rhoAB_Cmax.push_back(rhomaxsAB_C[i]);
+        rhoAC_Bmax.push_back(rhomaxAC_B);
       }
     }
-
+    
     for (int i = 0; i < u3ABC.size(); i++)
     {
       std::vector<u3::gelfand> gArrABC = u3::gelfandBasis(u3ABC[i]);

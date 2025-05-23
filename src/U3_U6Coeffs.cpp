@@ -99,19 +99,9 @@ int main(int argc, char* argv[])
   std::cin >> i_ab_c;
 
   // couple the three irreps in scheme I-(II-III)
-  auto [u3a_bc, rhomaxsa_bc] = u3::decomposition(u3a, u3bc[i_bc]);
-
-  int flag = 0, i_a_bc;
-  for (i_a_bc = 0; i_a_bc < u3a_bc.size(); i_a_bc++)
-  {
-    if (u3ab_c[i_ab_c] == u3a_bc[i_a_bc])
-    {
-      flag++;
-      break;
-    }
-  }
-
-  if (flag > 0)
+  auto rhomaxa_bc = u3::Rho(u3a, u3bc[i_bc], u3ab_c[i_ab_c]);
+  
+  if (rhomaxa_bc > 0)
   {
 
     // Start time measurement
@@ -131,7 +121,7 @@ int main(int argc, char* argv[])
     std::vector<double> coeffs = u3::U6(
         u3a, gArrA, u3b, gArrB, u3ab_c[i_ab_c], gArrABC, u3c, gArrC, u3ab[i_ab],
         gArrAB, rhomaxsab[i_ab], rhomaxsab_c[i_ab_c], u3bc[i_bc], gArrBC,
-        rhomaxsbc[i_bc], rhomaxsa_bc[i_a_bc], cgcs, racahs, wigU3U2db);
+        rhomaxsbc[i_bc], rhomaxa_bc, cgcs, racahs, wigU3U2db);
 
     // End time measurement
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -149,15 +139,14 @@ int main(int argc, char* argv[])
       {
         for (int rbc = 0; rbc < rhomaxsbc[i_bc]; rbc++)
         {
-          for (int ra_bc = 0; ra_bc < rhomaxsa_bc[i_a_bc]; ra_bc++)
+          for (int ra_bc = 0; ra_bc < rhomaxa_bc; ra_bc++)
           {
             std::cout << "\t\t\t\t\t  " << rab + 1 << "   " << rab_c + 1
                       << "\t\t     " << rbc + 1 << "  " << ra_bc + 1 << "\t -> "
                       << coeffs[((rab * rhomaxsab_c[i_ab_c] + rab_c) *
                                      rhomaxsbc[i_bc] +
                                  rbc) *
-                                    rhomaxsa_bc[i_a_bc] +
-                                ra_bc]
+                                    rhomaxa_bc + ra_bc]
                       << std::endl;
           }
         }

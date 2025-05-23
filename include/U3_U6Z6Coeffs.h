@@ -28,23 +28,6 @@ namespace u3
        u34utils::SO3_CGC& cgcs, u34utils::SO3_Racah& racahs,
        u3::WigU3U2_db& wigU3U2db)
   {
-/*
-    // coupling <gA;hwBC|hwABC> rhoA_BC
-    auto coeffsA_BC = u3::WigU3U2(u3A, u3BC, u3ABC, rhoA_BCmax, 
-      u3ABC.n13() + u3ABC.n23(), gArrA, gArrBC, gArrABC, cgcs); 
-
-    // coupling <gAB;gC|hwABC> rhoAB_C
-    auto coeffsAB_C = u3::WigU3U2(u3AB, u3C, u3ABC, rhoAB_Cmax, 
-      u3ABC.n13() + u3ABC.n23(), gArrAB, gArrC, gArrABC, cgcs); 
-
-    // coupling <gB;gC|hwBC> rhoBC
-    auto coeffsBC = u3::WigU3U2(u3B, u3C, u3BC, rhoBCmax, 
-      u3BC.n13() + u3BC.n23(), gArrB, gArrC, gArrBC, cgcs); 
-
-    // coupling <gA;gB|gAB> rhoAB
-    auto coeffsAB = u3::WigU3U2(u3A, u3B, u3AB, rhoABmax, -1, 
-      gArrA, gArrB, gArrAB, cgcs); 
-*/
     Eigen::MatrixXd A(rhoA_BCmax, rhoA_BCmax);
     Eigen::MatrixXd B(rhoA_BCmax, rhoABmax * rhoAB_Cmax * rhoBCmax);
     B.setZero();
@@ -158,23 +141,6 @@ namespace u3
        u34utils::SO3_CGC& cgcs, u34utils::SO3_Racah& racahs,
        u3::WigU3U2_db& wigU3U2db)
   {
-/*
-    // coupling <hwAC;gB|hwABC> rhoAC_B
-    auto coeffsAC_B = u3::WigU3U2(u3AC, u3B, u3ABC, rhoAC_Bmax, 
-      u3ABC.n13() + u3ABC.n23(), gArrAC, gArrB, gArrABC, cgcs);
-
-    // coupling <gAB;gC|hwABC> rhoAB_C
-    auto coeffsAB_C = u3::WigU3U2(u3AB, u3C, u3ABC, rhoAB_Cmax, 
-      u3ABC.n13() + u3ABC.n23(), gArrAB, gArrC, gArrABC, cgcs);
-
-    // coupling <gA;gC|hwAC> rhoAC
-    auto coeffsAC = u3::WigU3U2(u3A, u3C, u3AC, rhoACmax, 
-      u3AC.n13() + u3AC.n23(), gArrA, gArrC, gArrAC, cgcs);
-
-    // coupling <gA;gB|gAB> rhoAB
-    auto coeffsAB = u3::WigU3U2(u3A, u3B, u3AB, rhoABmax, -1, 
-      gArrA, gArrB, gArrAB, cgcs);
-*/
     Eigen::MatrixXd A(rhoAC_Bmax, rhoAC_Bmax);
     Eigen::MatrixXd B(rhoAC_Bmax, rhoABmax * rhoAB_Cmax * rhoACmax);
     B.setZero();
