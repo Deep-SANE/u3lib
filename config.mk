@@ -1,7 +1,3 @@
-U3LIB_DIR:=$(abspath $(dir $(lastword $(MAKEFILE_LIST))))
-
-include $(U3LIB_DIR)/config.local.mk
-
 # compiler specification:
 ifeq ($(USE_SLEPC),1)
 CXX=$(MPICXX)
