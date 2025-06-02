@@ -953,7 +953,7 @@ namespace u3
     return coeffs;
   }
 
-//#define U3LIB_ENABLE_WIGU3U2_CACHE
+#define U3LIB_ENABLE_WIGU3U2_CACHE
   class WigU3U2_db
   {
 #ifdef U3LIB_ENABLE_WIGU3U2_CACHE
