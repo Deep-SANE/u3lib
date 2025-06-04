@@ -1014,13 +1014,16 @@ namespace u3
         auto acc = coeffs_ref.access(n12a - n33a, n22a - n33a, n12b - n33b,
                                      n22b - n33b, n12c - n33c, n22c - n33c);
         
-        assert(acc.allowed);
-        assert(acc.computed);
-
         flag = acc.allowed;
-        row = coeffs_ref.get_row(acc);
 
-        assert(row.cols() == rhomax);
+        if (flag)
+        {
+          assert(acc.computed);
+
+          row = coeffs_ref.get_row(acc);
+
+          assert(row.cols() == rhomax);
+        }
       }
 
       return std::make_pair(flag, row);
