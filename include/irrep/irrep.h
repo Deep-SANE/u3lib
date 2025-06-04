@@ -39,6 +39,9 @@ namespace u3
       int lam() const { return n13() - n23(); }
       int mu() const { return n23() - n33(); }
 
+      // total quanta
+      int quanta() const { return n13() + n23() + n33(); }
+
       // dimension
       int dim() const
       {
