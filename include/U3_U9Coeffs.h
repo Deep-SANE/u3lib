@@ -40,6 +40,7 @@ namespace u3
     // couple u3AB and u3C
     auto [u3AB_C, rhomaxsAB_C] = u3::decomposition(u3AB, u3C);
 
+    /* an array to store the couple I-II-III irreps
     std::vector<u3::irrep> u3ABC;
     std::vector<int> rhoAB_Cmax, rhoAC_Bmax;
 
@@ -52,44 +53,35 @@ namespace u3
         rhoAB_Cmax.push_back(rhomaxsAB_C[i]);
         rhoAC_Bmax.push_back(rhomaxAC_B);
       }
-    }
+    } */
     
-    for (int i = 0; i < u3ABC.size(); i++)
+    //for (int i = 0; i < u3ABC.size(); i++)
+    for (int i = 0; i < u3AB_C.size(); i++)
     {
-      std::vector<u3::gelfand> gArrABC = u3::gelfandBasis(u3ABC[i]);
-/*
-      auto [u3ABC_D, rhomaxsABC_D] = u3::decomposition(u3ABC[i], u3D);
-      int rhoABC_Dmax = 0;
-      for (int j = 0; j < u3ABC_D.size(); j++)
-      {
-        if (u3ABC_D[j] == u3ABCD)
-        {
-          rhoABC_Dmax = rhomaxsABC_D[j];
-          break;
-        }
-      }
-*/
-      int rhoABC_Dmax = u3::Rho(u3ABC[i], u3D, u3ABCD);
+      int rhomaxAC_B = u3::Rho(u3AC, u3B, u3AB_C[i]);
+      if (rhomaxAC_B == 0)
+        continue;
+
+      int rhoABC_Dmax = u3::Rho(u3AB_C[i], u3D, u3ABCD);
       if (rhoABC_Dmax == 0)
         continue;
 
-      //std::cout << u3ABC[i] << rhoAB_Cmax[i] << "," << rhoAC_Bmax[i] << ","
-      // << rhoABC_Dmax << std::endl;
+      std::vector<u3::gelfand> gArrABC = u3::gelfandBasis(u3AB_C[i]);
 
       std::vector<double> U6_1 =
           u3::U6(u3AC, gArrAC, u3B, gArrB, u3ABCD, gArrABCD, u3D, gArrD,
-                 u3ABC[i], gArrABC, rhoAC_Bmax[i], rhoABC_Dmax, u3BD, gArrBD,
+                 u3AB_C[i], gArrABC, rhomaxAC_B, rhoABC_Dmax, u3BD, gArrBD,
                  rhoBDmax, rhoAC_BDmax, cgcs, racahs, wigU3U2db);
 
       std::vector<double> U6_2 =
           u3::U6(u3AB, gArrAB, u3C, gArrC, u3ABCD, gArrABCD, u3D, gArrD,
-                 u3ABC[i], gArrABC, rhoAB_Cmax[i], rhoABC_Dmax, u3CD, gArrCD,
+                 u3AB_C[i], gArrABC, rhomaxsAB_C[i], rhoABC_Dmax, u3CD, gArrCD,
                  rhoCDmax, rhoAB_CDmax, cgcs, racahs, wigU3U2db);
 
       std::vector<double> Z6 =
-          u3::Z6(u3B, gArrB, u3A, gArrA, u3ABC[i], gArrABC, u3C, gArrC, u3AB,
-                 gArrAB, rhoABmax, rhoAB_Cmax[i], u3AC, gArrAC, rhoACmax,
-                 rhoAC_Bmax[i], cgcs, racahs, wigU3U2db);
+          u3::Z6(u3B, gArrB, u3A, gArrA, u3AB_C[i], gArrABC, u3C, gArrC, u3AB,
+                 gArrAB, rhoABmax, rhomaxsAB_C[i], u3AC, gArrAC, rhoACmax,
+                 rhomaxAC_B, cgcs, racahs, wigU3U2db);
 
       for (int rAC = 0; rAC < rhoACmax; rAC++)
       {
@@ -103,9 +95,9 @@ namespace u3
               {
                 for (int rAC_BD = 0; rAC_BD < rhoAC_BDmax; rAC_BD++)
                 {
-                  for (int rAC_B = 0; rAC_B < rhoAC_Bmax[i]; rAC_B++)
+                  for (int rAC_B = 0; rAC_B < rhomaxAC_B; rAC_B++)
                   {
-                    for (int rAB_C = 0; rAB_C < rhoAB_Cmax[i]; rAB_C++)
+                    for (int rAB_C = 0; rAB_C < rhomaxsAB_C[i]; rAB_C++)
                     {
                       for (int rABC_D = 0; rABC_D < rhoABC_Dmax; rABC_D++)
                       {
@@ -113,8 +105,8 @@ namespace u3
                         rhoABmax + rAB) * rhoCDmax + rCD) * rhoAC_BDmax + rAC_BD] 
                         += U6_1[((rAC_B * rhoABC_Dmax + rABC_D) * rhoBDmax +
                                   rBD) * rhoAC_BDmax + rAC_BD] 
-                         * Z6[((rAB * rhoAB_Cmax[i] + rAB_C) * rhoACmax +
-                                rAC) * rhoAC_Bmax[i] + rAC_B] 
+                         * Z6[((rAB * rhomaxsAB_C[i] + rAB_C) * rhoACmax +
+                                rAC) * rhomaxAC_B + rAC_B] 
                          * U6_2[((rAB_C * rhoABC_Dmax + rABC_D) * rhoCDmax +
                                   rCD) * rhoAB_CDmax + rAB_CD];
                       }
