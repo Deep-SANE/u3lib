@@ -131,7 +131,7 @@ int main(int argc, char* argv[])
  
   if (pArrA.empty() || pArrB.empty() || pArrC.empty())
   {
-    std::cout << "Your angular momentum values are valid" << std::endl;
+    std::cout << "Your angular momentum values are invalid" << std::endl;
     return 1;
   }
 
@@ -149,8 +149,10 @@ int main(int argc, char* argv[])
 
   std::vector<std::tuple<int, int, int>> tArr;
   u34utils::SO3_CGC cgcs;
+  u3::WigU3U2_db wigU3U2db(cgcs);
 
-  std::vector<Eigen::MatrixXd> coeffs = u3::WigU3SO3(rhomax, pArrA, pArrB, pArrC, tArr, cgcs);
+  std::vector<Eigen::MatrixXd> coeffs = 
+    u3::WigU3SO3(rhomax, pArrA, pArrB, pArrC, tArr, cgcs, wigU3U2db);
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();

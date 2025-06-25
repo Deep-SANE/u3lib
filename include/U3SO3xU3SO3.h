@@ -23,7 +23,7 @@ namespace u3
     std::vector<u3::physicalvector>& pArrB,
     std::vector<u3::physicalvector>& pArrC,
     std::vector<std::tuple<int, int, int>>& tArr,
-    u34utils::SO3_CGC& cgcs)
+    u34utils::SO3_CGC& cgcs, u3::WigU3U2_db& wigU3U2db)
   {
 
     // build Gelfand basis
@@ -51,10 +51,10 @@ namespace u3
     }
 
     // find all the reduced canonical coupling coefficients
-    int w2min = *std::min_element(w2mins.begin(), w2mins.end());
-    auto canoCoeffs =
-        u3::WigU3U2(pArrA[0].toprow, pArrB[0].toprow, pArrC[0].toprow, rhomax,
-                    w2min, gArrA, gArrB, gArrC, cgcs);
+    //int w2min = *std::min_element(w2mins.begin(), w2mins.end());
+    //auto canoCoeffs =
+    //    u3::WigU3U2(pArrA[0].toprow, pArrB[0].toprow, pArrC[0].toprow, rhomax,
+    //                w2min, gArrA, gArrB, gArrC, cgcs);
     // note that u3C and all gelfand states are already normalized here
 
     std::vector<Eigen::MatrixXd> coeffs;
@@ -110,8 +110,6 @@ namespace u3
               {
                 for (int iC = 0; iC < canoBasisC[k].size(); iC++)
                 {
-                  Eigen::MatrixXd wigU3U2U1;
-
                   int n12A = gArrA[canoBasisA[pArrA[i].L - mA_abs][iA]].n12(),
                       n22A = gArrA[canoBasisA[pArrA[i].L - mA_abs][iA]].n22(),
                       n12B = gArrB[canoBasisB[j][iB]].n12(),
@@ -119,8 +117,16 @@ namespace u3
                       n12C = gArrC[canoBasisC[k][iC]].n12(),
                       n22C = gArrC[canoBasisC[k][iC]].n22();
 
-                  auto acc =
-                      canoCoeffs.access(n12A, n22A, n12B, n22B, n12C, n22C);
+                  //auto acc =
+                  //    canoCoeffs.access(n12A, n22A, n12B, n22B, n12C, n22C);
+
+                  auto [allow, canoCoeffs] = wigU3U2db.get(
+                    pArrA[0].toprow.n13(), pArrA[0].toprow.n23(), 
+                    pArrA[0].toprow.n33(), n12A, n22A,
+                    pArrB[0].toprow.n13(), pArrB[0].toprow.n23(), 
+                    pArrB[0].toprow.n33(), n12B, n22B,
+                    pArrC[0].toprow.n13(), pArrC[0].toprow.n23(), 
+                    pArrC[0].toprow.n33(), n12C, n22C);
 
                   int jj1 =
                           gArrA[canoBasisA[pArrA[i].L - mA_abs][iA]].Lambdax2(),
@@ -133,11 +139,10 @@ namespace u3
                   if (mA < 0)
                     mm1 *= -1;
 
-                  if ((acc.allowed == false) || ((mm1 + mm2) != mm3))
+                  if ((allow == false) || ((mm1 + mm2) != mm3))
                     continue;
 
-                  else
-                    wigU3U2U1 = canoCoeffs.get_row(acc) *
+                  auto wigU3U2U1 = canoCoeffs *
                                 cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
                   int phase =
