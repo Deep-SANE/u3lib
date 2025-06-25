@@ -159,13 +159,13 @@ namespace u3
                                          pArrC[k].kappa + k3, r) +=
                                 transformationA[pArrA[i].L - mA_abs](iA, k1) *
                                 transformationB[j](iB, k2) *
-                                transformationC[k](iC, k3) * wigU3U2U1(0, r);
+                                transformationC[k](iC, k3) * wigU3U2U1(r);
                           else
                             coeffs_temp((k1 * pArrB[j].kappa + k2) *
                                          pArrC[k].kappa + k3, r) += phase *
                                 transformationA[pArrA[i].L - mA_abs](iA, k1) *
                                 transformationB[j](iB, k2) *
-                                transformationC[k](iC, k3) * wigU3U2U1(0, r);
+                                transformationC[k](iC, k3) * wigU3U2U1(r);
                 }
               }
             }
