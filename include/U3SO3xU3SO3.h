@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <map>
 #include <tuple>
 #include <vector>
 
@@ -179,6 +180,81 @@ namespace u3
     return coeffs;
   }
 
+#define U3LIB_ENABLE_WIGU3SO3_CACHE
+  class WigU3SO3_db
+  {
+#ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
+    using key_type = std::array<int, 9>;
+    std::map<key_type, Eigen::MatrixXd> map_;
+#endif
+
+    u34utils::SO3_CGC& cgcs_;
+    u3::WigU3U2_db& wigU3U2db_;
+
+    auto calculate(const irrep& u3a, int la, 
+                   const irrep& u3b, int lb, 
+                   const irrep& u3c, int lc, 
+                   int rhomax)
+    {
+      std::vector<u3::physicalvector> 
+        pArrA(1, u3::physicalvector(u3a, la)),
+        pArrB(1, u3::physicalvector(u3b, lb)), 
+        pArrC(1, u3::physicalvector(u3c, lc)); 
+
+      std::vector<std::tuple<int, int, int>> tArr;
+
+      /* return one coefficient matrix
+        row = (ka * max(kb) + kb) * max(kc) + kc
+        column = rho
+      */
+      return WigU3SO3(rhomax, pArrA, pArrB, pArrC, tArr, cgcs_, wigU3U2db_)[0];
+    }
+
+  public:
+    WigU3SO3_db(u34utils::SO3_CGC& cgcs, u3::WigU3U2_db& wigU3U2db) 
+      : cgcs_(cgcs), wigU3U2db_(wigU3U2db)
+    { }
+
+    auto get(int lam1, int mu1, int l1, 
+             int lam2, int mu2, int l2,
+             int lam3, int mu3, int l3)
+    {
+      // normalized irreps:
+      irrep u3a(lam1, mu1);
+      irrep u3b(lam2, mu2);
+      irrep u3c(lam3, mu3);
+      int rhomax = Rho(u3a, u3b, u3c);
+
+      bool flag = false;
+      Eigen::MatrixXd m;
+
+      if (rhomax > 0 && std::fabs(l1 - l2) <= l3 && (l1 + l2) >= l3)
+      {
+#ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
+        key_type key = {lam1, mu1, l1,
+                        lam2, mu2, l2,
+                        lam3, mu3, l3};
+
+        auto iter = map_.find(key);
+        if (iter == map_.end())
+        {
+          auto p = map_.try_emplace(
+            key, calculate(u3a, l1, u3b, l2, u3c, l3, rhomax));
+          assert(p.second);
+          iter = p.first;
+        }
+
+        m = iter->second;
+#else
+        m = calculate(u3a, l1, u3b, l2, u3c, l3, rhomax);
+#endif
+        flag = true;
+        
+      }
+
+      return std::make_pair(flag, m);
+    }
+  };
 } // namespace u3
 
 #endif
