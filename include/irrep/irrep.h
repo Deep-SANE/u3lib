@@ -1,5 +1,5 @@
-#ifndef U3LIB_IRREP_GELFAND_H
-#define U3LIB_IRREP_GELFAND_H
+#ifndef U3LIB_IRREP_IRREP_H
+#define U3LIB_IRREP_IRREP_H
 
 #include <ostream>
 
