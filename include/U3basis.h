@@ -88,7 +88,7 @@ namespace u3
   }
 
   // Multiplicity of L
-  inline int Kappa(u3::irrep& u3, int l)
+  inline int Kappa(const u3::irrep& u3, int l)
   {
     return IntP((u3.n13() - u3.n33() - l + 0.0) / 2) -
            IntP((u3.n13() - u3.n23() + 1.0 - l) / 2) -
