@@ -6,7 +6,8 @@
 #include <iostream>
 #include <vector>
 
-#include "config.h"
+#include "U3gelfand.h"
+#include "U3irrep.h"
 
 namespace u3
 {
