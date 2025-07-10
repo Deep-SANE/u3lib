@@ -5,7 +5,12 @@
 
 namespace u3
 {
-  using irrep = internal::irrep_int_rep_t;
+  using irrep = internal::irrep_uint16_t_rep_t;
+}
+
+namespace su3
+{
+  using irrep = internal::irrep_uint16_t_rep_t;
 }
 
 #endif

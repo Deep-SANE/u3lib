@@ -4,13 +4,14 @@
 #include <ostream>
 
 #include "int_rep.h"
+#include "uint16_t_rep.h"
 
 namespace u3
 {
   namespace internal
   {
     /*
-     * A class for U(3) irrep [n13,n23,n33]
+     * Class for U(3) irrep [n13,n23,n33]
      *
      * The template argument specifies the internal representation.
      */
@@ -36,7 +37,9 @@ namespace u3
       bool operator!=(const irrep& other) const { return !(*this == other); }
 
       // lambda, mu
-      int lam() const { return n13() - n23(); }
+      int lambda() const { return n13() - n23(); }
+      int lam() const { return lambda(); }
+
       int mu() const { return n23() - n33(); }
 
       // total quanta
@@ -70,8 +73,57 @@ namespace u3
 
     // type aliases:
     using irrep_int_rep_t = irrep<irrep_int_rep>;
+    using irrep_uint16_t_rep_t = irrep<irrep_uint16_t_rep>;
 
   } // namespace internal
 } // namespace u3
+
+namespace su3
+{
+  namespace internal
+  {
+    /*
+     * Class for SU(3) irrep (lambda,mu)
+     *
+     * The template argument specifies the internal representation.
+     */
+    template <typename Rep>
+    class irrep : Rep
+    {
+    public:
+      using Rep::lambda, Rep::mu;
+
+      irrep() = default;
+
+      irrep(int lambda, int mu) : Rep(lambda, mu) { }
+
+      // comparison operators:
+      bool operator==(const irrep& other) const
+      {
+        return static_cast<const Rep&>(*this) == static_cast<const Rep&>(other);
+      }
+
+      bool operator!=(const irrep& other) const { return !(*this == other); }
+
+      // alternative function name for `lambda`:
+      int lam() const { return lambda(); }
+      void lam(int lm) { lambda(lm); }
+
+      // U(3) labels:
+      int n13() const { return lambda() + mu(); }
+      int n23() const { return mu(); }
+      int n33() const { return 0; }
+
+      // dimension:
+      int dim() const
+      {
+        return (1 + lambda()) * (1 + mu()) * (2 + lambda() + mu()) / 2;
+      }
+    };
+
+    // type aliases:
+    using irrep_uint16_t_rep_t = irrep<irrep_uint16_t_rep>;
+  } // namespace internal
+} // namespace su3
 
 #endif
