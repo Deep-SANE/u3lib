@@ -1,7 +1,7 @@
 #ifndef U3LIB_GELFAND_H
 #define U3LIB_GELFAND_H
 
-#include "gelfand/gelfand.h"
+#include "internal/gelfand/gelfand.h"
 
 namespace u3
 {

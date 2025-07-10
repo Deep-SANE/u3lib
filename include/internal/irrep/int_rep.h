@@ -1,5 +1,5 @@
-#ifndef U3LIB_IRREP_INT_REP_H
-#define U3LIB_IRREP_INT_REP_H
+#ifndef U3LIB_INTERNAL_IRREP_INT_REP_H
+#define U3LIB_INTERNAL_IRREP_INT_REP_H
 
 #include <tuple>
 

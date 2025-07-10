@@ -1,7 +1,7 @@
 #ifndef U3LIB_IRREP_H
 #define U3LIB_IRREP_H
 
-#include "irrep/irrep.h"
+#include "internal/irrep/irrep.h"
 
 namespace u3
 {

@@ -1,5 +1,5 @@
-#ifndef U3LIB_GELFAND_GELFAND_H
-#define U3LIB_GELFAND_GELFAND_H
+#ifndef U3LIB_INTERNAL_GELFAND_GELFAND_H
+#define U3LIB_INTERNAL_GELFAND_GELFAND_H
 
 #include <cmath>
 #include <ostream>
