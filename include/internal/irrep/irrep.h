@@ -97,6 +97,10 @@ namespace su3
 
       irrep(int lambda, int mu) : Rep(lambda, mu) { }
 
+      template <typename T>
+      irrep(const u3::internal::irrep<T>& u3) : Rep(u3.lambda(), u3.mu())
+      { }
+
       // comparison operators:
       bool operator==(const irrep& other) const
       {
