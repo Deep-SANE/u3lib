@@ -10,7 +10,7 @@
 namespace su3
 {
   // original Tomas' version of 'su3mult' (renamed to 'Rho' here):
-  int Rho(int lm1, int mu1, int lm2, int mu2, int lm3, int mu3)
+  inline int Rho(int lm1, int mu1, int lm2, int mu2, int lm3, int mu3)
   {
     int result = 0;
     int phase = lm1 + lm2 - lm3 - mu1 - mu2 + mu3;
