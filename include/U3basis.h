@@ -1,6 +1,8 @@
 #ifndef U3LIB_U3BASIS_H
 #define U3LIB_U3BASIS_H
 
+#include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <iostream>
@@ -8,6 +10,27 @@
 
 #include "U3gelfand.h"
 #include "U3irrep.h"
+
+namespace su3
+{
+  inline int kmax(int lm, int mu, int L)
+  {
+    assert((lm + mu - L) >= 0);
+
+    return (lm + mu - L) / 2 - std::max(0, (lm + 1 - L) / 2) -
+           std::max(0, (mu + 1 - L) / 2) + 1;
+  }
+
+  inline int kmax(const su3::irrep& ir, int L)
+  {
+    return su3::kmax(ir.lambda(), ir.mu(), L);
+  }
+
+  // alternatives called 'mult':
+  inline int mult(int lm, int mu, int L) { return su3::kmax(lm, mu, L); }
+
+  inline int mult(const su3::irrep& ir, int L) { return su3::kmax(ir, L); }
+} // namespace su3
 
 namespace u3
 {
@@ -78,6 +101,7 @@ namespace u3
   | kappa, L /
   */
 
+  /*
   // IntP(x) function, see Eq. (35) of Pan et al., Nucl. Phys. A (2016)
   inline int IntP(double x)
   {
@@ -94,6 +118,12 @@ namespace u3
            IntP((u3.n13() - u3.n23() + 1.0 - l) / 2) -
            IntP((u3.n23() - u3.n33() + 1.0 - l) / 2) + 1;
   }
+  */
+
+  inline int Kappa(const u3::irrep& ir, int L) { return su3::kmax(ir, L); }
+
+  // alternative called 'mult':
+  inline int mult(const u3::irrep& ir, int L) { return su3::kmax(ir, L); }
 
   struct physicalvector
   {

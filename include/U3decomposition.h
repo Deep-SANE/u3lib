@@ -66,6 +66,18 @@ namespace su3
                     su3c.mu());
   }
 
+  // alternatives called 'mult':
+  inline int mult(int lm1, int mu1, int lm2, int mu2, int lm3, int mu3)
+  {
+    return su3::Rho(lm1, mu1, lm2, mu2, lm3, mu3);
+  }
+
+  inline int mult(const su3::irrep& su3a, const su3::irrep& su3b,
+                  const su3::irrep& su3c)
+  {
+    return su3::Rho(su3a, su3b, su3c);
+  }
+
   inline std::pair<std::vector<su3::irrep>, std::vector<int>>
   decomposition(const su3::irrep& su3a, const su3::irrep& su3b)
   {
@@ -114,6 +126,13 @@ namespace u3
 {
   inline int Rho(const u3::irrep& u3a, const u3::irrep& u3b,
                  const u3::irrep& u3c)
+  {
+    return su3::Rho(u3a, u3b, u3c);
+  }
+
+  // alternative called 'mult':
+  inline int mult(const u3::irrep& u3a, const u3::irrep& u3b,
+                  const u3::irrep& u3c)
   {
     return su3::Rho(u3a, u3b, u3c);
   }
