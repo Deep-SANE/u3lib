@@ -26,6 +26,11 @@ namespace su3
     return su3::kmax(ir.lambda(), ir.mu(), L);
   }
 
+  // alternatives called 'Kappa':
+  inline int Kappa(int lm, int mu, int L) { return su3::kmax(lm, mu, L); }
+
+  inline int Kappa(const su3::irrep& ir, int L) { return su3::kmax(ir, L); }
+
   // alternatives called 'mult':
   inline int mult(int lm, int mu, int L) { return su3::kmax(lm, mu, L); }
 
@@ -121,6 +126,9 @@ namespace u3
   */
 
   inline int Kappa(const u3::irrep& ir, int L) { return su3::kmax(ir, L); }
+
+  // alternative called 'kmax':
+  inline int kmax(const u3::irrep& ir, int L) { return su3::kmax(ir, L); }
 
   // alternative called 'mult':
   inline int mult(const u3::irrep& ir, int L) { return su3::kmax(ir, L); }
