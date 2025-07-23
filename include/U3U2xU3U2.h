@@ -434,9 +434,10 @@ namespace u3
   // \   n12a  n22a       n12b  n22b   ||   n13c n23c    /_rho
 
   inline void HighestWeightReducedCoeffs(const std::vector<u3::gelfand>& gArr1,
-                                  const std::vector<u3::gelfand>& gArr2,
-                                  const std::vector<u3::gelfand>& gArr3,
-                                  u34utils::SO3_CGC& cgcs, WigU3U2_coeffs& coeffs)
+                                         const std::vector<u3::gelfand>& gArr2,
+                                         const std::vector<u3::gelfand>& gArr3,
+                                         qcx_utils::SO3_CGC& cgcs,
+                                         WigU3U2_coeffs& coeffs)
   {
     std::vector<std::pair<int, int>> indices =
         expand_to_uncoupled(gArr3[0], gArr1, gArr2);
@@ -444,9 +445,10 @@ namespace u3
     auto mat = E23E12(gArr1, gArr2, indices);
 
 #ifdef U3LIB_USE_SLEPC
-    Eigen::MatrixXd nullspace = u34utils::null_space_slepc(mat, coeffs.rhomax());
+    Eigen::MatrixXd nullspace =
+        qcx_utils::null_space_slepc(mat, coeffs.rhomax());
 #else
-    Eigen::MatrixXd nullspace = u34utils::null_space(mat);
+    Eigen::MatrixXd nullspace = qcx_utils::null_space(mat);
 #endif
 
     //std::cout << nullspace << std::endl;
@@ -486,13 +488,13 @@ namespace u3
 
   // build with E32
   inline void E32(int parent_g3, int& row, int rhomax,
-           std::vector<int>& same_weight_gArr3,
-           std::vector<std::pair<int, int>>& uncoupled_same_weight_gArr3,
-           const std::vector<u3::gelfand>& gArr1,
-           const std::vector<u3::gelfand>& gArr2,
-           const std::vector<u3::gelfand>& gArr3, Eigen::MatrixXd& b,
-           u34utils::SO3_CGC& cgcs, std::vector<Eigen::MatrixXd>& E32E31,
-           WigU3U2_coeffs& coeffs)
+                  std::vector<int>& same_weight_gArr3,
+                  std::vector<std::pair<int, int>>& uncoupled_same_weight_gArr3,
+                  const std::vector<u3::gelfand>& gArr1,
+                  const std::vector<u3::gelfand>& gArr2,
+                  const std::vector<u3::gelfand>& gArr3, Eigen::MatrixXd& b,
+                  qcx_utils::SO3_CGC& cgcs,
+                  std::vector<Eigen::MatrixXd>& E32E31, WigU3U2_coeffs& coeffs)
   {
     int jj3 = gArr3[parent_g3].Lambdax2(), mm3 = gArr3[parent_g3].MLambdax2();
 
@@ -610,13 +612,13 @@ namespace u3
 
   // build with E31
   inline void E31(int parent_g3, int& row, int rhomax,
-           std::vector<int>& same_weight_gArr3,
-           std::vector<std::pair<int, int>>& uncoupled_same_weight_gArr3,
-           const std::vector<u3::gelfand>& gArr1,
-           const std::vector<u3::gelfand>& gArr2,
-           const std::vector<u3::gelfand>& gArr3, Eigen::MatrixXd& b,
-           u34utils::SO3_CGC& cgcs, std::vector<Eigen::MatrixXd>& E32E31,
-           WigU3U2_coeffs& coeffs)
+                  std::vector<int>& same_weight_gArr3,
+                  std::vector<std::pair<int, int>>& uncoupled_same_weight_gArr3,
+                  const std::vector<u3::gelfand>& gArr1,
+                  const std::vector<u3::gelfand>& gArr2,
+                  const std::vector<u3::gelfand>& gArr3, Eigen::MatrixXd& b,
+                  qcx_utils::SO3_CGC& cgcs,
+                  std::vector<Eigen::MatrixXd>& E32E31, WigU3U2_coeffs& coeffs)
   {
     int jj3 = gArr3[parent_g3].Lambdax2(), mm3 = gArr3[parent_g3].MLambdax2();
 
@@ -737,10 +739,12 @@ namespace u3
   }
 
   inline void LowerWeightReducedCoeffs(const std::vector<u3::gelfand>& gArr1,
-                                const std::vector<u3::gelfand>& gArr2,
-                                const std::vector<u3::gelfand>& gArr3,
-                                int rhomax, std::vector<int>& same_weight_gArr3,
-                                u34utils::SO3_CGC& cgcs, WigU3U2_coeffs& coeffs)
+                                       const std::vector<u3::gelfand>& gArr2,
+                                       const std::vector<u3::gelfand>& gArr3,
+                                       int rhomax,
+                                       std::vector<int>& same_weight_gArr3,
+                                       qcx_utils::SO3_CGC& cgcs,
+                                       WigU3U2_coeffs& coeffs)
   {
     // trace states with the same [w2,w1] (z-weight)
     for (int i = 0; i < same_weight_gArr3.size(); i++)
@@ -906,12 +910,12 @@ namespace u3
 
   // all reduced coupling coefficients
   // u3A, u3B, u3C are all normalized prior to being passed
-  inline auto WigU3U2(const u3::irrep& u3A, const u3::irrep& u3B, 
-                      const u3::irrep& u3C, int rhomax, int w2min, 
+  inline auto WigU3U2(const u3::irrep& u3A, const u3::irrep& u3B,
+                      const u3::irrep& u3C, int rhomax, int w2min,
                       const std::vector<u3::gelfand>& gArrA,
-                      const std::vector<u3::gelfand>& gArrB, 
+                      const std::vector<u3::gelfand>& gArrB,
                       const std::vector<u3::gelfand>& gArrC,
-                      u34utils::SO3_CGC& cgcs)
+                      qcx_utils::SO3_CGC& cgcs)
   {
     WigU3U2_coeffs coeffs(u3A, u3B, u3C, rhomax);
 
@@ -961,7 +965,7 @@ namespace u3
     std::map<key_type, WigU3U2_coeffs> map_;
 #endif
 
-    u34utils::SO3_CGC& cgcs_;
+    qcx_utils::SO3_CGC& cgcs_;
 
     auto calculate(const irrep& u3a, const irrep& u3b, const irrep& u3c)
     {
@@ -975,7 +979,7 @@ namespace u3
     }
 
   public:
-    WigU3U2_db(u34utils::SO3_CGC& cgcs) : cgcs_(cgcs) { }
+    WigU3U2_db(qcx_utils::SO3_CGC& cgcs) : cgcs_(cgcs) { }
 
     auto get(int n13a, int n23a, int n33a, int n12a, int n22a, int n13b,
              int n23b, int n33b, int n12b, int n22b, int n13c, int n23c,
@@ -1048,7 +1052,7 @@ namespace u3
     get(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C, int rhomax,
         const std::vector<u3::gelfand>& gArrA,
         const std::vector<u3::gelfand>& gArrB, std::vector<u3::gelfand>& gArrC,
-        u34utils::SO3_CGC& cgcs)
+        qcx_utils::SO3_CGC& cgcs)
     {
 #ifdef U3LIB_ENABLE_WIGU3U2_CACHE
       key_type key = {u3A.n13(), u3A.n23(), u3A.n33(), u3B.n13(), u3B.n23(),

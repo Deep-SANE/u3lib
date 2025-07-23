@@ -197,9 +197,10 @@ namespace u3
     auto Lproj = u3::Lprojection(physvec, gArr, canoBasis);
     // and solving its null space
 #ifdef U3LIB_USE_SLEPC
-    Eigen::MatrixXd transformation = u34utils::null_space_slepc(Lproj, physvec.kappa);
+    Eigen::MatrixXd transformation =
+        qcx_utils::null_space_slepc(Lproj, physvec.kappa);
 #else
-    Eigen::MatrixXd transformation = u34utils::null_space(Lproj);
+    Eigen::MatrixXd transformation = qcx_utils::null_space(Lproj);
 #endif
 
     // ensure the nullspace is solved correctly

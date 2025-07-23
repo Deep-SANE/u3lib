@@ -16,7 +16,7 @@
 
 class WigU3U2_coeffs
 {
-  u34utils::SO3_CGC cgcs_;
+  qcx_utils::SO3_CGC cgcs_;
 
   std::optional<u3::WigU3U2_coeffs> coeffs_;
 

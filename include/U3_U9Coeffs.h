@@ -19,20 +19,19 @@ namespace u3
 
   // input by users: u3a, u3b, u3c, u3d, u3ab, u3cd, u3ac, u3bd, u3abcd
   // all normalized
-  inline std::vector<double> 
-    U9(const u3::irrep& u3A, const std::vector<u3::gelfand>& gArrA,
-       const u3::irrep& u3B, const std::vector<u3::gelfand>& gArrB,
-       const u3::irrep& u3C, const std::vector<u3::gelfand>& gArrC,
-       const u3::irrep& u3D, const std::vector<u3::gelfand>& gArrD,
-       const u3::irrep& u3AB, const std::vector<u3::gelfand>& gArrAB,
-       const u3::irrep& u3CD, const std::vector<u3::gelfand>& gArrCD,
-       const u3::irrep& u3AC, const std::vector<u3::gelfand>& gArrAC,
-       const u3::irrep& u3BD, const std::vector<u3::gelfand>& gArrBD,
-       const u3::irrep& u3ABCD, const std::vector<u3::gelfand>& gArrABCD,
-       int rhoABmax, int rhoCDmax, int rhoAB_CDmax,
-       int rhoACmax, int rhoBDmax, int rhoAC_BDmax,
-       u34utils::SO3_CGC& cgcs, u34utils::SO3_Racah& racahs,
-       u3::WigU3U2_db& wigU3U2db)
+  inline std::vector<double>
+  U9(const u3::irrep& u3A, const std::vector<u3::gelfand>& gArrA,
+     const u3::irrep& u3B, const std::vector<u3::gelfand>& gArrB,
+     const u3::irrep& u3C, const std::vector<u3::gelfand>& gArrC,
+     const u3::irrep& u3D, const std::vector<u3::gelfand>& gArrD,
+     const u3::irrep& u3AB, const std::vector<u3::gelfand>& gArrAB,
+     const u3::irrep& u3CD, const std::vector<u3::gelfand>& gArrCD,
+     const u3::irrep& u3AC, const std::vector<u3::gelfand>& gArrAC,
+     const u3::irrep& u3BD, const std::vector<u3::gelfand>& gArrBD,
+     const u3::irrep& u3ABCD, const std::vector<u3::gelfand>& gArrABCD,
+     int rhoABmax, int rhoCDmax, int rhoAB_CDmax, int rhoACmax, int rhoBDmax,
+     int rhoAC_BDmax, qcx_utils::SO3_CGC& cgcs, qcx_utils::SO3_Racah& racahs,
+     u3::WigU3U2_db& wigU3U2db)
   {
     std::vector<double> U(rhoACmax * rhoBDmax * rhoAB_CDmax * rhoABmax *
                               rhoCDmax * rhoAC_BDmax, 0.0);

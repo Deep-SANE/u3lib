@@ -114,8 +114,8 @@ int main(int argc, char* argv[])
     std::vector<u3::gelfand> gArrBC = u3::gelfandBasis(u3bc[i_bc]);
     std::vector<u3::gelfand> gArrABC = u3::gelfandBasis(u3ab_c[i_ab_c]);
 
-    u34utils::SO3_CGC cgcs;
-    u34utils::SO3_Racah racahs;
+    qcx_utils::SO3_CGC cgcs;
+    qcx_utils::SO3_Racah racahs;
     u3::WigU3U2_db wigU3U2db(cgcs);
 
     std::vector<double> coeffs = u3::U6(

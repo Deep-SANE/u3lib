@@ -19,12 +19,12 @@
 namespace u3
 {
   // generate Wigner U3->SO(3) coefficients for multiple values of l1, l2, l3
-  inline std::vector<Eigen::MatrixXd>  WigU3SO3(int& rhomax, 
-    std::vector<u3::physicalvector>& pArrA,
-    std::vector<u3::physicalvector>& pArrB,
-    std::vector<u3::physicalvector>& pArrC,
-    std::vector<std::tuple<int, int, int>>& tArr,
-    u34utils::SO3_CGC& cgcs, u3::WigU3U2_db& wigU3U2db)
+  inline std::vector<Eigen::MatrixXd>
+  WigU3SO3(int& rhomax, std::vector<u3::physicalvector>& pArrA,
+           std::vector<u3::physicalvector>& pArrB,
+           std::vector<u3::physicalvector>& pArrC,
+           std::vector<std::tuple<int, int, int>>& tArr,
+           qcx_utils::SO3_CGC& cgcs, u3::WigU3U2_db& wigU3U2db)
   {
 
     // build Gelfand basis
@@ -188,7 +188,7 @@ namespace u3
     std::map<key_type, Eigen::MatrixXd> map_;
 #endif
 
-    u34utils::SO3_CGC& cgcs_;
+    qcx_utils::SO3_CGC& cgcs_;
     u3::WigU3U2_db& wigU3U2db_;
 
     auto calculate(const irrep& u3a, int la, 
@@ -211,8 +211,8 @@ namespace u3
     }
 
   public:
-    WigU3SO3_db(u34utils::SO3_CGC& cgcs, u3::WigU3U2_db& wigU3U2db) 
-      : cgcs_(cgcs), wigU3U2db_(wigU3U2db)
+    WigU3SO3_db(qcx_utils::SO3_CGC& cgcs, u3::WigU3U2_db& wigU3U2db)
+        : cgcs_(cgcs), wigU3U2db_(wigU3U2db)
     { }
 
     auto get(int lam1, int mu1, int l1, 

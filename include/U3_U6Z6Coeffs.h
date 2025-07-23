@@ -16,17 +16,16 @@
 namespace u3
 {
   // input by users: u3A, u3B, u3ABC, u3C, u3AB, u3BC, all normalized
-  inline std::vector<double> 
-    U6(const u3::irrep& u3A, const std::vector<u3::gelfand>& gArrA,
-       const u3::irrep& u3B, const std::vector<u3::gelfand>& gArrB,
-       const u3::irrep& u3ABC, const std::vector<u3::gelfand>& gArrABC,
-       const u3::irrep& u3C, const std::vector<u3::gelfand>& gArrC,
-       const u3::irrep& u3AB, const std::vector<u3::gelfand>& gArrAB,
-       int rhoABmax, int rhoAB_Cmax, 
-       const u3::irrep& u3BC, const std::vector<u3::gelfand>& gArrBC, 
-       int rhoBCmax, int rhoA_BCmax, 
-       u34utils::SO3_CGC& cgcs, u34utils::SO3_Racah& racahs,
-       u3::WigU3U2_db& wigU3U2db)
+  inline std::vector<double>
+  U6(const u3::irrep& u3A, const std::vector<u3::gelfand>& gArrA,
+     const u3::irrep& u3B, const std::vector<u3::gelfand>& gArrB,
+     const u3::irrep& u3ABC, const std::vector<u3::gelfand>& gArrABC,
+     const u3::irrep& u3C, const std::vector<u3::gelfand>& gArrC,
+     const u3::irrep& u3AB, const std::vector<u3::gelfand>& gArrAB,
+     int rhoABmax, int rhoAB_Cmax, const u3::irrep& u3BC,
+     const std::vector<u3::gelfand>& gArrBC, int rhoBCmax, int rhoA_BCmax,
+     qcx_utils::SO3_CGC& cgcs, qcx_utils::SO3_Racah& racahs,
+     u3::WigU3U2_db& wigU3U2db)
   {
     Eigen::MatrixXd A(rhoA_BCmax, rhoA_BCmax);
     Eigen::MatrixXd B(rhoA_BCmax, rhoABmax * rhoAB_Cmax * rhoBCmax);
@@ -129,17 +128,16 @@ namespace u3
   }
 
   // input by users: u3B, u3B, u3ABC, u3C, u3AB, u3AC
-  inline std::vector<double> 
-    Z6(const u3::irrep& u3B, const std::vector<u3::gelfand>& gArrB,
-       const u3::irrep& u3A, const std::vector<u3::gelfand>& gArrA,
-       const u3::irrep& u3ABC, const std::vector<u3::gelfand>& gArrABC,
-       const u3::irrep& u3C, const std::vector<u3::gelfand>& gArrC,
-       const u3::irrep& u3AB, const std::vector<u3::gelfand>& gArrAB,
-       int rhoABmax, int rhoAB_Cmax, 
-       const u3::irrep& u3AC, const std::vector<u3::gelfand>& gArrAC, 
-       int rhoACmax, int rhoAC_Bmax, 
-       u34utils::SO3_CGC& cgcs, u34utils::SO3_Racah& racahs,
-       u3::WigU3U2_db& wigU3U2db)
+  inline std::vector<double>
+  Z6(const u3::irrep& u3B, const std::vector<u3::gelfand>& gArrB,
+     const u3::irrep& u3A, const std::vector<u3::gelfand>& gArrA,
+     const u3::irrep& u3ABC, const std::vector<u3::gelfand>& gArrABC,
+     const u3::irrep& u3C, const std::vector<u3::gelfand>& gArrC,
+     const u3::irrep& u3AB, const std::vector<u3::gelfand>& gArrAB,
+     int rhoABmax, int rhoAB_Cmax, const u3::irrep& u3AC,
+     const std::vector<u3::gelfand>& gArrAC, int rhoACmax, int rhoAC_Bmax,
+     qcx_utils::SO3_CGC& cgcs, qcx_utils::SO3_Racah& racahs,
+     u3::WigU3U2_db& wigU3U2db)
   {
     Eigen::MatrixXd A(rhoAC_Bmax, rhoAC_Bmax);
     Eigen::MatrixXd B(rhoAC_Bmax, rhoABmax * rhoAB_Cmax * rhoACmax);

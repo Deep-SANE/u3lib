@@ -153,8 +153,8 @@ int main(int argc, char* argv[])
     std::vector<u3::gelfand> gArrBD = u3::gelfandBasis(u3bd[i_bd]);
     std::vector<u3::gelfand> gArrABCD = u3::gelfandBasis(u3ab_cd[i_ab_cd]);
 
-    u34utils::SO3_CGC cgcs;
-    u34utils::SO3_Racah racahs;
+    qcx_utils::SO3_CGC cgcs;
+    qcx_utils::SO3_Racah racahs;
     u3::WigU3U2_db wigU3U2db(cgcs);
 
     std::vector<double> coeffs =
