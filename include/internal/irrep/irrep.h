@@ -62,6 +62,8 @@ namespace u3
         n23(n23() - n33());
         n33(0);
       }
+
+      bool zero() const { return (n13() == 0) && (n23() == 0) && (n33() == 0); }
     };
 
     // print u3irrep
@@ -123,6 +125,8 @@ namespace su3
       {
         return (1 + lambda()) * (1 + mu()) * (2 + lambda() + mu()) / 2;
       }
+
+      bool zero() const { return (lambda() == 0) && (mu() == 0); }
     };
 
     // type aliases:
