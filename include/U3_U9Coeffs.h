@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <map>
 #include <vector>
 
 #include <Eigen/Dense>
@@ -125,6 +126,107 @@ namespace u3
 
     return U;
   }
+
+#define U3LIB_ENABLE_U3U9_CACHE
+  class U3U9_db
+  {
+#ifdef U3LIB_ENABLE_U3U9_CACHE
+    using key_type = std::array<int, 18>;
+    std::map<key_type, std::vector<double>> map_;
+#endif
+
+    qcx_utils::SO3_CGC& cgcs_;
+    qcx_utils::SO3_Racah& racahs_;
+    u3::WigU3U2_db& wigU3U2db_;
+
+    auto calculate(const u3::irrep& u3A, const u3::irrep& u3B, 
+                   const u3::irrep& u3C, const u3::irrep& u3D,
+                   const u3::irrep& u3AB, const u3::irrep& u3CD,
+                   const u3::irrep& u3AC, const u3::irrep& u3BD, 
+                   const u3::irrep& u3ABCD, 
+                   int rhoABmax, int rhoCDmax, int rhoAB_CDmax, 
+                   int rhoACmax, int rhoBDmax, int rhoAC_BDmax)
+    {
+      std::vector<u3::gelfand> gArrA = u3::gelfandBasis(u3A),
+                               gArrB = u3::gelfandBasis(u3B),
+                               gArrC = u3::gelfandBasis(u3C),
+                               gArrD = u3::gelfandBasis(u3D),
+                               gArrAB = u3::gelfandBasis(u3AB),
+                               gArrCD = u3::gelfandBasis(u3CD),
+                               gArrAC = u3::gelfandBasis(u3AC),
+                               gArrBD = u3::gelfandBasis(u3BD),
+                               gArrABCD = u3::gelfandBasis(u3ABCD);
+
+      return U9(u3A,gArrA,u3B,gArrB,u3C,gArrC,u3D,gArrD,
+                u3AB,gArrAB,u3CD,gArrCD,u3AC,gArrAC,u3BD,gArrBD,u3ABCD,gArrABCD,
+                rhoABmax,rhoCDmax,rhoAB_CDmax,rhoACmax,rhoBDmax,rhoAC_BDmax,
+                cgcs_,racahs_,wigU3U2db_);
+    }
+
+  public:
+    U3U9_db(qcx_utils::SO3_CGC& cgcs, qcx_utils::SO3_Racah& racahs,
+                                          u3::WigU3U2_db& wigU3U2db) 
+      : cgcs_(cgcs), racahs_(racahs), wigU3U2db_(wigU3U2db)
+    {}
+
+    auto get(int n13a, int n23a, int n33a, int n13b, int n23b, int n33b, 
+             int n13c, int n23c, int n33c, int n13d, int n23d, int n33d,
+             int n13ab, int n23ab, int n33ab, int n13cd, int n23cd, int n33cd,
+             int n13ac, int n23ac, int n33ac, int n13bd, int n23bd, int n33bd,
+             int n13abcd, int n23abcd, int n33abcd)
+    {
+      u3::irrep u3A(n13a - n33a, n23a - n33a, 0), 
+                u3B(n13b - n33b, n23b - n33b, 0), 
+                u3C(n13c - n33c, n23c - n33c, 0), 
+                u3D(n13d - n33d, n23d - n33d, 0), 
+                u3AB(n13ab - n33ab, n23ab - n33ab, 0), 
+                u3CD(n13cd - n33cd, n23cd - n33cd, 0), 
+                u3AC(n13ac - n33ac, n23ac - n33ac, 0),
+                u3BD(n13bd - n33bd, n23bd - n33bd, 0),
+                u3ABCD(n13abcd - n33abcd, n23abcd - n33abcd, 0);
+
+      int rhoABmax = Rho(u3A,u3B,u3AB), rhoCDmax = Rho(u3C,u3D,u3CD),
+          rhoACmax = Rho(u3A,u3C,u3AC), rhoBDmax = Rho(u3B,u3D,u3BD),
+          rhoAB_CDmax = Rho(u3AB,u3CD,u3ABCD), 
+          rhoAC_BDmax = Rho(u3AC,u3BD,u3ABCD);
+
+      bool flag = false;
+      std::vector<double> c;
+
+      if (rhoABmax > 0 && rhoCDmax > 0 && rhoACmax > 0 && rhoBDmax > 0
+          && rhoAB_CDmax > 0 && rhoAC_BDmax > 0)
+      {
+#ifdef U3LIB_ENABLE_U3U9_CACHE
+        key_type key = {u3A.n13(), u3A.n23(),
+                        u3B.n13(), u3B.n23(),
+                        u3C.n13(), u3C.n23(),
+                        u3D.n13(), u3D.n23(),
+                        u3AB.n13(), u3AB.n23(),
+                        u3CD.n13(), u3CD.n23(),
+                        u3AC.n13(), u3AC.n23(),
+                        u3BD.n13(), u3BD.n23(),
+                        u3ABCD.n13(), u3ABCD.n23()};
+        auto iter = map_.find(key);
+        if (iter == map_.end())
+        {
+          auto p = map_.try_emplace(key, 
+            calculate(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD, 
+              rhoABmax,rhoCDmax,rhoAB_CDmax,rhoACmax,rhoBDmax,rhoAC_BDmax));
+          assert(p.second);
+          iter = p.first;
+        }
+
+        c = iter->second;
+#else
+        c = calculate(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD, 
+              rhoABmax,rhoCDmax,rhoAB_CDmax,rhoACmax,rhoBDmax,rhoAC_BDmax);
+#endif
+        flag = true;
+      }
+
+      return std::make_pair(flag, c);
+    }
+  };
 
 } // namespace u3
 
