@@ -383,7 +383,7 @@ namespace u3
 
       if (rhoABmax > 0 && rhoAB_Cmax > 0 && rhoACmax > 0 && rhoAC_Bmax > 0)
       {
-#ifdef U3LIB_ENABLE_U3U6_CACHE
+#ifdef U3LIB_ENABLE_U3Z6_CACHE
         key_type key = {u3B.n13(), u3B.n23(),
                         u3A.n13(), u3A.n23(),
                         u3ABC.n13(), u3ABC.n23(),
