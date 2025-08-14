@@ -215,6 +215,11 @@ namespace u3
         : cgcs_(cgcs), wigU3U2db_(wigU3U2db)
     { }
 
+#ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
+    WigU3SO3_db(const WigU3SO3_db&) = delete;
+    WigU3SO3_db& operator=(const WigU3SO3_db&) = delete;
+#endif
+
     auto get(int lam1, int mu1, int l1, 
              int lam2, int mu2, int l2,
              int lam3, int mu3, int l3)

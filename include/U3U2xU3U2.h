@@ -981,6 +981,11 @@ namespace u3
   public:
     WigU3U2_db(qcx_utils::SO3_CGC& cgcs) : cgcs_(cgcs) { }
 
+#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
+    WigU3U2_db(const WigU3U2_db&) = delete;
+    WigU3U2_db& operator=(const WigU3U2_db&) = delete;
+#endif
+
     auto get(int n13a, int n23a, int n33a, int n12a, int n22a, int n13b,
              int n23b, int n33b, int n12b, int n22b, int n13c, int n23c,
              int n33c, int n12c, int n22c)
@@ -1033,59 +1038,6 @@ namespace u3
       return std::make_pair(flag, row);
     }
   };
-
-/*
-#define U3LIB_ENABLE_WIGU3U2_CACHE
-  class WigU3U2_db
-  {
-#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
-    using key_type = std::array<int, 9>;
-    std::map<key_type, WigU3U2_coeffs> map_;
-#endif
-
-  public:
-#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
-    auto&
-#else
-    auto
-#endif
-    get(const u3::irrep& u3A, const u3::irrep& u3B, u3::irrep& u3C, int rhomax,
-        const std::vector<u3::gelfand>& gArrA,
-        const std::vector<u3::gelfand>& gArrB, std::vector<u3::gelfand>& gArrC,
-        qcx_utils::SO3_CGC& cgcs)
-    {
-#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
-      key_type key = {u3A.n13(), u3A.n23(), u3A.n33(), u3B.n13(), u3B.n23(),
-                      u3B.n33(), u3C.n13(), u3C.n23(), u3C.n33()};
-
-      auto iter = map_.find(key);
-      if (iter == map_.end())
-      {
-        auto p = map_.try_emplace(
-            key, WigU3U2(u3A, u3B, u3C, rhomax, -1, gArrA, gArrB, gArrC, cgcs));
-        assert(p.second);
-        iter = p.first;
-      }
-//#define U3LIB_WIGU3U2_CACHE_CHECK
-#ifdef U3LIB_WIGU3U2_CACHE_CHECK
-      else
-      {
-        auto coeffs =
-            WigU3U2(u3A, u3B, u3C, rhomax, -1, gArrA, gArrB, gArrC, cgcs);
-
-        auto max_diff =
-            (iter->second.matrix() - coeffs.matrix()).cwiseAbs().maxCoeff();
-        assert(max_diff < 1e-6);
-      }
-#endif
-
-      return iter->second;
-#else
-      return WigU3U2(u3A, u3B, u3C, rhomax, -1, gArrA, gArrB, gArrC, cgcs);
-#endif
-    }
-  };
-*/
 } // namespace u3
 
 #endif
