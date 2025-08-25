@@ -173,8 +173,8 @@ namespace u3
         : cgcs_(cgcs), racahs_(racahs), wigU3U2db_(wigU3U2db)
     { }
 
-    decltype(auto) get(u3::irrep u3A, u3::irrep u3B, u3::irrep& u3C,
-                       u3::irrep u3D, u3::irrep u3AB, u3::irrep& u3CD,
+    decltype(auto) get(u3::irrep u3A, u3::irrep u3B, u3::irrep u3C,
+                       u3::irrep u3D, u3::irrep u3AB, u3::irrep u3CD,
                        u3::irrep u3AC, u3::irrep u3BD, u3::irrep u3ABCD)
     {
       auto rhoABmax = Rho(u3A, u3B, u3AB);
@@ -193,8 +193,8 @@ namespace u3
 #else
     std::vector<double>
 #endif
-    get(u3::irrep u3A, u3::irrep u3B, u3::irrep& u3C, u3::irrep u3D,
-        u3::irrep u3AB, u3::irrep& u3CD, u3::irrep u3AC, u3::irrep u3BD,
+    get(u3::irrep u3A, u3::irrep u3B, u3::irrep u3C, u3::irrep u3D,
+        u3::irrep u3AB, u3::irrep u3CD, u3::irrep u3AC, u3::irrep u3BD,
         u3::irrep u3ABCD, int rhoABmax, int rhoCDmax, int rhoABCDmax,
         int rhoACmax, int rhoBDmax, int rhoACBDmax)
     {
