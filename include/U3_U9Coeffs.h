@@ -1,9 +1,12 @@
 #ifndef U3LIB_U3_U9COEFFS_H
 #define U3LIB_U3_U9COEFFS_H 
 
+#include <array>
+#include <cassert>
 #include <cmath>
 #include <iostream>
 #include <map>
+#include <utility>
 #include <vector>
 
 #include <Eigen/Dense>
@@ -133,19 +136,20 @@ namespace u3
 #ifdef U3LIB_ENABLE_U3U9_CACHE
     using key_type = std::array<int, 18>;
     std::map<key_type, std::vector<double>> map_;
+
+    std::vector<double> empty_; 
 #endif
 
     qcx_utils::SO3_CGC& cgcs_;
     qcx_utils::SO3_Racah& racahs_;
     u3::WigU3U2_db& wigU3U2db_;
 
-    auto calculate(const u3::irrep& u3A, const u3::irrep& u3B, 
+    auto calculate(const u3::irrep& u3A, const u3::irrep& u3B,
                    const u3::irrep& u3C, const u3::irrep& u3D,
                    const u3::irrep& u3AB, const u3::irrep& u3CD,
-                   const u3::irrep& u3AC, const u3::irrep& u3BD, 
-                   const u3::irrep& u3ABCD, 
-                   int rhoABmax, int rhoCDmax, int rhoAB_CDmax, 
-                   int rhoACmax, int rhoBDmax, int rhoAC_BDmax)
+                   const u3::irrep& u3AC, const u3::irrep& u3BD,
+                   const u3::irrep& u3ABCD, int rhoABmax, int rhoCDmax,
+                   int rhoAB_CDmax, int rhoACmax, int rhoBDmax, int rhoAC_BDmax)
     {
       std::vector<u3::gelfand> gArrA = u3::gelfandBasis(u3A),
                                gArrB = u3::gelfandBasis(u3B),
@@ -157,18 +161,99 @@ namespace u3
                                gArrBD = u3::gelfandBasis(u3BD),
                                gArrABCD = u3::gelfandBasis(u3ABCD);
 
-      return U9(u3A,gArrA,u3B,gArrB,u3C,gArrC,u3D,gArrD,
-                u3AB,gArrAB,u3CD,gArrCD,u3AC,gArrAC,u3BD,gArrBD,u3ABCD,gArrABCD,
-                rhoABmax,rhoCDmax,rhoAB_CDmax,rhoACmax,rhoBDmax,rhoAC_BDmax,
-                cgcs_,racahs_,wigU3U2db_);
+      return U9(u3A, gArrA, u3B, gArrB, u3C, gArrC, u3D, gArrD, u3AB, gArrAB,
+                u3CD, gArrCD, u3AC, gArrAC, u3BD, gArrBD, u3ABCD, gArrABCD,
+                rhoABmax, rhoCDmax, rhoAB_CDmax, rhoACmax, rhoBDmax,
+                rhoAC_BDmax, cgcs_, racahs_, wigU3U2db_);
     }
 
   public:
     U3U9_db(qcx_utils::SO3_CGC& cgcs, qcx_utils::SO3_Racah& racahs,
-                                          u3::WigU3U2_db& wigU3U2db) 
-      : cgcs_(cgcs), racahs_(racahs), wigU3U2db_(wigU3U2db)
-    {}
+            u3::WigU3U2_db& wigU3U2db)
+        : cgcs_(cgcs), racahs_(racahs), wigU3U2db_(wigU3U2db)
+    { }
 
+    decltype(auto) get(u3::irrep u3A, u3::irrep u3B, u3::irrep& u3C,
+                       u3::irrep u3D, u3::irrep u3AB, u3::irrep& u3CD,
+                       u3::irrep u3AC, u3::irrep u3BD, u3::irrep u3ABCD)
+    {
+      auto rhoABmax = Rho(u3A, u3B, u3AB);
+      auto rhoCDmax = Rho(u3C, u3D, u3CD);
+      auto rhoABCDmax = Rho(u3AB, u3CD, u3ABCD);
+      auto rhoACmax = Rho(u3A, u3C, u3AC);
+      auto rhoBDmax = Rho(u3B, u3D, u3BD);
+      auto rhoACBDmax = Rho(u3AC, u3BD, u3ABCD);
+
+      return get(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD, rhoABmax,
+                 rhoCDmax, rhoABCDmax, rhoACmax, rhoBDmax, rhoACBDmax);
+    }
+
+#ifdef U3LIB_ENABLE_U3U9_CACHE
+    const std::vector<double>&
+#else
+    std::vector<double>
+#endif
+    get(u3::irrep u3A, u3::irrep u3B, u3::irrep& u3C, u3::irrep u3D,
+        u3::irrep u3AB, u3::irrep& u3CD, u3::irrep u3AC, u3::irrep u3BD,
+        u3::irrep u3ABCD, int rhoABmax, int rhoCDmax, int rhoABCDmax,
+        int rhoACmax, int rhoBDmax, int rhoACBDmax)
+    {
+      u3A.normalize();
+      u3B.normalize();
+      u3C.normalize();
+      u3D.normalize();
+      u3AB.normalize();
+      u3CD.normalize();
+      u3AC.normalize();
+      u3BD.normalize();
+      u3ABCD.normalize();
+
+      assert(rhoABmax == Rho(u3A, u3B, u3AB));
+      assert(rhoCDmax == Rho(u3C, u3D, u3CD));
+      assert(rhoABCDmax == Rho(u3AB, u3CD, u3ABCD));
+      assert(rhoACmax == Rho(u3A, u3C, u3AC));
+      assert(rhoBDmax == Rho(u3B, u3D, u3BD));
+      assert(rhoACBDmax == Rho(u3AC, u3BD, u3ABCD));
+
+      bool flag = rhoABmax > 0 && rhoCDmax > 0 && rhoABCDmax > 0 &&
+                  rhoACmax > 0 && rhoBDmax > 0 && rhoACBDmax > 0;
+
+#ifdef U3LIB_ENABLE_U3U9_CACHE
+      if (flag)
+      {
+        key_type key = {u3A.n13(),    u3A.n23(),   u3B.n13(),  u3B.n23(),
+                        u3C.n13(),    u3C.n23(),   u3D.n13(),  u3D.n23(),
+                        u3AB.n13(),   u3AB.n23(),  u3CD.n13(), u3CD.n23(),
+                        u3AC.n13(),   u3AC.n23(),  u3BD.n13(), u3BD.n23(),
+                        u3ABCD.n13(), u3ABCD.n23()};
+
+        auto iter = map_.find(key);
+        if (iter == map_.end())
+        {
+          auto p = map_.try_emplace(
+              key, calculate(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD,
+                             rhoABmax, rhoCDmax, rhoABCDmax, rhoACmax, rhoBDmax,
+                             rhoACBDmax));
+
+          assert(p.second);
+          iter = p.first;
+        }
+
+        return iter->second;
+      }
+      else
+        return empty_;
+#else
+      if (flag)
+        return calculate(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD,
+                         rhoABmax, rhoCDmax, rhoABCDmax, rhoACmax, rhoBDmax,
+                         rhoACBDmax);
+      else
+        return {};
+#endif
+    }
+
+    // TO BE REMOVED IN THE FUTURE:
     auto get(int n13a, int n23a, int n33a, int n13b, int n23b, int n33b, 
              int n13c, int n23c, int n33c, int n13d, int n23d, int n33d,
              int n13ab, int n23ab, int n33ab, int n13cd, int n23cd, int n33cd,
