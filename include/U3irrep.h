@@ -4,7 +4,6 @@
 #include <cassert>
 #include <cstdint>
 #include <ostream>
-#include <tuple>
 
 #include <qcx_convert.h>
 
