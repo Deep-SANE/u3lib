@@ -2,6 +2,7 @@
 #define U3LIB_DECOMPOSITION_H
 
 #include <algorithm>
+#include <cassert>
 #include <utility>
 #include <vector>
 
@@ -165,33 +166,49 @@ namespace u3
           int b13 = u3a.n13() - n12, b23 = u3a.n23() - n22, b33 = u3a.n33(),
               b12 = n12 - n11, b22 = n22, b11 = n11;
 
-          u3::irrep u3c = u3b;
+          assert(b13 >= 0);
+          assert(b23 >= 0);
+          assert(b33 >= 0);
+          assert(b12 >= 0);
+          assert(b22 >= 0);
+          assert(b11 >= 0);
 
-          u3c.n33(u3c.n33() + b13);
-          if (!u3c.check())
+          // u3::irrep u3c = u3b;
+          int n13 = u3b.n13();
+          int n23 = u3b.n23();
+          int n33 = u3b.n33();
+
+          // u3c.n33(u3c.n33() + b13);
+          n33 += b13;
+          if (n33 > n23)
             continue;
 
-          u3c.n23(u3c.n23() + b12);
-          if (!u3c.check())
+          // u3c.n23(u3c.n23() + b12);
+          n23 += b12;
+          if (n23 > n13)
             continue;
 
-          u3c.n13(u3c.n13() + b11);
-          if (!u3c.check())
+          // u3c.n13(u3c.n13() + b11);
+          n13 += b11;
+
+          // u3c.n33(u3c.n33() + b23);
+          n33 += b23;
+          if (n33 > n23)
             continue;
 
-          u3c.n33(u3c.n33() + b23);
-          if (!u3c.check())
+          // u3c.n23(u3c.n23() + b22);
+          n23 += b22;
+          if (n23 > n13)
             continue;
 
-          u3c.n23(u3c.n23() + b22);
-          if (!u3c.check())
+          // u3c.n33(u3c.n33() + b33);
+          n33 += b33;
+          if (n33 > n23)
             continue;
 
-          u3c.n33(u3c.n33() + b33);
-          if (!u3c.check())
-            continue;
-
+          u3::irrep u3c(n13, n23, n33);
           u3c.normalize();
+
           auto iter = std::find(u3cs.begin(), u3cs.end(), u3c);
           if (iter == u3cs.end())
           {

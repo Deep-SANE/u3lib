@@ -18,6 +18,13 @@ ifdef QCX_UTILS_DIR
 CXXFLAGS += -I$(QCX_UTILS_DIR)/include
 endif
 
+ifdef HAVE_FMT
+CXXFLAGS += -DHAVE_FMT
+ifdef FMT_ROOT
+CXXFLAGS += -I$(FMT_ROOT)/include
+endif
+endif
+
 ifdef EIGEN_DIR
 CXXFLAGS += -I$(EIGEN_DIR)
 endif 
