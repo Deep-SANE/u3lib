@@ -44,4 +44,24 @@ int main()
 
   su3D = u3D;
   print_irrep(su3D);
+
+  {
+    su3::irrep su3(2, 2);
+    u3::irrep u3(su3, 6);
+    print_irrep(u3);
+
+    assert(u3.n13() == 4);
+    assert(u3.n23() == 2);
+    assert(u3.n33() == 0);
+  }
+
+  {
+    su3::irrep su3(0, 0);
+    u3::irrep u3(su3, 6);
+    print_irrep(u3);
+
+    assert(u3.n13() == 2);
+    assert(u3.n23() == 2);
+    assert(u3.n33() == 2);
+  }
 }

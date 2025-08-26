@@ -86,6 +86,17 @@ namespace u3
 
     irrep(const su3::irrep& su3) : su3::irrep(su3), n33_(0) { }
 
+    // SU(3)->U(3) conversion with the total number of quanta provided:
+    irrep(const su3::irrep& su3, int N) : irrep(su3)
+    {
+      assert(N >= 0);
+      int n33 = N - su3.lambda() - 2 * su3.mu();
+      assert(n33 % 3 == 0);
+      n33 /= 3;
+      n33_ += n33;
+      assert(quanta() == N);
+    }
+
     // comparison:
     auto operator<=>(const irrep&) const = default;
 
