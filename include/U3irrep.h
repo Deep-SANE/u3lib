@@ -3,9 +3,11 @@
 
 #include <cassert>
 #include <cstdint>
+#include <istream>
 #include <ostream>
 
 #include <qcx_convert.h>
+#include <qcx_readwrite.h>
 
 #ifdef HAVE_FMT
 #include <fmt/format.h>
@@ -58,6 +60,22 @@ namespace su3
 
     // check for (0,0):
     bool zero() const { return (lambda() == 0) && (mu() == 0); }
+
+    // write to binary file:
+    void writeBinary(std::ostream& s) const
+    {
+      qcx_utils::write(s, lambda_);
+      qcx_utils::write(s, mu_);
+    }
+
+    // read from binary file:
+    void readBinary(std::istream& s)
+    {
+      qcx_utils::read(s, lambda_);
+      qcx_utils::read(s, mu_);
+    }
+
+    // read from binary file:
   };
 
   // output stream operator:
@@ -106,27 +124,6 @@ namespace u3
     int n23() const { return su3::irrep::n23() + n33_; }
     int n33() const { return n33_; }
 
-    /*
-    // setters:
-
-    void set(int n1, int n2, int n3)
-    {
-      lambda(n1 - n3);
-      mu(n2 - n3);
-      n33(n3);
-    }
-
-    void n13(int n1) { lambda(n1 - mu_ - n33_); }
-
-    void n23(int n2)
-    {
-      lambda(n13() - n2);
-      mu(n2 - n33_);
-    }
-
-    void n33(int n3) { n33_ = qcx_utils::itou16(n3); }
-    */
-
     // total quanta:
     int quanta() const { return lambda_ + 2 * mu_ + 3 * n33_; }
 
@@ -140,6 +137,20 @@ namespace u3
 
     // check for [0,0,0]:
     bool zero() const { return su3::irrep::zero() && (n33_ == 0); }
+
+    // write to binary file:
+    void writeBinary(std::ostream& s) const
+    {
+      su3::irrep::writeBinary(s);
+      qcx_utils::write(s, n33_);
+    }
+
+    // read from binary file:
+    void readBinary(std::istream& s)
+    {
+      su3::irrep::readBinary(s);
+      qcx_utils::read(s, n33_);
+    }
   };
 
   // output stream operator:
