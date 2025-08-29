@@ -64,15 +64,15 @@ namespace su3
     // write to binary file:
     void writeBinary(std::ostream& s) const
     {
-      qcx_utils::write(s, lambda_);
-      qcx_utils::write(s, mu_);
+      qcx_utils::writeBinary(s, lambda_);
+      qcx_utils::writeBinary(s, mu_);
     }
 
     // read from binary file:
     void readBinary(std::istream& s)
     {
-      qcx_utils::read(s, lambda_);
-      qcx_utils::read(s, mu_);
+      qcx_utils::readBinary(s, lambda_);
+      qcx_utils::readBinary(s, mu_);
     }
 
     // read from binary file:
@@ -142,14 +142,14 @@ namespace u3
     void writeBinary(std::ostream& s) const
     {
       su3::irrep::writeBinary(s);
-      qcx_utils::write(s, n33_);
+      qcx_utils::writeBinary(s, n33_);
     }
 
     // read from binary file:
     void readBinary(std::istream& s)
     {
       su3::irrep::readBinary(s);
-      qcx_utils::read(s, n33_);
+      qcx_utils::readBinary(s, n33_);
     }
   };
 
