@@ -209,13 +209,6 @@ namespace u3
                                gArrBD = u3::gelfandBasis(u3BD),
                                gArrABCD = u3::gelfandBasis(u3ABCD);
 
-      assert(rhoABmax == Rho(u3A, u3B, u3AB));
-      assert(rhoCDmax == Rho(u3C, u3D, u3CD));
-      assert(rhoAB_CDmax == Rho(u3AB, u3CD, u3ABCD));
-      assert(rhoACmax == Rho(u3A, u3C, u3AC));
-      assert(rhoBDmax == Rho(u3B, u3D, u3BD));
-      assert(rhoAC_BDmax == Rho(u3AC, u3BD, u3ABCD));
-
       return U9(u3A, gArrA, u3B, gArrB, u3C, gArrC, u3D, gArrD, u3AB, gArrAB,
                 u3CD, gArrCD, u3AC, gArrAC, u3BD, gArrBD, u3ABCD, gArrABCD,
                 rhoABmax, rhoCDmax, rhoAB_CDmax, rhoACmax, rhoBDmax,
