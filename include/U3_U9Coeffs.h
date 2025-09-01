@@ -15,6 +15,7 @@
 #include "U3_U6Z6Coeffs.h"
 #include "U3basis.h"
 
+#include <qcx_ND.h>
 #include <so3Coeffs/SO3_CGC.h>
 #include <so3Coeffs/SO3_Racah.h>
 
@@ -130,6 +131,53 @@ namespace u3
     return U;
   }
 
+  class U3U9
+  {
+    std::vector<double> coeffs_;
+    qcx_utils::NDIndex ndi_;
+
+  public:
+    U3U9()
+    {
+      ndi_.add_dimensions(0, 0, 0, 0, 0, 0);
+      assert(coeffs_.size() == ndi_.cardinality());
+    }
+
+    U3U9(const std::vector<double>& coeffs, size_t rhoACmax, size_t rhoBDmax,
+         size_t rhoABCDmax, size_t rhoABmax, size_t rhoCDmax, size_t rhoACBDmax)
+        : coeffs_(coeffs)
+    {
+      ndi_.add_dimensions(rhoACmax, rhoBDmax, rhoABCDmax, rhoABmax, rhoCDmax,
+                          rhoACBDmax);
+      assert(coeffs_.size() == ndi_.cardinality());
+    }
+
+    size_t size() const { return coeffs_.size(); }
+
+    bool empty() const { return size() == 0; }
+
+    size_t rhoACmax() const { return ndi_.dimension(0); }
+    size_t rhoBDmax() const { return ndi_.dimension(1); }
+    size_t rhoABCDmax() const { return ndi_.dimension(2); }
+    size_t rhoABmax() const { return ndi_.dimension(3); }
+    size_t rhoCDmax() const { return ndi_.dimension(4); }
+    size_t rhoACBDmax() const { return ndi_.dimension(5); }
+
+    double operator[](size_t i) const
+    {
+      assert(i < coeffs_.size());
+      return coeffs_[i];
+    }
+
+    double get(size_t rhoAC, size_t rhoBD, size_t rhoABCD, size_t rhoAB,
+               size_t rhoCD, size_t rhoACBD)
+    {
+      std::array multi_index = {rhoAC, rhoBD, rhoABCD, rhoAB, rhoCD, rhoACBD};
+      size_t i = ndi_.to_linear(multi_index);
+      return operator[](i);
+    }
+  };
+
 #define U3LIB_ENABLE_U3U9_CACHE
   class U3U9_db
   {
@@ -161,6 +209,13 @@ namespace u3
                                gArrBD = u3::gelfandBasis(u3BD),
                                gArrABCD = u3::gelfandBasis(u3ABCD);
 
+      assert(rhoABmax == Rho(u3A, u3B, u3AB));
+      assert(rhoCDmax == Rho(u3C, u3D, u3CD));
+      assert(rhoAB_CDmax == Rho(u3AB, u3CD, u3ABCD));
+      assert(rhoACmax == Rho(u3A, u3C, u3AC));
+      assert(rhoBDmax == Rho(u3B, u3D, u3BD));
+      assert(rhoAC_BDmax == Rho(u3AC, u3BD, u3ABCD));
+
       return U9(u3A, gArrA, u3B, gArrB, u3C, gArrC, u3D, gArrD, u3AB, gArrAB,
                 u3CD, gArrCD, u3AC, gArrAC, u3BD, gArrBD, u3ABCD, gArrABCD,
                 rhoABmax, rhoCDmax, rhoAB_CDmax, rhoACmax, rhoBDmax,
@@ -172,6 +227,24 @@ namespace u3
             u3::WigU3U2_db& wigU3U2db)
         : cgcs_(cgcs), racahs_(racahs), wigU3U2db_(wigU3U2db)
     { }
+
+    U3U9 get_U3U9(u3::irrep u3A, u3::irrep u3B, u3::irrep u3C, u3::irrep u3D,
+                  u3::irrep u3AB, u3::irrep u3CD, u3::irrep u3AC,
+                  u3::irrep u3BD, u3::irrep u3ABCD, int rhoACmax, int rhoBDmax,
+                  int rhoABCDmax, int rhoABmax, int rhoCDmax, int rhoACBDmax)
+    {
+      decltype(auto) coeffs =
+          get(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD, rhoABmax,
+              rhoCDmax, rhoABCDmax, rhoACmax, rhoBDmax, rhoACBDmax);
+
+      return {coeffs,
+              static_cast<size_t>(rhoACmax),
+              static_cast<size_t>(rhoBDmax),
+              static_cast<size_t>(rhoABCDmax),
+              static_cast<size_t>(rhoABmax),
+              static_cast<size_t>(rhoCDmax),
+              static_cast<size_t>(rhoACBDmax)};
+    }
 
     decltype(auto) get(u3::irrep u3A, u3::irrep u3B, u3::irrep u3C,
                        u3::irrep u3D, u3::irrep u3AB, u3::irrep u3CD,
