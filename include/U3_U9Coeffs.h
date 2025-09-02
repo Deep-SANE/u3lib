@@ -186,6 +186,10 @@ namespace u3
 #ifdef U3LIB_ENABLE_U3U9_CACHE
     using key_type = std::array<int, 18>;
     std::map<key_type, std::vector<double>> map_;
+
+    using return_type = std::span<const double>;
+#else
+    using return_type = std::vector<double>;
 #endif
 
     qcx_utils::SO3_CGC& cgcs_;
@@ -221,15 +225,11 @@ namespace u3
         : cgcs_(cgcs), racahs_(racahs), wigU3U2db_(wigU3U2db)
     { }
 
-#ifdef U3LIB_ENABLE_U3U9_CACHE
-    U3U9<std::span<const double>>
-#else
-    U3U9<std::vector<double>>
-#endif
-    get_U3U9(u3::irrep u3A, u3::irrep u3B, u3::irrep u3C, u3::irrep u3D,
-             u3::irrep u3AB, u3::irrep u3CD, u3::irrep u3AC, u3::irrep u3BD,
-             u3::irrep u3ABCD, int rhoACmax, int rhoBDmax, int rhoABCDmax,
-             int rhoABmax, int rhoCDmax, int rhoACBDmax)
+    U3U9<return_type> get_U3U9(u3::irrep u3A, u3::irrep u3B, u3::irrep u3C,
+                               u3::irrep u3D, u3::irrep u3AB, u3::irrep u3CD,
+                               u3::irrep u3AC, u3::irrep u3BD, u3::irrep u3ABCD,
+                               int rhoACmax, int rhoBDmax, int rhoABCDmax,
+                               int rhoABmax, int rhoCDmax, int rhoACBDmax)
     {
       auto coeffs =
           get(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD, rhoABmax,
@@ -261,15 +261,11 @@ namespace u3
     }
     */
 
-#ifdef U3LIB_ENABLE_U3U9_CACHE
-    std::span<const double>
-#else
-    std::vector<double>
-#endif
-    get(u3::irrep u3A, u3::irrep u3B, u3::irrep u3C, u3::irrep u3D,
-        u3::irrep u3AB, u3::irrep u3CD, u3::irrep u3AC, u3::irrep u3BD,
-        u3::irrep u3ABCD, int rhoABmax, int rhoCDmax, int rhoABCDmax,
-        int rhoACmax, int rhoBDmax, int rhoACBDmax)
+    return_type get(u3::irrep u3A, u3::irrep u3B, u3::irrep u3C, u3::irrep u3D,
+                    u3::irrep u3AB, u3::irrep u3CD, u3::irrep u3AC,
+                    u3::irrep u3BD, u3::irrep u3ABCD, int rhoABmax,
+                    int rhoCDmax, int rhoABCDmax, int rhoACmax, int rhoBDmax,
+                    int rhoACBDmax)
     {
       u3A.normalize();
       u3B.normalize();
