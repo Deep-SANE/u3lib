@@ -6,6 +6,7 @@
 #include <cmath>
 #include <iostream>
 #include <map>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -131,10 +132,11 @@ namespace u3
     return U;
   }
 
+  template <typename T>
   class U3U9
   {
-    std::vector<double> coeffs_;
-    qcx_utils::NDIndex ndi_;
+    T coeffs_;
+    qcx_utils::NDIndex6 ndi_;
 
   public:
     U3U9()
@@ -143,9 +145,9 @@ namespace u3
       assert(coeffs_.size() == ndi_.cardinality());
     }
 
-    U3U9(const std::vector<double>& coeffs, size_t rhoACmax, size_t rhoBDmax,
-         size_t rhoABCDmax, size_t rhoABmax, size_t rhoCDmax, size_t rhoACBDmax)
-        : coeffs_(coeffs)
+    U3U9(T&& coeffs, size_t rhoACmax, size_t rhoBDmax, size_t rhoABCDmax,
+         size_t rhoABmax, size_t rhoCDmax, size_t rhoACBDmax)
+        : coeffs_(std::move(coeffs))
     {
       ndi_.add_dimensions(rhoACmax, rhoBDmax, rhoABCDmax, rhoABmax, rhoCDmax,
                           rhoACBDmax);
@@ -184,8 +186,6 @@ namespace u3
 #ifdef U3LIB_ENABLE_U3U9_CACHE
     using key_type = std::array<int, 18>;
     std::map<key_type, std::vector<double>> map_;
-
-    std::vector<double> empty_; 
 #endif
 
     qcx_utils::SO3_CGC& cgcs_;
@@ -221,16 +221,21 @@ namespace u3
         : cgcs_(cgcs), racahs_(racahs), wigU3U2db_(wigU3U2db)
     { }
 
-    U3U9 get_U3U9(u3::irrep u3A, u3::irrep u3B, u3::irrep u3C, u3::irrep u3D,
-                  u3::irrep u3AB, u3::irrep u3CD, u3::irrep u3AC,
-                  u3::irrep u3BD, u3::irrep u3ABCD, int rhoACmax, int rhoBDmax,
-                  int rhoABCDmax, int rhoABmax, int rhoCDmax, int rhoACBDmax)
+#ifdef U3LIB_ENABLE_U3U9_CACHE
+    U3U9<std::span<const double>>
+#else
+    U3U9<std::vector<double>>
+#endif
+    get_U3U9(u3::irrep u3A, u3::irrep u3B, u3::irrep u3C, u3::irrep u3D,
+             u3::irrep u3AB, u3::irrep u3CD, u3::irrep u3AC, u3::irrep u3BD,
+             u3::irrep u3ABCD, int rhoACmax, int rhoBDmax, int rhoABCDmax,
+             int rhoABmax, int rhoCDmax, int rhoACBDmax)
     {
-      decltype(auto) coeffs =
+      auto coeffs =
           get(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD, rhoABmax,
               rhoCDmax, rhoABCDmax, rhoACmax, rhoBDmax, rhoACBDmax);
 
-      return {coeffs,
+      return {std::move(coeffs),
               static_cast<size_t>(rhoACmax),
               static_cast<size_t>(rhoBDmax),
               static_cast<size_t>(rhoABCDmax),
@@ -239,9 +244,10 @@ namespace u3
               static_cast<size_t>(rhoACBDmax)};
     }
 
-    decltype(auto) get(u3::irrep u3A, u3::irrep u3B, u3::irrep u3C,
-                       u3::irrep u3D, u3::irrep u3AB, u3::irrep u3CD,
-                       u3::irrep u3AC, u3::irrep u3BD, u3::irrep u3ABCD)
+    /*
+    auto get(u3::irrep u3A, u3::irrep u3B, u3::irrep u3C, u3::irrep u3D,
+             u3::irrep u3AB, u3::irrep u3CD, u3::irrep u3AC, u3::irrep u3BD,
+             u3::irrep u3ABCD)
     {
       auto rhoABmax = Rho(u3A, u3B, u3AB);
       auto rhoCDmax = Rho(u3C, u3D, u3CD);
@@ -253,9 +259,10 @@ namespace u3
       return get(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD, rhoABmax,
                  rhoCDmax, rhoABCDmax, rhoACmax, rhoBDmax, rhoACBDmax);
     }
+    */
 
 #ifdef U3LIB_ENABLE_U3U9_CACHE
-    const std::vector<double>&
+    std::span<const double>
 #else
     std::vector<double>
 #endif
@@ -284,38 +291,33 @@ namespace u3
       bool flag = rhoABmax > 0 && rhoCDmax > 0 && rhoABCDmax > 0 &&
                   rhoACmax > 0 && rhoBDmax > 0 && rhoACBDmax > 0;
 
-#ifdef U3LIB_ENABLE_U3U9_CACHE
-      if (flag)
-      {
-        key_type key = {u3A.n13(),    u3A.n23(),   u3B.n13(),  u3B.n23(),
-                        u3C.n13(),    u3C.n23(),   u3D.n13(),  u3D.n23(),
-                        u3AB.n13(),   u3AB.n23(),  u3CD.n13(), u3CD.n23(),
-                        u3AC.n13(),   u3AC.n23(),  u3BD.n13(), u3BD.n23(),
-                        u3ABCD.n13(), u3ABCD.n23()};
-
-        auto iter = map_.find(key);
-        if (iter == map_.end())
-        {
-          auto p = map_.try_emplace(
-              key, calculate(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD,
-                             rhoABmax, rhoCDmax, rhoABCDmax, rhoACmax, rhoBDmax,
-                             rhoACBDmax));
-
-          assert(p.second);
-          iter = p.first;
-        }
-
-        return iter->second;
-      }
-      else
-        return empty_;
-#else
-      if (flag)
-        return calculate(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD,
-                         rhoABmax, rhoCDmax, rhoABCDmax, rhoACmax, rhoBDmax,
-                         rhoACBDmax);
-      else
+      if (!flag)
         return {};
+
+#ifdef U3LIB_ENABLE_U3U9_CACHE
+      key_type key = {u3A.n13(),    u3A.n23(),   u3B.n13(),  u3B.n23(),
+                      u3C.n13(),    u3C.n23(),   u3D.n13(),  u3D.n23(),
+                      u3AB.n13(),   u3AB.n23(),  u3CD.n13(), u3CD.n23(),
+                      u3AC.n13(),   u3AC.n23(),  u3BD.n13(), u3BD.n23(),
+                      u3ABCD.n13(), u3ABCD.n23()};
+
+      auto iter = map_.find(key);
+      if (iter == map_.end())
+      {
+        auto p = map_.try_emplace(key, calculate(u3A, u3B, u3C, u3D, u3AB, u3CD,
+                                                 u3AC, u3BD, u3ABCD, rhoABmax,
+                                                 rhoCDmax, rhoABCDmax, rhoACmax,
+                                                 rhoBDmax, rhoACBDmax));
+
+        assert(p.second);
+        iter = p.first;
+      }
+
+      return iter->second;
+#else
+      return calculate(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD,
+                       rhoABmax, rhoCDmax, rhoABCDmax, rhoACmax, rhoBDmax,
+                       rhoACBDmax);
 #endif
     }
 
