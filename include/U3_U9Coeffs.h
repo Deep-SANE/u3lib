@@ -231,6 +231,10 @@ namespace u3
                                int rhoACmax, int rhoBDmax, int rhoABCDmax,
                                int rhoABmax, int rhoCDmax, int rhoACBDmax)
     {
+      if ((rhoACmax == 0) || (rhoBDmax == 0) || (rhoABCDmax == 0) ||
+          (rhoABmax == 0) || (rhoCDmax == 0) || (rhoACBDmax == 0))
+        return {};
+
       auto coeffs =
           get(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD, rhoABmax,
               rhoCDmax, rhoABCDmax, rhoACmax, rhoBDmax, rhoACBDmax);
@@ -284,10 +288,8 @@ namespace u3
       assert(rhoBDmax == Rho(u3B, u3D, u3BD));
       assert(rhoACBDmax == Rho(u3AC, u3BD, u3ABCD));
 
-      bool flag = rhoABmax > 0 && rhoCDmax > 0 && rhoABCDmax > 0 &&
-                  rhoACmax > 0 && rhoBDmax > 0 && rhoACBDmax > 0;
-
-      if (!flag)
+      if ((rhoABmax == 0) || (rhoCDmax == 0) || (rhoABCDmax == 0) ||
+          (rhoACmax == 0) || (rhoBDmax == 0) || (rhoACBDmax == 0))
         return {};
 
 #ifdef U3LIB_ENABLE_U3U9_CACHE
