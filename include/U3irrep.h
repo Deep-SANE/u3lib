@@ -100,7 +100,7 @@ namespace u3
         : su3::irrep(n1 - n2, n2 - n3), n33_(qcx_utils::itou16(n3))
     { }
 
-    irrep(int l, int m) : su3::irrep(l, m) { }
+    irrep(int l, int m) : su3::irrep(l, m), n33_(0) { }
 
     irrep(const su3::irrep& su3) : su3::irrep(su3), n33_(0) { }
 
