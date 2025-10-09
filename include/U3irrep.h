@@ -173,7 +173,7 @@ public:
   template <typename Context>
   constexpr auto format(const su3::irrep& i, Context& ctx) const
   {
-    return format_to(ctx.out(), "({},{})", i.lambda(), i.mu());
+    return fmt::format_to(ctx.out(), "({},{})", i.lambda(), i.mu());
   }
 };
 
@@ -188,7 +188,7 @@ public:
   template <typename Context>
   constexpr auto format(const u3::irrep& i, Context& ctx) const
   {
-    return format_to(ctx.out(), "[{},{},{}]", i.n13(), i.n23(), i.n33());
+    return fmt::format_to(ctx.out(), "[{},{},{}]", i.n13(), i.n23(), i.n33());
   }
 };
 
