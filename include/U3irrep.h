@@ -61,6 +61,20 @@ namespace su3
     // check for (0,0):
     bool zero() const { return (lambda() == 0) && (mu() == 0); }
 
+    // second-order Casimir
+    double C2() const
+    {
+      return (lambda_ * lambda_ + lambda_ * mu_ + 
+        mu_ * mu_ + 3.0 * lambda_ + 3.0 * mu_) * 2.0 / 3.0;
+    }
+
+    // third-order Casimir
+    double C3() const
+    {
+      return (lambda_ - mu_) * (lambda_ + 2.0 * mu_ + 3.0) *
+        (2.0 * lambda_ + mu_ + 3.0) / 9.0;
+    }
+
     // write to binary file:
     void writeBinary(std::ostream& s) const
     {
@@ -74,8 +88,6 @@ namespace su3
       qcx_utils::readBinary(s, lambda_);
       qcx_utils::readBinary(s, mu_);
     }
-
-    // read from binary file:
   };
 
   // output stream operator:
