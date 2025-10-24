@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
   std::cout << "Please enter n: ";
   std::cin >> n;
 
-  u3::irrep u3A(lam1, mu1), u3B(n, 0), u3B_conj(0, n);
+  u3::irrep u3A(lam1, mu1), u3B(n, 0);
 
   auto [u3Cs, rhomaxs] = u3::decomposition(u3A, u3B);
 
