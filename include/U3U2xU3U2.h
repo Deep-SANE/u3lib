@@ -12,8 +12,7 @@
 #include <vector>
 
 #include <Eigen/Dense>
-
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
 #include <Eigen/Sparse>
 #endif
 
@@ -23,7 +22,7 @@
 #include <so3Coeffs/SO3_CGC.h>
 
 #include <nullspace_solver_qr.h>
-#ifdef U3LIB_USE_SLEPC
+#ifdef USE_SLEPC
 #include <nullspace_solver_slepc.h>
 #endif
 
@@ -357,7 +356,7 @@ namespace u3
 
     int row_num = new_indices.size();
 
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
     std::vector<Eigen::Triplet<double>> ija;
 #else
     Eigen::MatrixXd mat(row_num, col_num);
@@ -371,25 +370,25 @@ namespace u3
         int g1 = indices[j].first, g2 = indices[j].second;
         // action of E23
         if (u3::E23_12(gArr1[g1], gArr1[new_g1]) && new_g2 == g2)
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
           ija.emplace_back(i, j, gArr1[g1].e23_12());
 #else
           mat(i, j) = gArr1[g1].e23_12();
 #endif
         else if (u3::E23_22(gArr1[g1], gArr1[new_g1]) && new_g2 == g2)
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
           ija.emplace_back(i, j, gArr1[g1].e23_22());
 #else
           mat(i, j) = gArr1[g1].e23_22();
 #endif
         else if (new_g1 == g1 && u3::E23_12(gArr2[g2], gArr2[new_g2]))
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
           ija.emplace_back(i, j, gArr2[g2].e23_12());
 #else
           mat(i, j) = gArr2[g2].e23_12();
 #endif
         else if (new_g1 == g1 && u3::E23_22(gArr2[g2], gArr2[new_g2]))
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
           ija.emplace_back(i, j, gArr2[g2].e23_22());
 #else
           mat(i, j) = gArr2[g2].e23_22();
@@ -397,20 +396,20 @@ namespace u3
 
         // action of E12
         else if (u3::E12(gArr1[g1], gArr1[new_g1]) && new_g2 == g2)
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
           ija.emplace_back(i, j, gArr1[g1].e12());
 #else
           mat(i, j) = gArr1[g1].e12();
 #endif
         else if (new_g1 == g1 && u3::E12(gArr2[g2], gArr2[new_g2]))
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
           ija.emplace_back(i, j, gArr2[g2].e12());
 #else
           mat(i, j) = gArr2[g2].e12();
 #endif
 
         else
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
           ;
 #else
           mat(i, j) = 0.0;
@@ -418,7 +417,7 @@ namespace u3
       }
     }
 
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
     Eigen::SparseMatrix<double> mat(row_num, col_num);
     mat.setFromTriplets(ija.begin(), ija.end());
 #endif
@@ -444,7 +443,7 @@ namespace u3
 
     auto mat = E23E12(gArr1, gArr2, indices);
 
-#ifdef U3LIB_USE_SLEPC
+#ifdef USE_SLEPC
     Eigen::MatrixXd nullspace =
         qcx_utils::null_space_slepc(mat, coeffs.rhomax());
 #else

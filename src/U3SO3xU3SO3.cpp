@@ -11,13 +11,13 @@
 #include <U3basis.h>
 #include <U3SO3xU3SO3.h> 
  
-#ifdef U3LIB_USE_SLEPC
+#ifdef USE_SLEPC
 #include <slepcsys.h>
 #endif 
 
 int main(int argc, char* argv[])
 {
-#ifdef U3LIB_USE_SLEPC
+#ifdef USE_SLEPC
   SlepcInitialize(&argc, &argv, NULL, NULL);
 #endif
 
@@ -189,7 +189,7 @@ int main(int argc, char* argv[])
   std::cout << "Elapsed time: " << duration.count() << " seconds or "
             << duration.count() / 60.0 << " minutes" << std::endl;
 
-#ifdef U3LIB_USE_SLEPC 
+#ifdef USE_SLEPC 
   SlepcFinalize();
 #endif
 

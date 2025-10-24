@@ -10,7 +10,7 @@
 #include <U3decomposition.h>
 #include <U3U2xU3U2.h>
 
-#ifdef U3LIB_USE_SLEPC
+#ifdef USE_SLEPC
 #include <slepcsys.h>
 #endif
 
@@ -24,7 +24,7 @@ public:
   WigU3U2_coeffs(int n13a, int n23a, int n33a, int n13b, int n23b, int n33b,
                  int n13c, int n23c, int n33c)
   {
-#ifdef U3LIB_USE_SLEPC
+#ifdef USE_SLEPC
     SlepcInitializeNoArguments();
 #endif
 
@@ -48,7 +48,7 @@ public:
 
   ~WigU3U2_coeffs()
   {
-#ifdef U3LIB_USE_SLEPC
+#ifdef USE_SLEPC
     SlepcFinalize();
 #endif
   }

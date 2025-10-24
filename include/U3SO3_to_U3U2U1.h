@@ -8,15 +8,14 @@
 #include <vector>
 
 #include <Eigen/Dense>
-
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
 #include <Eigen/Sparse>
 #endif
 
 #include "U3basis.h"
 
 #include <nullspace_solver_qr.h>
-#ifdef U3LIB_USE_SLEPC
+#ifdef USE_SLEPC
 #include <nullspace_solver_slepc.h>
 #endif
 
@@ -80,7 +79,7 @@ namespace u3
 
     int row_num = new_indices.size(), col_num = indices.size();
 
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
     std::vector<Eigen::Triplet<double>> ija;
 #else
     Eigen::MatrixXd projector(row_num, col_num);
@@ -92,13 +91,13 @@ namespace u3
       {
         // action of E13
         if (u3::E13_12(gArr[indices[j]], gArr[new_indices[i]]))
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
           ija.emplace_back(i, j, gArr[indices[j]].e13_12());
 #else
           projector(i, j) = gArr[indices[j]].e13_12();
 #endif
         else if (u3::E13_22(gArr[indices[j]], gArr[new_indices[i]]))
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
           ija.emplace_back(i, j, gArr[indices[j]].e13_22());
 #else
           projector(i, j) = gArr[indices[j]].e13_22();
@@ -107,20 +106,20 @@ namespace u3
         // action of E32
         else if (u3::E23_12(gArr[new_indices[i]], gArr[indices[j]]))
 
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
           ija.emplace_back(i, j, gArr[indices[j]].e32_12());
 #else
           projector(i, j) = gArr[indices[j]].e32_12();
 #endif          
         else if (u3::E23_22(gArr[new_indices[i]], gArr[indices[j]]))
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
           ija.emplace_back(i, j, gArr[indices[j]].e32_22());
 #else
           projector(i, j) = gArr[indices[j]].e32_22();
 #endif 
 
         else
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
           ;
 #else
           projector(i, j) = 0.0;
@@ -128,7 +127,7 @@ namespace u3
       }
     }
 
-#ifdef U3LIB_SPARSE_MAT
+#ifdef USE_SLEPC
     Eigen::SparseMatrix<double> projector(row_num, col_num);
     projector.setFromTriplets(ija.begin(), ija.end());
 #endif
@@ -175,7 +174,7 @@ namespace u3
       for (int k = 0; k < kappa_max; k++)
       {
         transformation_new(i, k) *= n;
-#ifdef U3LIB_USE_SLEPC
+#ifdef USE_SLEPC
         double tol = 1e-12;
 #else
         double tol = 1e-12;
@@ -196,7 +195,7 @@ namespace u3
     // Building the projection matrix
     auto Lproj = u3::Lprojection(physvec, gArr, canoBasis);
     // and solving its null space
-#ifdef U3LIB_USE_SLEPC
+#ifdef USE_SLEPC
     Eigen::MatrixXd transformation =
         qcx_utils::null_space_slepc(Lproj, physvec.kappa);
 #else
