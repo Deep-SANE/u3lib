@@ -229,11 +229,15 @@ namespace u3
       irrep u3b(lam2, mu2);
       irrep u3c(lam3, mu3);
       int rhomax = Rho(u3a, u3b, u3c);
+      int kappamaxa = Kappa(u3a,l1);
+      int kappamaxb = Kappa(u3b,l2);
+      int kappamaxc = Kappa(u3c,l3);
 
       bool flag = false;
       Eigen::MatrixXd m;
 
-      if (rhomax > 0 && std::fabs(l1 - l2) <= l3 && (l1 + l2) >= l3)
+      if (rhomax > 0 && kappamaxa > 0 && kappamaxb > 0 && kappamaxc > 0 &&
+          std::fabs(l1 - l2) <= l3 && (l1 + l2) >= l3)
       {
 #ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
         key_type key = {lam1, mu1, l1,
