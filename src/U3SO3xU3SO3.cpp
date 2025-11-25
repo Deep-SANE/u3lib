@@ -135,24 +135,14 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  /*
-    for (int i = 0; i < pArrA.size(); i++)
-      std::cout << pArrA[i] << std::endl;
-    for (int i = 0; i < pArrB.size(); i++)
-      std::cout << pArrB[i] << std::endl;
-    for (int i = 0; i < pArrC.size(); i++)
-      std::cout << pArrC[i] << std::endl;
-  */ 
-
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
 
-  std::vector<std::tuple<int, int, int>> tArr;
   qcx_utils::SO3_CGC cgcs;
   u3::WigU3U2_db wigU3U2db(cgcs);
 
-  std::vector<Eigen::MatrixXd> coeffs = 
-    u3::WigU3SO3(rhomax, pArrA, pArrB, pArrC, tArr, cgcs, wigU3U2db);
+  auto [tArr, coeffs] = 
+    u3::WigU3SO3(rhomax, pArrA, pArrB, pArrC, cgcs, wigU3U2db);
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();

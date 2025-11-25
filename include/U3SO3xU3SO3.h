@@ -6,6 +6,7 @@
 #include <iostream>
 #include <map>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include <Eigen/Dense>
@@ -19,54 +20,127 @@
 namespace u3
 {
   // generate Wigner U3->SO(3) coefficients for multiple values of l1, l2, l3
-  inline std::vector<Eigen::MatrixXd>
-  WigU3SO3(int& rhomax, std::vector<u3::physicalvector>& pArrA,
-           std::vector<u3::physicalvector>& pArrB,
-           std::vector<u3::physicalvector>& pArrC,
-           std::vector<std::tuple<int, int, int>>& tArr,
+  inline auto
+  WigU3SO3(int rhomax, 
+           const std::vector<u3::physicalvector>& pArrA,
+           const std::vector<u3::physicalvector>& pArrB,
+           const std::vector<u3::physicalvector>& pArrC,
            qcx_utils::SO3_CGC& cgcs, u3::WigU3U2_db& wigU3U2db)
   {
-
     // build Gelfand basis
-    std::vector<u3::gelfand> gArrA = u3::gelfandBasis(pArrA[0].toprow),
-                             gArrB = u3::gelfandBasis(pArrB[0].toprow),
-                             gArrC = u3::gelfandBasis(pArrC[0].toprow);
+    std::vector<u3::gelfand> gArrA = u3::gelfandBasis(pArrA[0].irr),
+                             gArrB = u3::gelfandBasis(pArrB[0].irr),
+                             gArrC = u3::gelfandBasis(pArrC[0].irr);
 
+    // find transformation for physical states belong to the 3rd irrep
+    std::vector<std::vector<int>> canoBasisC(pArrC.size());
+    std::vector<Eigen::MatrixXd> transformationC(pArrC.size());
+    for (int i = 0; i < pArrC.size(); i++)
+      std::tie(canoBasisC[i], transformationC[i]) =
+          u3::phys_to_cano(pArrC[i], pArrC[i].L, gArrC);
+
+    std::vector<Eigen::MatrixXd> coeffs;
+    std::vector<std::tuple<int, int, int>> tArr;
+
+#ifdef ADD_SU3LIB_PHASE_U3SO3
+    // find transformation for physical states belong to the 1st irrep
+    std::vector<std::vector<int>> canoBasisA(pArrA.size());
+    std::vector<Eigen::MatrixXd> transformationA(pArrA.size());
+    for (int i = 0; i < pArrA.size(); i++)
+      std::tie(canoBasisA[i], transformationA[i]) =
+          u3::phys_to_cano(pArrA[i], pArrA[i].L, gArrA);
+
+    int i, j, k;
+    for (j = 0; j < pArrB.size(); j++)
+    {
+      auto [canoBasisB, transformationB] = u3::phys_to_cano_allM(pArrB[j], gArrB);
+
+      for (i = 0; i < pArrA.size(); i++)
+      {
+        const auto& canoA = canoBasisA[i];
+        const auto& transA = transformationA[i];
+
+        for (k = 0; k < pArrC.size(); k++)
+        {
+          const auto& canoC = canoBasisC[k];
+          const auto& transC = transformationC[k];
+
+          if (std::fabs(pArrA[i].L - pArrB[j].L) <= pArrC[k].L &&
+              (pArrA[i].L + pArrB[j].L) >= pArrC[k].L)
+          {
+            tArr.emplace_back(i, j, k);
+
+            Eigen::MatrixXd coeffs_temp(pArrA[i].kappa * pArrB[j].kappa 
+                                                * pArrC[k].kappa, rhomax);
+            coeffs_temp.setZero();
+
+            int mB = pArrC[k].L - pArrA[i].L;
+            const auto& canoB = canoBasisB[pArrB[j].L - mB];
+            const auto& transB = transformationB[pArrB[j].L - mB];
+
+            double cgc1 =
+                cgcs.compute(2 * pArrA[i].L, 2 * pArrB[j].L, 2 * pArrC[k].L,
+                             2 * pArrA[i].L, 2 * mB, 2 * pArrC[k].L);
+
+            for (int iA = 0; iA < canoA.size(); iA++)
+            {
+              const auto& gA = gArrA[canoA[iA]];
+
+              for (int iB = 0; iB < canoB.size(); iB++)
+              {
+                const auto& gB = gArrB[canoB[iB]];
+
+                for (int iC = 0; iC < canoC.size(); iC++)
+                {
+                  const auto& gC = gArrC[canoC[iC]];
+
+                  auto [allow, canoCoeffs] = wigU3U2db.get(
+                    gA.n13(), gA.n23(), gA.n33(), gA.n12(), gA.n22(),
+                    gB.n13(), gB.n23(), gB.n33(), gB.n12(), gB.n22(),
+                    gC.n13(), gC.n23(), gC.n33(), gC.n12(), gC.n22());
+
+                  int jj1 = gA.Lambdax2(), mm1 = gA.MLambdax2(),
+                      jj2 = gB.Lambdax2(), mm2 = gB.MLambdax2(),
+                      jj3 = gC.Lambdax2(), mm3 = gC.MLambdax2();
+
+                  if ((allow == false) || ((mm1 + mm2) != mm3))
+                    continue;
+
+                  auto wigU3U2U1 = canoCoeffs *
+                                cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+
+                  for (int r = 0; r < rhomax; r++)
+                    for (int k1 = 0; k1 < pArrA[i].kappa; k1++)
+                      for (int k2 = 0; k2 < pArrB[j].kappa; k2++)
+                        for (int k3 = 0; k3 < pArrC[k].kappa; k3++)
+                          coeffs_temp((k1 * pArrB[j].kappa + k2) *
+                                       pArrC[k].kappa + k3, r) +=
+                                       transA(iA, k1) * transB(iB, k2) *
+                                       transC(iC, k3) * wigU3U2U1(r);
+                }
+              }
+            }
+            coeffs_temp /= cgc1;
+            coeffs.push_back(coeffs_temp);
+          }
+        }
+      }
+    }
+#else
     // find transformation for physical states belong to the 2nd irrep
     std::vector<std::vector<int>> canoBasisB(pArrB.size());
     std::vector<Eigen::MatrixXd> transformationB(pArrB.size());
     for (int i = 0; i < pArrB.size(); i++)
-      transformationB[i] =
-          u3::phys_to_cano(pArrB[i], pArrB[i].L, canoBasisB[i], gArrB);
-
-    // find transformation for physical states belong to the 3rd irrep
-    std::vector<int> w2mins(pArrC.size());
-    std::vector<std::vector<int>> canoBasisC(pArrC.size());
-    std::vector<Eigen::MatrixXd> transformationC(pArrC.size());
-    for (int i = 0; i < pArrC.size(); i++)
-    {
-      transformationC[i] =
-          u3::phys_to_cano(pArrC[i], pArrC[i].L, canoBasisC[i], gArrC);
-      w2mins[i] =
-          gArrC[canoBasisC[i].back()].n12() + gArrC[canoBasisC[i].back()].n22();
-    }
-
-    // find all the reduced canonical coupling coefficients
-    //int w2min = *std::min_element(w2mins.begin(), w2mins.end());
-    //auto canoCoeffs =
-    //    u3::WigU3U2(pArrA[0].toprow, pArrB[0].toprow, pArrC[0].toprow, rhomax,
-    //                w2min, gArrA, gArrB, gArrC, cgcs);
-    // note that u3C and all gelfand states are already normalized here
-
-    std::vector<Eigen::MatrixXd> coeffs;
+      std::tie(canoBasisB[i], transformationB[i]) =
+          u3::phys_to_cano(pArrB[i], pArrB[i].L, gArrB);
 
     int i, j, k;
     for (i = 0; i < pArrA.size(); i++)
     {
       std::vector<std::vector<int>> canoBasisA(1);
       std::vector<Eigen::MatrixXd> transformationA(1);
-      transformationA[0] =
-          u3::phys_to_cano(pArrA[i], pArrA[i].L, canoBasisA[0], gArrA);
+        std::tie(canoBasisA[0], transformationA[0]) =
+          u3::phys_to_cano(pArrA[i], pArrA[i].L, gArrA);
 
       for (j = 0; j < pArrB.size(); j++)
       {
@@ -122,12 +196,12 @@ namespace u3
                   //    canoCoeffs.access(n12A, n22A, n12B, n22B, n12C, n22C);
 
                   auto [allow, canoCoeffs] = wigU3U2db.get(
-                    pArrA[0].toprow.n13(), pArrA[0].toprow.n23(), 
-                    pArrA[0].toprow.n33(), n12A, n22A,
-                    pArrB[0].toprow.n13(), pArrB[0].toprow.n23(), 
-                    pArrB[0].toprow.n33(), n12B, n22B,
-                    pArrC[0].toprow.n13(), pArrC[0].toprow.n23(), 
-                    pArrC[0].toprow.n33(), n12C, n22C);
+                    pArrA[0].irr.n13(), pArrA[0].irr.n23(), 
+                    pArrA[0].irr.n33(), n12A, n22A,
+                    pArrB[0].irr.n13(), pArrB[0].irr.n23(), 
+                    pArrB[0].irr.n33(), n12B, n22B,
+                    pArrC[0].irr.n13(), pArrC[0].irr.n23(), 
+                    pArrC[0].irr.n33(), n12C, n22C);
 
                   int jj1 =
                           gArrA[canoBasisA[pArrA[i].L - mA_abs][iA]].Lambdax2(),
@@ -147,7 +221,7 @@ namespace u3
                                 cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
 
                   int phase =
-                      ((pArrA[i].toprow.lam() + pArrA[i].L +
+                      ((pArrA[i].lam() + pArrA[i].L +
                         gArrA[canoBasisA[pArrA[i].L - mA_abs][iA]].n22()) %
                            2 == 0) ? 1 : -1;
 
@@ -176,8 +250,9 @@ namespace u3
         }
       }
     }
+#endif
 
-    return coeffs;
+    return std::make_pair(tArr, coeffs);
   }
 
 #define U3LIB_ENABLE_WIGU3SO3_CACHE
@@ -191,23 +266,89 @@ namespace u3
     qcx_utils::SO3_CGC& cgcs_;
     u3::WigU3U2_db& wigU3U2db_;
 
-    auto calculate(const irrep& u3a, int la, 
-                   const irrep& u3b, int lb, 
-                   const irrep& u3c, int lc, 
-                   int rhomax)
+    // generate Wigner U3->SO(3) coefficients for specific l1, l2, l3
+    auto calculate(int rhomax, const u3::physicalvector& pA,
+      const u3::physicalvector& pB, const u3::physicalvector& pC)
     {
-      std::vector<u3::physicalvector> 
-        pArrA(1, u3::physicalvector(u3a, la)),
-        pArrB(1, u3::physicalvector(u3b, lb)), 
-        pArrC(1, u3::physicalvector(u3c, lc)); 
+      // build Gelfand basis
+      std::vector<u3::gelfand> gArrA = u3::gelfandBasis(pA.irr),
+                               gArrB = u3::gelfandBasis(pB.irr),
+                               gArrC = u3::gelfandBasis(pC.irr);
 
-      std::vector<std::tuple<int, int, int>> tArr;
+      // find transformation for the 3rd state
+      auto [canoC, transC] = u3::phys_to_cano(pC, pC.L, gArrC);
 
-      /* return one coefficient matrix
-        row = (ka * max(kb) + kb) * max(kc) + kc
-        column = rho
-      */
-      return WigU3SO3(rhomax, pArrA, pArrB, pArrC, tArr, cgcs_, wigU3U2db_)[0];
+      Eigen::MatrixXd coeffs(pA.kappa * pB.kappa * pC.kappa, rhomax);
+      coeffs.setZero();
+
+#ifdef ADD_SU3LIB_PHASE_U3SO3
+      // find transformation for the 1st state
+      auto [canoA, transA] = u3::phys_to_cano(pA, pA.L, gArrA);
+
+      // find transformation for the 2nd state
+      int mB = pC.L - pA.L;
+      auto [canoB, transB] = u3::phys_to_cano(pB, mB, gArrB);
+
+      double cgc1 = cgcs_.compute(2 * pA.L, 2 * pB.L, 2 * pC.L,
+                                  2 * pA.L, 2 * mB, 2 * pC.L);
+#else
+      // find transformation for the 1st state
+      int mA = pC.L - pB.L;
+      auto [canoA, transA] = u3::phys_to_cano(pA, mA, gArrA);
+
+      // find transformation for the 2nd state
+      auto [canoB, transB] = u3::phys_to_cano(pB, pB.L, gArrB);
+
+      double cgc1 = cgcs_.compute(2 * pA.L, 2 * pB.L, 2 * pC.L,
+                                  2 * mA, 2 * pB.L, 2 * pC.L);
+#endif
+
+      for (int iA = 0; iA < canoA.size(); iA++)
+      {
+        const auto& gA = gArrA[canoA[iA]];
+
+        for (int iB = 0; iB < canoB.size(); iB++)
+        {
+          const auto& gB = gArrB[canoB[iB]];
+
+          for (int iC = 0; iC < canoC.size(); iC++)
+          {
+            const auto& gC = gArrC[canoC[iC]];
+
+            auto [allow, canoCoeffs] = wigU3U2db_.get(
+              gA.n13(), gA.n23(), gA.n33(), gA.n12(), gA.n22(),
+              gB.n13(), gB.n23(), gB.n33(), gB.n12(), gB.n22(),
+              gC.n13(), gC.n23(), gC.n33(), gC.n12(), gC.n22());
+
+            int jj1 = gA.Lambdax2(), mm1 = gA.MLambdax2(),
+                jj2 = gB.Lambdax2(), mm2 = gB.MLambdax2(),
+                jj3 = gC.Lambdax2(), mm3 = gC.MLambdax2();
+
+            if ((allow == false) || ((mm1 + mm2) != mm3))
+              continue;
+
+            auto wigU3U2U1 = canoCoeffs *
+                    cgcs_.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+
+            for (int r = 0; r < rhomax; r++)
+              for (int k1 = 0; k1 < pA.kappa; k1++)
+                for (int k2 = 0; k2 < pB.kappa; k2++)
+                  for (int k3 = 0; k3 < pC.kappa; k3++)
+                    coeffs((k1 * pB.kappa + k2) * pC.kappa + k3, r) 
+                      += transA(iA, k1) * transB(iB, k2) *
+                         transC(iC, k3) * wigU3U2U1(r);
+          }
+        }
+      }
+
+      coeffs /= cgc1;
+
+      for (size_t i = 0; i < coeffs.rows(); i++)
+        for (size_t j = 0; j < coeffs.cols(); j++)
+          if (std::fabs(coeffs(i, j)) < 1e-12)
+            coeffs(i, j) = 0.0;
+    
+      return coeffs;
     }
 
   public:
@@ -225,19 +366,15 @@ namespace u3
              int lam3, int mu3, int l3)
     {
       // normalized irreps:
-      irrep u3a(lam1, mu1);
-      irrep u3b(lam2, mu2);
-      irrep u3c(lam3, mu3);
-      int rhomax = Rho(u3a, u3b, u3c);
-      int kappamaxa = Kappa(u3a,l1);
-      int kappamaxb = Kappa(u3b,l2);
-      int kappamaxc = Kappa(u3c,l3);
+      u3::irrep u3a(lam1, mu1), u3b(lam2, mu2), u3c(lam3, mu3);
+      int rhomax = u3::Rho(u3a, u3b, u3c);
+      u3::physicalvector pA(u3a, l1), pB(u3b, l2), pC(u3c, l3); 
 
       bool flag = false;
       Eigen::MatrixXd m;
 
-      if (rhomax > 0 && kappamaxa > 0 && kappamaxb > 0 && kappamaxc > 0 &&
-          std::fabs(l1 - l2) <= l3 && (l1 + l2) >= l3)
+      if (rhomax > 0 && pA.kappa > 0 && pB.kappa > 0 && pC.kappa > 0 
+          && std::fabs(l1 - l2) <= l3 && (l1 + l2) >= l3)
       {
 #ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
         key_type key = {lam1, mu1, l1,
@@ -247,18 +384,16 @@ namespace u3
         auto iter = map_.find(key);
         if (iter == map_.end())
         {
-          auto p = map_.try_emplace(
-            key, calculate(u3a, l1, u3b, l2, u3c, l3, rhomax));
+          auto p = map_.try_emplace(key, calculate(rhomax, pA, pB, pC));
           assert(p.second);
           iter = p.first;
         }
 
         m = iter->second;
 #else
-        m = calculate(u3a, l1, u3b, l2, u3c, l3, rhomax);
+        m = calculate(rhomax, pA, pB, pC);
 #endif
         flag = true;
-        
       }
 
       return std::make_pair(flag, m);
