@@ -26,8 +26,8 @@ int main(int argc, char* argv[])
   std::cout << "The physical basis states are: " << std::endl;
   for (int i = 0; i < physbasis.size(); i++)
   {
-    std::cout << "(" << i << "): |(" << physbasis[i].toprow.lam() << ","
-              << physbasis[i].toprow.mu()
+    std::cout << "(" << i << "): |(" << physbasis[i].lam() << ","
+              << physbasis[i].mu()
               << "), kappa_max=" << physbasis[i].kappa
               << ", L=" << physbasis[i].L << ">" << std::endl;
   }

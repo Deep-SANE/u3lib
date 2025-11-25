@@ -67,13 +67,11 @@ namespace u3
     if (m == 2)
     {
       // Expanding in canonical basis
-      std::vector<u3::gelfand> bra_gArr = u3::gelfandBasis(bra.toprow);
-      std::vector<int> bra_indices;
-      Eigen::MatrixXd bra_coeffs = u3::phys_to_cano(bra, bra.L, bra_indices, bra_gArr);
+      std::vector<u3::gelfand> bra_gArr = u3::gelfandBasis(bra.irr);
+      auto [bra_indices, bra_coeffs] = u3::phys_to_cano(bra, bra.L, bra_gArr);
 
-      std::vector<u3::gelfand> ket_gArr = u3::gelfandBasis(ket.toprow);
-      std::vector<int> ket_indices;
-      Eigen::MatrixXd ket_coeffs = u3::phys_to_cano(ket, ket.L, ket_indices, ket_gArr);
+      std::vector<u3::gelfand> ket_gArr = u3::gelfandBasis(ket.irr);
+      auto [ket_indices, ket_coeffs] = u3::phys_to_cano(ket, ket.L, ket_gArr);
 
       double factor = std::sqrt(2.0 * bra.L + 1.0);
 
@@ -96,13 +94,11 @@ namespace u3
     else if (m == 1)
     {
       // Expanding in canonical basis
-      std::vector<u3::gelfand> bra_gArr = u3::gelfandBasis(bra.toprow);
-      std::vector<int> bra_indices;
-      Eigen::MatrixXd bra_coeffs = u3::phys_to_cano(bra, bra.L, bra_indices, bra_gArr);
+      std::vector<u3::gelfand> bra_gArr = u3::gelfandBasis(bra.irr);
+      auto [bra_indices, bra_coeffs] = u3::phys_to_cano(bra, bra.L, bra_gArr);
 
-      std::vector<u3::gelfand> ket_gArr = u3::gelfandBasis(ket.toprow);
-      std::vector<int> ket_indices;
-      Eigen::MatrixXd ket_coeffs = u3::phys_to_cano(ket, ket.L, ket_indices, ket_gArr);
+      std::vector<u3::gelfand> ket_gArr = u3::gelfandBasis(ket.irr);
+      auto [ket_indices, ket_coeffs] = u3::phys_to_cano(ket, ket.L, ket_gArr);
 
       double factor =
           std::sqrt((ket.L + 2.0) * (2.0 * bra.L + 1.0) / (2.0 * ket.L));
@@ -153,9 +149,8 @@ namespace u3
     else if (m == 0)
     {
       // Expanding in canonical basis
-      std::vector<u3::gelfand> ket_gArr = u3::gelfandBasis(ket.toprow);
-      std::vector<int> ket_indices;
-      Eigen::MatrixXd ket_coeffs = u3::phys_to_cano(ket, ket.L, ket_indices, ket_gArr);
+      std::vector<u3::gelfand> ket_gArr = u3::gelfandBasis(ket.irr);
+      auto [ket_indices, ket_coeffs] = u3::phys_to_cano(ket, ket.L, ket_gArr);
 
       double factor =
           std::sqrt((ket.L + 1.0) * (2.0 * ket.L + 1.0) * (2.0 * ket.L + 3.0) /
@@ -177,7 +172,7 @@ namespace u3
 
           if (i == j)
             RME(i, j) +=
-                (3.0 * ket.L - 2.0 * ket.toprow.n13() - 2.0 * ket.toprow.n23());
+                (3.0 * ket.L - 2.0 * ket.irr.n13() - 2.0 * ket.irr.n23());
 
           RME(i, j) *= factor;
         }
