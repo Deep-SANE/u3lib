@@ -6,30 +6,22 @@
 #include <slepcsys.h>
 #endif 
 
-
-/* This program tests the following conjugation relation
-   
-   < (lam1,mu1) k1 l1; (n,0) l || (lam3,mu3) k3 l3 >_rhomax=1
-   = (-)^phi * sqrt(dim(lam3,mu3) * dim(l1) / dim(lam1,mu1) / dim(l3))
-   * < (lam3,mu3) k3 l3; (0,n) l || (lam1,mu1) k1 l1 >_rhomax=1
-
-   where
-   phi = lam1 + mu1 - l1 - (lam3 + mu3 - l3) + (n + l)/2
-*/
-
-Eigen::MatrixXd diff(int k1, const Eigen::MatrixXd& m1, 
-  					 int k3, const Eigen::MatrixXd& m3)
+auto diff(int k1, int k2, int k3,  
+  const Eigen::MatrixXd& A, const Eigen::MatrixXd& B)
 {
-  Eigen::MatrixXd d(m1.rows(), m1.cols());
+  Eigen::MatrixXd d(A.rows(), A.cols());
 
   for (size_t i = 0; i < k1; i++)
   {
-  	for (size_t j = 0; j < k3; j++)
+  	for (size_t j = 0; j < k2; j++)
   	{
-  	  auto m1_row = i * k3 + j;
-  	  auto m3_row = j * k1 + i;
+      for (size_t k = 0; k < k3; k++)
+      {
+        auto A_row = (i * k2 + j) * k3 + k;
+        auto B_row = (k * k2 + j) * k1 + i;
 
-  	  d(m1_row,0) = m1(m1_row,0) - m3(m3_row,0);
+        d.row(A_row) = A.row(A_row) - B.row(B_row);
+      }
   	}
   }
 
@@ -42,14 +34,20 @@ int main(int argc, char* argv[])
   SlepcInitialize(&argc, &argv, NULL, NULL);
 #endif
 
-  int lam1, mu1, n;
+#ifdef ADD_SU3LIB_PHASE_U3SO3
+
+  qcx_utils::SO3_CGC cgcs;
+  u3::WigU3U2_db wigU3U2db(cgcs);
+  u3::WigU3SO3_db wigU3SO3db(cgcs, wigU3U2db);
+
+  int lam1, mu1, lam2, mu2;
   std::cout << "Please enter lambda1, mu1: ";
   std::cin >> lam1 >> mu1;
+  
+  std::cout << "Please enter lambda2 != mu2: ";
+  std::cin >> lam2 >> mu2;
 
-  std::cout << "Please enter n: ";
-  std::cin >> n;
-
-  u3::irrep u3A(lam1, mu1), u3B(n, 0);
+  u3::irrep u3A(lam1, mu1), u3B(lam2, mu2);
 
   auto [u3Cs, rhomaxs] = u3::decomposition(u3A, u3B);
 
@@ -63,17 +61,20 @@ int main(int argc, char* argv[])
   int index;
   std::cout << "Please enter the index of the irrep you are interested: ";
   std::cin >> index;
+  if (rhomaxs[index] > 1)
+  {
+    std::cout << "Only rhomax = 1 can be tested";
+    return 1;
+  }
+
   u3::irrep u3C = u3Cs[index];
   int lam3 = u3C.lam(), mu3 = u3C.mu(), rhomax = rhomaxs[index];
 
-  std::vector<u3::physicalvector> pArrA = u3::physicalBasis(u3A), 
-  	pArrB = u3::physicalBasis(u3B), pArrC = u3::physicalBasis(u3C);
+  auto pArrA = u3::physicalBasis(u3A), 
+  	   pArrB = u3::physicalBasis(u3B), 
+       pArrC = u3::physicalBasis(u3C);
 
   double dimA = u3A.dim(), dimC = u3C.dim();
-
-  qcx_utils::SO3_CGC cgcs;
-  u3::WigU3U2_db wigU3U2db(cgcs);
-  u3::WigU3SO3_db wigU3SO3db(cgcs, wigU3U2db);
 
   for (const auto& pA : pArrA)
   {
@@ -82,28 +83,36 @@ int main(int argc, char* argv[])
   	  for (const auto& pC : pArrC)
   	  {
   	  	auto [flag, cgcU3] = wigU3SO3db.get(lam1, mu1, pA.L,
-  	  										n, 0, pB.L, lam3, mu3, pC.L);
+  	  										   lam2, mu2, pB.L, lam3, mu3, pC.L);
 
   	  	if (flag)
   	  	{
   	  	  auto [flag_conj, cgcU3_conj] = wigU3SO3db.get(lam3, mu3, pC.L,
-  	  										0, n, pB.L, lam1, mu1, pA.L);
+  	  										               mu2, lam2, pB.L, lam1, mu1, pA.L);
+          assert(flag_conj);
 
-  	  	  int phi = lam1 + mu1 - pA.L - (lam3 + mu3 - pC.L) + (n + pB.L) / 2;
+          int phi = lam1 + mu1 - pA.L - (lam3 + mu3 - pC.L) - pB.L;
+
   	  	  double phase = (phi % 2 == 0) ? 1.0 : -1.0;
   	  	  double factor = 
   	  	  	std::sqrt((2.0 * pA.L + 1.0) * dimC / (2.0 * pC.L + 1.0) / dimA);
+          
+          auto d = diff(pA.kappa, pB.kappa, pC.kappa, cgcU3, phase * factor * cgcU3_conj);
 
   	  	  std::cout << "\nl1 = " << pA.L << "; l2 = " << pB.L << "; l3 = " << pC.L 
   	  	  			<< "\nCoupling:\n" << cgcU3 
   	  	  			<< "\nConjugate coupling:\n" << cgcU3_conj 
-  	  	  			<< "\nDifference with factor:\n" << diff(
-  	  	  					pA.kappa, cgcU3, pC.kappa, phase * factor * cgcU3_conj)
+  	  	  			<< "\nDifference with factor: " << ((d.norm() > 1e-10) ? "Violated" : "")
+                //<< "\nDifference with factor: " << ((d.norm() > 1e-6) ? d : Eigen::MatrixXd(0,0))
   	  	  			<< std::endl;
   	  	}
   	  }
   	}
   }
+
+#else
+  std::cout << "No phase enforced" << std::endl;
+#endif
 
 #ifdef USE_SLEPC 
   SlepcFinalize();
