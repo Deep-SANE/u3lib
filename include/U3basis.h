@@ -135,7 +135,7 @@ namespace u3
 
   struct physicalvector
   {
-    u3::irrep toprow;
+    u3::irrep irr;
     int L;
     int kappa;
 
@@ -145,7 +145,7 @@ namespace u3
     // initialization
     physicalvector(u3::irrep u3, int l)
     {
-      toprow = u3;
+      irr = u3;
       kappa = Kappa(u3, l);
       L = l;
     }
@@ -153,17 +153,22 @@ namespace u3
     // assignment operator
     physicalvector& operator=(const physicalvector& physvec)
     {
-      toprow = physvec.toprow;
+      irr = physvec.irr;
       kappa = physvec.kappa;
       L = physvec.L;
       return *this;
     }
+
+    // get SU(3)
+    auto lam() const { return irr.lam(); }
+    auto lambda() const { return irr.lam(); }
+    auto mu() const { return irr.mu(); }
   };
 
   // print out a physical basis vector
   inline std::ostream& operator<<(std::ostream& s, physicalvector& physvec)
   {
-    return s << "(" << physvec.toprow.lam() << "," << physvec.toprow.mu()
+    return s << "(" << physvec.lam() << "," << physvec.mu()
              << "), kappa=" << physvec.kappa << ", L=" << physvec.L;
   }
 

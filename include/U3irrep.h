@@ -75,6 +75,13 @@ namespace su3
         (2.0 * lambda_ + mu_ + 3.0) / 9.0;
     }
 
+    // conjugate irrep
+    su3::irrep conjugate() const { return su3::irrep(mu_, lambda_); }
+    double conjugate_phase() const 
+    { 
+      return ((lambda_ + mu_) % 2 == 0) ? 1.0 : -1.0;
+    }
+
     // write to binary file:
     void writeBinary(std::ostream& s) const
     {
@@ -138,6 +145,7 @@ namespace u3
 
     // total quanta:
     int quanta() const { return lambda_ + 2 * mu_ + 3 * n33_; }
+    int C1() const { return quanta(); }
 
     /*
     // check order of quantum numbers
@@ -149,6 +157,9 @@ namespace u3
 
     // check for [0,0,0]:
     bool zero() const { return su3::irrep::zero() && (n33_ == 0); }
+
+    // conjugate irrep
+    u3::irrep conjugate() const { return u3::irrep(mu(), lambda()); }
 
     // write to binary file:
     void writeBinary(std::ostream& s) const
