@@ -13,7 +13,7 @@
 
 namespace su3
 {
-  inline int kmax(int lm, int mu, int L)
+  inline u3::mult_t kmax(u3::qn_t lm, u3::qn_t mu, u3::qn_t L)
   {
     assert((lm + mu - L) >= 0);
 
@@ -21,20 +21,32 @@ namespace su3
            std::max(0, (mu + 1 - L) / 2) + 1;
   }
 
-  inline int kmax(const su3::irrep& ir, int L)
+  inline u3::mult_t kmax(const su3::irrep& ir, u3::qn_t L)
   {
     return su3::kmax(ir.lambda(), ir.mu(), L);
   }
 
   // alternatives called 'Kappa':
-  inline int Kappa(int lm, int mu, int L) { return su3::kmax(lm, mu, L); }
+  inline u3::mult_t Kappa(u3::qn_t lm, u3::qn_t mu, u3::qn_t L) 
+  { 
+    return su3::kmax(lm, mu, L); 
+  }
 
-  inline int Kappa(const su3::irrep& ir, int L) { return su3::kmax(ir, L); }
+  inline u3::mult_t Kappa(const su3::irrep& ir, u3::qn_t L) 
+  { 
+    return su3::kmax(ir, L); 
+  }
 
   // alternatives called 'mult':
-  inline int mult(int lm, int mu, int L) { return su3::kmax(lm, mu, L); }
+  inline u3::mult_t mult(u3::qn_t lm, u3::qn_t mu, u3::qn_t L) 
+  { 
+    return su3::kmax(lm, mu, L); 
+  }
 
-  inline int mult(const su3::irrep& ir, int L) { return su3::kmax(ir, L); }
+  inline u3::mult_t mult(const su3::irrep& ir, u3::qn_t L) 
+  { 
+    return su3::kmax(ir, L); 
+  }
 } // namespace su3
 
 namespace u3
@@ -79,9 +91,9 @@ namespace u3
   {
     std::vector<u3::gelfand> gArr;
 
-    for (int n12 = x.n13(); n12 >= x.n23(); n12--)
-      for (int n22 = x.n23(); n22 >= x.n33(); n22--)
-        for (int n11 = n12; n11 >= n22; n11--)
+    for (u3::qn_t n12 = x.n13(); n12 >= x.n23(); n12--)
+      for (u3::qn_t n22 = x.n23(); n22 >= x.n33(); n22--)
+        for (u3::qn_t n11 = n12; n11 >= n22; n11--)
           gArr.emplace_back(x.n13(), x.n23(), x.n33(), n12, n22, n11);
 
     return gArr;
@@ -92,11 +104,9 @@ namespace u3
                                  const std::vector<u3::gelfand>& gArr)
   {
     std::size_t i;
-
     for (i = 0; i < gArr.size(); i++)
-      if (u3::E11(g, gArr[i]))
-        break;
-
+      if (u3::E11(g, gArr[i])) break;
+        
     return i;
   }
 
@@ -125,25 +135,25 @@ namespace u3
   }
   */
 
-  inline int Kappa(const u3::irrep& ir, int L) { return su3::kmax(ir, L); }
+  inline u3::mult_t Kappa(const u3::irrep& ir, u3::qn_t L) { return su3::kmax(ir, L); }
 
   // alternative called 'kmax':
-  inline int kmax(const u3::irrep& ir, int L) { return su3::kmax(ir, L); }
+  inline u3::mult_t kmax(const u3::irrep& ir, u3::qn_t L) { return su3::kmax(ir, L); }
 
   // alternative called 'mult':
-  inline int mult(const u3::irrep& ir, int L) { return su3::kmax(ir, L); }
+  inline u3::mult_t mult(const u3::irrep& ir, u3::qn_t L) { return su3::kmax(ir, L); }
 
   struct physicalvector
   {
     u3::irrep irr;
-    int L;
-    int kappa;
+    u3::qn_t L;
+    u3::mult_t kappa;
 
     // Default constructor
     physicalvector() : kappa(0), L(0) { }
 
     // initialization
-    physicalvector(u3::irrep u3, int l)
+    physicalvector(u3::irrep u3, u3::qn_t l)
     {
       irr = u3;
       kappa = Kappa(u3, l);
@@ -169,16 +179,14 @@ namespace u3
   inline std::ostream& operator<<(std::ostream& s, physicalvector& physvec)
   {
     return s << "(" << physvec.lam() << "," << physvec.mu()
-             << "), kappa=" << physvec.kappa << ", L=" << physvec.L;
+             << "), kappa=" << static_cast<int>(physvec.kappa) << ", L=" << physvec.L;
   }
 
   // find all physical states associated with an irrep
   inline std::vector<u3::physicalvector> physicalBasis(const u3::irrep& u3)
   {
     std::vector<u3::physicalvector> basis;
-    int l;
-
-    for (l = u3.n13() - u3.n33(); l >= 0; l--)
+    for (u3::qn_t l = u3.n13() - u3.n33(); l >= 0; l--)
     {
       u3::physicalvector physvec(u3, l);
       if (physvec.kappa == 0)

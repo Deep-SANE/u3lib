@@ -27,7 +27,7 @@ namespace u3
 
       gelfand() = default;
 
-      gelfand(int n13, int n23, int n33, int n12, int n22, int n11)
+      gelfand(qn_t n13, qn_t n23, qn_t n33, qn_t n12, qn_t n22, qn_t n11)
           : Rep(n13, n23, n33, n12, n22, n11)
       { }
 
@@ -57,17 +57,17 @@ namespace u3
         n33(0);
       }
 
-      int lambda() const { return n13() - n23(); }
-      int mu() const { return n23() - n33(); }
+      qn_t lambda() const { return n13() - n23(); }
+      qn_t mu() const { return n23() - n33(); }
 
-      int epsilon() const
+      qn_t epsilon() const
       {
         return 2 * (n13() + n23() + n33()) - 3 * (n12() + n22());
       }
 
       // obtain SU(2) angular momentum quantum numbers
-      int Lambdax2() const { return n12() - n22(); }
-      int MLambdax2() const { return 2 * n11() - n12() - n22(); }
+      qn_t Lambdax2() const { return n12() - n22(); }
+      qn_t MLambdax2() const { return 2 * n11() - n12() - n22(); }
 
       // conjugate
       gelfand conjugate() const
@@ -85,19 +85,19 @@ namespace u3
 
       double e11() const
       {
-        int n = n11();
+        auto n = n11();
         return static_cast<double>(n);
       }
 
       double e22() const
       {
-        int n = n12() + n22() - n11();
+        auto n = n12() + n22() - n11();
         return static_cast<double>(n);
       }
 
       double e33() const
       {
-        int n = n13() + n23() + n33() - n12() - n22();
+        auto n = n13() + n23() + n33() - n12() - n22();
         return static_cast<double>(n);
       }
 
@@ -105,22 +105,22 @@ namespace u3
 
       double e12() const
       {
-        int n = (n12() - n11()) * (n11() - n22() + 1);
+        auto n = (n12() - n11()) * (n11() - n22() + 1);
         return std::sqrt(static_cast<double>(n));
       }
 
       double e21() const
       {
-        int n = (n12() - n11() + 1) * (n11() - n22());
+        auto n = (n12() - n11() + 1) * (n11() - n22());
         return std::sqrt(static_cast<double>(n));
       }
 
       double e23_12() const
       {
-        int num = (n13() - n12()) * (n12() - n23() + 1) * (n12() - n33() + 2) *
+        auto num = (n13() - n12()) * (n12() - n23() + 1) * (n12() - n33() + 2) *
                   (n12() - n11() + 1);
 
-        int den = (n12() - n22() + 2) * (n12() - n22() + 1);
+        auto den = (n12() - n22() + 2) * (n12() - n22() + 1);
 
         double d = static_cast<double>(num) / static_cast<double>(den);
         return std::sqrt(d);
@@ -128,10 +128,10 @@ namespace u3
 
       double e23_22() const
       {
-        int num = (n13() - n22() + 1) * (n23() - n22()) * (n22() - n33() + 1) *
+        auto num = (n13() - n22() + 1) * (n23() - n22()) * (n22() - n33() + 1) *
                   (n11() - n22());
 
-        int den = (n12() - n22() + 1) * (n12() - n22());
+        auto den = (n12() - n22() + 1) * (n12() - n22());
 
         double d = static_cast<double>(num) / static_cast<double>(den);
         return std::sqrt(d);
@@ -139,10 +139,10 @@ namespace u3
 
       double e32_12() const
       {
-        int num = (n13() - n12() + 1) * (n12() - n23()) * (n12() - n33() + 1) *
+        auto num = (n13() - n12() + 1) * (n12() - n23()) * (n12() - n33() + 1) *
                   (n12() - n11());
 
-        int den = (n12() - n22() + 1) * (n12() - n22());
+        auto den = (n12() - n22() + 1) * (n12() - n22());
 
         double d = static_cast<double>(num) / static_cast<double>(den);
         return std::sqrt(d);
@@ -150,10 +150,10 @@ namespace u3
 
       double e32_22() const
       {
-        int num = (n13() - n22() + 2) * (n23() - n22() + 1) * (n22() - n33()) *
+        auto num = (n13() - n22() + 2) * (n23() - n22() + 1) * (n22() - n33()) *
                   (n11() - n22() + 1);
 
-        int den = (n12() - n22() + 2) * (n12() - n22() + 1);
+        auto den = (n12() - n22() + 2) * (n12() - n22() + 1);
 
         double d = static_cast<double>(num) / static_cast<double>(den);
         return std::sqrt(d);
@@ -161,10 +161,10 @@ namespace u3
 
       double e13_12() const
       {
-        int num = (n13() - n12()) * (n12() - n23() + 1) * (n12() - n33() + 2) *
+        auto num = (n13() - n12()) * (n12() - n23() + 1) * (n12() - n33() + 2) *
                   (n11() - n22() + 1);
 
-        int den = (n12() - n22() + 2) * (n12() - n22() + 1);
+        auto den = (n12() - n22() + 2) * (n12() - n22() + 1);
 
         double d = static_cast<double>(num) / static_cast<double>(den);
         return std::sqrt(d);
@@ -172,10 +172,10 @@ namespace u3
 
       double e13_22() const
       {
-        int num = (n13() - n22() + 1) * (n23() - n22()) * (n22() - n33() + 1) *
+        auto num = (n13() - n22() + 1) * (n23() - n22()) * (n22() - n33() + 1) *
                   (n12() - n11());
 
-        int den = (n12() - n22() + 1) * (n12() - n22());
+        auto den = (n12() - n22() + 1) * (n12() - n22());
 
         double d = static_cast<double>(num) / static_cast<double>(den);
         return -std::sqrt(d);
@@ -183,10 +183,10 @@ namespace u3
 
       double e31_12() const
       {
-        int num = (n13() - n12() + 1) * (n12() - n23()) * (n12() - n33() + 1) *
+        auto num = (n13() - n12() + 1) * (n12() - n23()) * (n12() - n33() + 1) *
                   (n11() - n22());
 
-        int den = (n12() - n22() + 1) * (n12() - n22());
+        auto den = (n12() - n22() + 1) * (n12() - n22());
 
         double d = static_cast<double>(num) / static_cast<double>(den);
         return std::sqrt(d);
@@ -194,10 +194,10 @@ namespace u3
 
       double e31_22() const
       {
-        int num = (n13() - n22() + 2) * (n23() - n22() + 1) * (n22() - n33()) *
+        auto num = (n13() - n22() + 2) * (n23() - n22() + 1) * (n22() - n33()) *
                   (n12() - n11() + 1);
 
-        int den = (n12() - n22() + 2) * (n12() - n22() + 1);
+        auto den = (n12() - n22() + 2) * (n12() - n22() + 1);
 
         double d = static_cast<double>(num) / static_cast<double>(den);
         return -std::sqrt(d);

@@ -13,6 +13,8 @@
 #include <fmt/format.h>
 #endif
 
+#include "U3gelfand.h"
+
 namespace su3
 {
    // Class that represents SU(3) irrep.
@@ -20,7 +22,7 @@ namespace su3
   {
   protected:
     // type used to represent labels:
-    using rep_type = uint16_t;
+    using rep_type = u3::qn_t; // uint16_t;
 
     // SU(3) labels:
     rep_type lambda_, mu_;
@@ -29,8 +31,8 @@ namespace su3
     // default constructor; creates (0,0):
     irrep() : lambda_(0), mu_(0) { }
 
-    irrep(int l, int m)
-        : lambda_(qcx_utils::itou16(l)), mu_(qcx_utils::itou16(m))
+    irrep(u3::qn_t l, u3::qn_t m)
+        : lambda_(qcx_utils::ito16(l)), mu_(qcx_utils::ito16(m))
     { }
 
     // comparison:
@@ -115,16 +117,16 @@ namespace u3
     // default constructor; creates [0,0,0]:
     irrep() : n33_(0) { }
 
-    irrep(int n1, int n2, int n3)
+    irrep(u3::qn_t n1, u3::qn_t n2, u3::qn_t n3)
         : su3::irrep(n1 - n2, n2 - n3), n33_(qcx_utils::itou16(n3))
     { }
 
-    irrep(int l, int m) : su3::irrep(l, m), n33_(0) { }
+    irrep(u3::qn_t l, u3::qn_t m) : su3::irrep(l, m), n33_(0) { }
 
     irrep(const su3::irrep& su3) : su3::irrep(su3), n33_(0) { }
 
     // SU(3)->U(3) conversion with the total number of quanta provided:
-    irrep(const su3::irrep& su3, int N) : irrep(su3)
+    irrep(const su3::irrep& su3, u3::qn_t N) : irrep(su3)
     {
       assert(N >= 0);
       int n33 = N - su3.lambda() - 2 * su3.mu();
