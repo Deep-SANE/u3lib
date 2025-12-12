@@ -27,7 +27,7 @@ namespace u3
 
       gelfand() = default;
 
-      gelfand(qn_t n13, qn_t n23, qn_t n33, qn_t n12, qn_t n22, qn_t n11)
+      gelfand(uqn_t n13, uqn_t n23, uqn_t n33, uqn_t n12, uqn_t n22, uqn_t n11)
           : Rep(n13, n23, n33, n12, n22, n11)
       { }
 
@@ -57,17 +57,17 @@ namespace u3
         n33(0);
       }
 
-      qn_t lambda() const { return n13() - n23(); }
-      qn_t mu() const { return n23() - n33(); }
+      int lambda() const { return n13() - n23(); }
+      int mu() const { return n23() - n33(); }
 
-      qn_t epsilon() const
+      int epsilon() const
       {
         return 2 * (n13() + n23() + n33()) - 3 * (n12() + n22());
       }
 
       // obtain SU(2) angular momentum quantum numbers
-      qn_t Lambdax2() const { return n12() - n22(); }
-      qn_t MLambdax2() const { return 2 * n11() - n12() - n22(); }
+      int Lambdax2() const { return n12() - n22(); }
+      int MLambdax2() const { return 2 * n11() - n12() - n22(); }
 
       // conjugate
       gelfand conjugate() const

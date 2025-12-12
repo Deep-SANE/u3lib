@@ -22,7 +22,7 @@ namespace su3
   {
   protected:
     // type used to represent labels:
-    using rep_type = u3::qn_t; // uint16_t;
+    using rep_type = u3::uqn_t; 
 
     // SU(3) labels:
     rep_type lambda_, mu_;
@@ -31,8 +31,8 @@ namespace su3
     // default constructor; creates (0,0):
     irrep() : lambda_(0), mu_(0) { }
 
-    irrep(u3::qn_t l, u3::qn_t m)
-        : lambda_(qcx_utils::ito16(l)), mu_(qcx_utils::ito16(m))
+    irrep(rep_type l, rep_type m)
+        : lambda_(l), mu_(m) // conversion check is implicit
     { }
 
     // comparison:
@@ -44,8 +44,8 @@ namespace su3
     int mu() const { return static_cast<int>(mu_); }
 
     // U(3) getters:
-    int n13() const { return lambda_ + mu_; }
-    int n23() const { return mu_; }
+    int n13() const { return lambda() + mu(); }
+    int n23() const { return mu(); }
     int n33() const { return 0; }
 
     /*
@@ -66,22 +66,22 @@ namespace su3
     // second-order Casimir
     double C2() const
     {
-      return (lambda_ * lambda_ + lambda_ * mu_ + 
-        mu_ * mu_ + 3.0 * lambda_ + 3.0 * mu_) * 2.0 / 3.0;
+      return (lambda() * lambda() + lambda() * mu() + 
+        mu() * mu() + 3.0 * lambda() + 3.0 * mu()) * 2.0 / 3.0;
     }
 
     // third-order Casimir
     double C3() const
     {
-      return (lambda_ - mu_) * (lambda_ + 2.0 * mu_ + 3.0) *
-        (2.0 * lambda_ + mu_ + 3.0) / 9.0;
+      return (lambda() - mu()) * (lambda() + 2.0 * mu() + 3.0) *
+        (2.0 * lambda() + mu() + 3.0) / 9.0;
     }
 
     // conjugate irrep
     su3::irrep conjugate() const { return su3::irrep(mu_, lambda_); }
     double conjugate_phase() const 
     { 
-      return ((lambda_ + mu_) % 2 == 0) ? 1.0 : -1.0;
+      return ((lambda() + mu()) % 2 == 0) ? 1.0 : -1.0;
     }
 
     // write to binary file:
@@ -117,22 +117,22 @@ namespace u3
     // default constructor; creates [0,0,0]:
     irrep() : n33_(0) { }
 
-    irrep(u3::qn_t n1, u3::qn_t n2, u3::qn_t n3)
-        : su3::irrep(n1 - n2, n2 - n3), n33_(qcx_utils::itou16(n3))
+    irrep(rep_type n1, rep_type n2, rep_type n3)
+        : su3::irrep(n1 - n2, n2 - n3), n33_(n3)
     { }
 
-    irrep(u3::qn_t l, u3::qn_t m) : su3::irrep(l, m), n33_(0) { }
+    irrep(rep_type l, rep_type m) : su3::irrep(l, m), n33_(0) { }
 
     irrep(const su3::irrep& su3) : su3::irrep(su3), n33_(0) { }
 
     // SU(3)->U(3) conversion with the total number of quanta provided:
-    irrep(const su3::irrep& su3, u3::qn_t N) : irrep(su3)
+    irrep(const su3::irrep& su3, rep_type N) : irrep(su3)
     {
       assert(N >= 0);
       int n33 = N - su3.lambda() - 2 * su3.mu();
       assert(n33 % 3 == 0);
       n33 /= 3;
-      n33_ += n33;
+      n33_ = n33_ + static_cast<rep_type>(n33);
       assert(quanta() == N);
     }
 
@@ -140,13 +140,12 @@ namespace u3
     auto operator<=>(const irrep&) const = default;
 
     // getters:
-
-    int n13() const { return su3::irrep::n13() + n33_; }
-    int n23() const { return su3::irrep::n23() + n33_; }
-    int n33() const { return n33_; }
+    int n33() const { return static_cast<int>(n33_); }
+    int n13() const { return su3::irrep::n13() + n33(); }
+    int n23() const { return su3::irrep::n23() + n33(); }
 
     // total quanta:
-    int quanta() const { return lambda_ + 2 * mu_ + 3 * n33_; }
+    int quanta() const { return lambda() + 2 * mu() + 3 * n33(); }
     int C1() const { return quanta(); }
 
     /*
