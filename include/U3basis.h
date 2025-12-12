@@ -143,12 +143,14 @@ namespace u3
   // alternative called 'mult':
   inline int mult(const u3::irrep& ir, int L) { return su3::kmax(ir, L); }
 
-  struct physicalvector
+  class physicalvector
   {
+  private:
     u3::irrep irr_;
     u3::uqn_t L_;
     u3::mult_t kappa_;
 
+  public:
     // Default constructor
     physicalvector() : kappa_(0), L_(0) { }
 
