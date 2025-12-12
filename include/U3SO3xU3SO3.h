@@ -203,12 +203,9 @@ namespace u3
                   //    canoCoeffs.access(n12A, n22A, n12B, n22B, n12C, n22C);
 
                   auto [allow, canoCoeffs] = wigU3U2db.get(
-                    pArrA[0].irr().n13(), pArrA[0].irr().n23(), 
-                    pArrA[0].irr().n33(), n12A, n22A,
-                    pArrB[0].irr().n13(), pArrB[0].irr().n23(), 
-                    pArrB[0].irr().n33(), n12B, n22B,
-                    pArrC[0].irr().n13(), pArrC[0].irr().n23(), 
-                    pArrC[0].irr().n33(), n12C, n22C);
+                    pArrA[0].n13(), pArrA[0].n23(), pArrA[0].n33(), n12A, n22A,
+                    pArrB[0].n13(), pArrB[0].n23(), pArrB[0].n33(), n12B, n22B,
+                    pArrC[0].n13(), pArrC[0].n23(), pArrC[0].n33(), n12C, n22C);
 
                   int jj1 = gArrA[canoBasisA[LA - mA_abs][iA]].Lambdax2(),
                       mm1 = gArrA[canoBasisA[LA - mA_abs][iA]].MLambdax2(),

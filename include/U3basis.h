@@ -168,12 +168,19 @@ namespace u3
       return *this;
     }
 
+    const auto& irr() const {return irr_; }
+
     // get SU(3)
     int lam() const { return irr_.lam(); }
     int lambda() const { return irr_.lam(); }
     int mu() const { return irr_.mu(); }
 
-    const auto& irr() const {return irr_; }
+    // get U(3)
+    int n13() const { return irr_.n13(); }
+    int n23() const { return irr_.n23(); }
+    int n33() const { return irr_.n33(); }
+
+    // get SO(3)
     int kappa() const { return static_cast<int>(kappa_); }
     int L() const { return static_cast<int>(L_); }
   };

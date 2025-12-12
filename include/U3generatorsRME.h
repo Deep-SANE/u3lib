@@ -174,7 +174,7 @@ namespace u3
 
           if (i == j)
             RME(i, j) +=
-                (3.0 * ket.L() - 2.0 * ket.irr().n13() - 2.0 * ket.irr().n23());
+                (3.0 * ket.L() - 2.0 * ket.n13() - 2.0 * ket.n23());
 
           RME(i, j) *= factor;
         }
