@@ -147,12 +147,12 @@ namespace u3
     const Eigen::MatrixXd& transformation)
   {
     // normalize coefficient
-    double n = std::sqrt(2.0 / ((p.L - M) * (p.L + M + 1.0)));
+    double n = std::sqrt(2.0 / ((p.L() - M) * (p.L() + M + 1.0)));
 
     // store new expansion
     std::vector<int> canoBasis_new = u3::expand_to_gelfand(M, gArr);
 
-    Eigen::MatrixXd transformation_new(canoBasis_new.size(), p.kappa);
+    Eigen::MatrixXd transformation_new(canoBasis_new.size(), p.kappa());
     transformation_new.setZero();
 
     // basis states are obtained by acting with two generators E31 and E23
@@ -192,12 +192,12 @@ namespace u3
     const Eigen::MatrixXd& transformation)
   {
     // normalize coefficient
-    double n = std::sqrt(2.0 / ((p.L + M) * (p.L - M + 1.0)));
+    double n = std::sqrt(2.0 / ((p.L() + M) * (p.L() - M + 1.0)));
 
     // store new expansion
     std::vector<int> canoBasis_new = u3::expand_to_gelfand(M, gArr);
 
-    Eigen::MatrixXd transformation_new(canoBasis_new.size(), p.kappa);
+    Eigen::MatrixXd transformation_new(canoBasis_new.size(), p.kappa());
     transformation_new.setZero();
 
     // basis states are obtained by acting with two generators E31 and E23
@@ -235,26 +235,26 @@ namespace u3
     phys_to_cano(const u3::physicalvector& p, int M, 
                  const std::vector<u3::gelfand>& gArr)
   {
-    std::vector<int> canoBasis = u3::expand_to_gelfand(p.L, gArr);
-    Eigen::MatrixXd transformation(canoBasis.size(), p.kappa);
+    std::vector<int> canoBasis = u3::expand_to_gelfand(p.L(), gArr);
+    Eigen::MatrixXd transformation(canoBasis.size(), p.kappa());
 
     // Step 1: Generate the HWS M = L
 #ifdef ADD_SU3LIB_PHASE_U3SO3
     if (p.lam() > p.mu())
     {
       // conjugate irrep
-      u3::irrep irr_conj = p.irr.conjugate();
-      u3::physicalvector p_conj(irr_conj, p.L);
+      u3::irrep irr_conj = p.irr().conjugate();
+      u3::physicalvector p_conj(irr_conj, p.L());
       std::vector<u3::gelfand> gArr_conj = u3::gelfandBasis(irr_conj);
 
       // get the transformation
       auto [canoBasis_conj, transformation_conj] =
-        u3::phys_to_cano(p_conj, p.L, gArr_conj);
+        u3::phys_to_cano(p_conj, p.L(), gArr_conj);
 
       for (size_t i = 0; i < canoBasis_conj.size(); i++)
       {
         const auto& g_conj = gArr_conj[canoBasis_conj[i]];
-        double phase = ((g_conj.n22() + g_conj.n11() - p.L) % 2 == 0) 
+        double phase = ((g_conj.n22() + g_conj.n11() - p.L()) % 2 == 0) 
                      ? 1.0 : -1.0;
         for (size_t j = 0; j < canoBasis.size(); j++)
         {
@@ -275,7 +275,7 @@ namespace u3
       auto Lproj = u3::Lprojection(gArr, canoBasis);
       // and solving its null space
 #ifdef USE_SLEPC
-      transformation = qcx_utils::null_space_slepc(Lproj, p.kappa);
+      transformation = qcx_utils::null_space_slepc(Lproj, p.kappa());
 #else
       transformation = qcx_utils::null_space(Lproj);
 #endif
@@ -286,7 +286,7 @@ namespace u3
     auto Lproj = u3::Lprojection(gArr, canoBasis);
     // and solving its null space
 #ifdef USE_SLEPC
-    transformation = qcx_utils::null_space_slepc(Lproj, p.kappa);
+    transformation = qcx_utils::null_space_slepc(Lproj, p.kappa());
 #else
     transformation = qcx_utils::null_space(Lproj);
 #endif
@@ -294,10 +294,10 @@ namespace u3
 #endif
 
     // ensure the nullspace is solved correctly
-    assert(p.kappa == transformation.cols());
+    assert(p.kappa() == transformation.cols());
 
     // Step 2: Lowering to abs(M)
-    for (int m = p.L - 1; m >= std::fabs(M); m--)
+    for (int m = p.L() - 1; m >= std::fabs(M); m--)
     {
       auto [canoBasis_new, transformation_new] = 
         lowerM(p, m, gArr, canoBasis, transformation);
@@ -310,7 +310,7 @@ namespace u3
     if (M < 0)
     {
       std::vector<int> canoBasis_new = u3::expand_to_gelfand(M, gArr);
-      Eigen::MatrixXd transformation_new(canoBasis_new.size(), p.kappa);
+      Eigen::MatrixXd transformation_new(canoBasis_new.size(), p.kappa());
 
       for (int j = 0; j < canoBasis_new.size(); j++)
       {
@@ -323,7 +323,7 @@ namespace u3
           if (g.n12() == g_new.n12() && g.n22() == g_new.n22() &&
                 g.n12() + g.n22() - g.n11() == g_new.n11())
           {
-            double phase = ((p.lam() + p.L + g.n22()) %
+            double phase = ((p.lam() + p.L() + g.n22()) %
                             2 == 0) ? 1.0 : -1.0;
             transformation_new.row(j) = phase * transformation.row(k);
             break;
@@ -341,31 +341,31 @@ namespace u3
   inline auto phys_to_cano_allM(const u3::physicalvector& p, 
                                 const std::vector<u3::gelfand>& gArr)
   {
-    std::vector<std::vector<int>> canoBasis(2 * p.L + 1);
-    std::vector<Eigen::MatrixXd> transformation(2 * p.L + 1);
+    std::vector<std::vector<int>> canoBasis(2 * p.L() + 1);
+    std::vector<Eigen::MatrixXd> transformation(2 * p.L() + 1);
     
     // Step 1: Generate the HWS M = L
-    canoBasis[0] = u3::expand_to_gelfand(p.L, gArr);
+    canoBasis[0] = u3::expand_to_gelfand(p.L(), gArr);
 
 #ifdef ADD_SU3LIB_PHASE_U3SO3
     if (p.lam() > p.mu())
     {
-      transformation[0] = Eigen::MatrixXd(canoBasis[0].size(), p.kappa);
+      transformation[0] = Eigen::MatrixXd(canoBasis[0].size(), p.kappa());
 
       // conjugate irrep
-      u3::irrep irr_conj = p.irr.conjugate();
-      u3::physicalvector p_conj(irr_conj, p.L);
+      u3::irrep irr_conj = p.irr().conjugate();
+      u3::physicalvector p_conj(irr_conj, p.L());
       std::vector<u3::gelfand> gArr_conj = u3::gelfandBasis(irr_conj);
 
       // get the transformation
       auto [canoBasis_conj, transformation_conj] =
-        u3::phys_to_cano(p_conj, p.L, gArr_conj);
+        u3::phys_to_cano(p_conj, p.L(), gArr_conj);
 
       for (size_t i = 0; i < canoBasis_conj.size(); i++)
       {
         const auto& g_conj = gArr_conj[canoBasis_conj[i]];
 
-        double phase = ((g_conj.n22() + g_conj.n11() - p.L) % 2 == 0) 
+        double phase = ((g_conj.n22() + g_conj.n11() - p.L()) % 2 == 0) 
                      ? 1.0 : -1.0;
         for (size_t j = 0; j < canoBasis[0].size(); j++)
         {
@@ -386,7 +386,7 @@ namespace u3
       auto Lproj = u3::Lprojection(gArr, canoBasis[0]);
       // and solving its null space
 #ifdef USE_SLEPC
-      transformation[0] = qcx_utils::null_space_slepc(Lproj, p.kappa);
+      transformation[0] = qcx_utils::null_space_slepc(Lproj, p.kappa());
 #else
       transformation[0] = qcx_utils::null_space(Lproj);
 #endif
@@ -397,7 +397,7 @@ namespace u3
     auto Lproj = u3::Lprojection(gArr, canoBasis[0]);
     // and solving its null space
 #ifdef USE_SLEPC
-    transformation[0] = qcx_utils::null_space_slepc(Lproj, p.kappa);
+    transformation[0] = qcx_utils::null_space_slepc(Lproj, p.kappa());
 #else
     transformation[0] = qcx_utils::null_space(Lproj);
 #endif
@@ -405,40 +405,42 @@ namespace u3
 #endif
 
     // ensure the nullspace is solved correctly
-    assert(p.kappa == transformation[0].cols());
+    assert(p.kappa() == transformation[0].cols());
 
     // Step 2: Lowering to M = 0
-    for (int m = p.L - 1; m >= 0; m--)
+    for (int m = p.L() - 1; m >= 0; m--)
     {
+      auto x = p.L() - m;
       // store new expansion
-      canoBasis[p.L - m] = u3::expand_to_gelfand(m, gArr);
+      canoBasis[x] = u3::expand_to_gelfand(m, gArr);
 
-      std::tie(canoBasis[p.L - m], transformation[p.L - m]) = lowerM(
-        p, m, gArr, canoBasis[p.L - m - 1], transformation[p.L - m - 1]);
+      std::tie(canoBasis[x], transformation[x]) = lowerM(
+        p, m, gArr, canoBasis[x - 1], transformation[x - 1]);
     }
 
     // Step 3: generate M < 0 by conjugation
-    for (int m = -1; m >= -p.L; m--)
+    for (int m = -1; m >= -p.L(); m--)
     {
-      canoBasis[p.L - m] = u3::expand_to_gelfand(m, gArr);
-      transformation[p.L - m] = 
-          Eigen::MatrixXd(canoBasis[p.L - m].size(), p.kappa);
+      auto x_m = p.L() - m, x_p = p.L() + m;
+      canoBasis[x_m] = u3::expand_to_gelfand(m, gArr);
+      transformation[x_m] = 
+          Eigen::MatrixXd(canoBasis[x_m].size(), p.kappa());
 
-      for (int j = 0; j < canoBasis[p.L - m].size(); j++)
+      for (int j = 0; j < canoBasis[x_m].size(); j++)
       {
-        const auto& g_new = gArr[canoBasis[p.L - m][j]];
+        const auto& g_new = gArr[canoBasis[x_m][j]];
 
-        for (int k = 0; k < canoBasis[p.L + m].size(); k++)
+        for (int k = 0; k < canoBasis[x_p].size(); k++)
         {
-          const auto& g = gArr[canoBasis[p.L + m][k]];
+          const auto& g = gArr[canoBasis[x_p][k]];
 
           if (g.n12() == g_new.n12() && g.n22() == g_new.n22() &&
               g.n12() + g.n22() - g.n11() == g_new.n11())
           {
-            double phase = ((p.lam() + p.L + g.n22()) %
+            double phase = ((p.lam() + p.L() + g.n22()) %
                               2 == 0) ? 1.0 : -1.0;
-            transformation[p.L - m].row(j) = phase 
-                * transformation[p.L + m].row(k);
+            transformation[x_m].row(j) = phase 
+                * transformation[x_p].row(k);
             break;
           }
         }

@@ -18,18 +18,18 @@ int main(int argc, char* argv[])
   std::cout << "Please enter SU(3) quantum numbers (lambda,mu): ";
   std::cin >> lambda >> mu;
 
-  u3::irrep u3top(lambda, mu);
+  u3::irrep ir(lambda, mu);
 
   // building the physical basis excluding those which have zero multiplicity
-  std::vector<u3::physicalvector> physbasis = u3::physicalBasis(u3top);
+  std::vector<u3::physicalvector> physbasis = u3::physicalBasis(ir);
 
   std::cout << "The physical basis states are: " << std::endl;
   for (int i = 0; i < physbasis.size(); i++)
   {
     std::cout << "(" << i << "): |(" << physbasis[i].lam() << ","
               << physbasis[i].mu()
-              << "), kappa_max=" << physbasis[i].kappa
-              << ", L=" << physbasis[i].L << ">" << std::endl;
+              << "), kappa_max=" << physbasis[i].kappa()
+              << ", L=" << physbasis[i].L() << ">" << std::endl;
   }
 
   std::cout << "This program computes reduced matrix elements of SU(3) "

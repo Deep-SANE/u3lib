@@ -60,8 +60,7 @@ int main(int argc, char* argv[])
     std::cin >> l1;
 
     // Stop condition
-    if (l1 == -1)
-      break;
+    if (l1 == -1) break;
 
     // Include all
     if (l1 == -2)
@@ -74,8 +73,7 @@ int main(int argc, char* argv[])
     if (l1 >= 0)
     {
       u3::physicalvector p(u3A, l1);
-      if (p.kappa > 0)
-        pArrA.push_back(p);
+      if (p.kappa() > 0) pArrA.push_back(p);
     }
   }
 
@@ -85,8 +83,7 @@ int main(int argc, char* argv[])
     std::cin >> l2;
 
     // Stop condition
-    if (l2 == -1)
-      break;
+    if (l2 == -1) break;
 
     // Include all
     if (l2 == -2)
@@ -99,8 +96,7 @@ int main(int argc, char* argv[])
     if (l2 >= 0)
     {
       u3::physicalvector p(u3B, l2);
-      if (p.kappa > 0)
-        pArrB.push_back(p);
+      if (p.kappa() > 0) pArrB.push_back(p);
     }
   }
 
@@ -110,8 +106,7 @@ int main(int argc, char* argv[])
     std::cin >> l3;
 
     // Stop condition
-    if (l3 == -1)
-      break;
+    if (l3 == -1) break;
 
     // Include all
     if (l3 == -2)
@@ -124,8 +119,7 @@ int main(int argc, char* argv[])
     if (l3 >= 0)
     {
       u3::physicalvector p(u3C, l3);
-      if (p.kappa > 0)
-        pArrC.push_back(p);
+      if (p.kappa() > 0) pArrC.push_back(p);
     }
   }
  
@@ -154,21 +148,21 @@ int main(int argc, char* argv[])
         k = std::get<2>(tArr[t]);
 
     std::cout << "Reduced coupling coefficients: < (" << lam1 << "," << mu1
-              << ") k1 " << pArrA[i].L << " ; (" << lam2 << "," << mu2
-              << ") k2 " << pArrB[j].L << " || "
-              << "(" << u3C.lam() << "," << u3C.mu() << ") k3 " << pArrC[k].L
+              << ") k1 " << pArrA[i].L() << " ; (" << lam2 << "," << mu2
+              << ") k2 " << pArrB[j].L() << " || "
+              << "(" << u3C.lam() << "," << u3C.mu() << ") k3 " << pArrC[k].L()
               << " > "
               << "for rho = 1 ... " << rhomax << std::endl;
     std::cout << "k1\tk2\tk3" << std::endl;
 
     Eigen::MatrixXd coeffs_temp = coeffs[t];
 
-    for (int k1 = 0; k1 < pArrA[i].kappa; k1++)
-      for (int k2 = 0; k2 < pArrB[j].kappa; k2++)
-        for (int k3 = 0; k3 < pArrC[k].kappa; k3++)
+    for (int k1 = 0; k1 < pArrA[i].kappa(); k1++)
+      for (int k2 = 0; k2 < pArrB[j].kappa(); k2++)
+        for (int k3 = 0; k3 < pArrC[k].kappa(); k3++)
           std::cout << "" << k1 + 1 << "\t" << k2 + 1 << "\t" << k3 + 1 << "\t"
                     << coeffs_temp.row(
-                           (k1 * pArrB[j].kappa + k2) * pArrC[k].kappa + k3)
+                           (k1 * pArrB[j].kappa() + k2) * pArrC[k].kappa() + k3)
                     << std::endl;
   }
 

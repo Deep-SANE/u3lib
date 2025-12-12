@@ -180,31 +180,26 @@ namespace u3
 
           // u3c.n33(u3c.n33() + b13);
           n33 += b13;
-          if (n33 > n23)
-            continue;
+          if (n33 > n23) continue;
 
           // u3c.n23(u3c.n23() + b12);
           n23 += b12;
-          if (n23 > n13)
-            continue;
+          if (n23 > n13) continue;
 
           // u3c.n13(u3c.n13() + b11);
           n13 += b11;
 
           // u3c.n33(u3c.n33() + b23);
           n33 += b23;
-          if (n33 > n23)
-            continue;
+          if (n33 > n23) continue;
 
           // u3c.n23(u3c.n23() + b22);
           n23 += b22;
-          if (n23 > n13)
-            continue;
+          if (n23 > n13) continue;
 
           // u3c.n33(u3c.n33() + b33);
           n33 += b33;
-          if (n33 > n23)
-            continue;
+          if (n33 > n23) continue;
 
           u3::irrep u3c(n13, n23, n33);
           u3c.normalize();

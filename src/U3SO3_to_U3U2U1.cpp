@@ -32,8 +32,8 @@ int main(int argc, char* argv[])
   for (int i = 0; i < pArr.size(); i++)
   {
     std::cout << "(" << i << "): |" << "(" << pArr[i].lam() << ","
-              << pArr[i].mu() << "), kappa_max=" << pArr[i].kappa
-              << ", L=" << pArr[i].L << ">" << std::endl;
+              << pArr[i].mu() << "), kappa_max=" << pArr[i].kappa()
+              << ", L=" << pArr[i].L() << ">" << std::endl;
   } 
 
   int index;
@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
 
     std::cout
       << "The Gelfand states and the expansion coefficients for kappa = 1,...,"
-      << p.kappa << " are:" << std::endl;
+      << p.kappa() << " are:" << std::endl;
 
     for (int i = 0; i < canoBasis.size(); i++)
       std::cout << "|" << gArr[canoBasis[i]] << "> \t" << transformation.row(i)
@@ -86,15 +86,17 @@ int main(int argc, char* argv[])
     // End time measurement
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    for (int m = p.L; m >= -p.L; m--)
+    for (int m = p.L(); m >= -p.L(); m--)
     {
       std::cout
         << "Gelfand states and expansion coefficients for M = " << m 
-        << " for kappa = 1,...," << p.kappa << " are:" << std::endl;
+        << " for kappa = 1,...," << p.kappa() << " are:" << std::endl;
 
-      for (int i = 0; i < canoBasis[p.L - m].size(); i++)
-        std::cout << "|" << gArr[canoBasis[p.L - m][i]] 
-                  << "> \t" << transformation[p.L - m].row(i)
+      auto id = p.L() - m;
+
+      for (int i = 0; i < canoBasis[id].size(); i++)
+        std::cout << "|" << gArr[canoBasis[id][i]] 
+                  << "> \t" << transformation[id].row(i)
                   << std::endl;
     }
 

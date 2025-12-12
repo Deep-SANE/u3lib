@@ -13,7 +13,7 @@
 
 namespace su3
 {
-  inline u3::mult_t kmax(u3::qn_t lm, u3::qn_t mu, u3::qn_t L)
+  inline int kmax(int lm, int mu, int L)
   {
     assert((lm + mu - L) >= 0);
 
@@ -21,29 +21,29 @@ namespace su3
            std::max(0, (mu + 1 - L) / 2) + 1;
   }
 
-  inline u3::mult_t kmax(const su3::irrep& ir, u3::qn_t L)
+  inline int kmax(const su3::irrep& ir, int L)
   {
     return su3::kmax(ir.lambda(), ir.mu(), L);
   }
 
   // alternatives called 'Kappa':
-  inline u3::mult_t Kappa(u3::qn_t lm, u3::qn_t mu, u3::qn_t L) 
+  inline int Kappa(int lm, int mu, int L) 
   { 
     return su3::kmax(lm, mu, L); 
   }
 
-  inline u3::mult_t Kappa(const su3::irrep& ir, u3::qn_t L) 
+  inline int Kappa(const su3::irrep& ir, int L) 
   { 
     return su3::kmax(ir, L); 
   }
 
   // alternatives called 'mult':
-  inline u3::mult_t mult(u3::qn_t lm, u3::qn_t mu, u3::qn_t L) 
+  inline int mult(int lm, int mu, int L) 
   { 
     return su3::kmax(lm, mu, L); 
   }
 
-  inline u3::mult_t mult(const su3::irrep& ir, u3::qn_t L) 
+  inline int mult(const su3::irrep& ir, int L) 
   { 
     return su3::kmax(ir, L); 
   }
@@ -91,9 +91,9 @@ namespace u3
   {
     std::vector<u3::gelfand> gArr;
 
-    for (u3::qn_t n12 = x.n13(); n12 >= x.n23(); n12--)
-      for (u3::qn_t n22 = x.n23(); n22 >= x.n33(); n22--)
-        for (u3::qn_t n11 = n12; n11 >= n22; n11--)
+    for (int n12 = x.n13(); n12 >= x.n23(); n12--)
+      for (int n22 = x.n23(); n22 >= x.n33(); n22--)
+        for (int n11 = n12; n11 >= n22; n11--)
           gArr.emplace_back(x.n13(), x.n23(), x.n33(), n12, n22, n11);
 
     return gArr;
@@ -135,61 +135,62 @@ namespace u3
   }
   */
 
-  inline u3::mult_t Kappa(const u3::irrep& ir, u3::qn_t L) { return su3::kmax(ir, L); }
+  inline int Kappa(const u3::irrep& ir, int L) { return su3::kmax(ir, L); }
 
   // alternative called 'kmax':
-  inline u3::mult_t kmax(const u3::irrep& ir, u3::qn_t L) { return su3::kmax(ir, L); }
+  inline int kmax(const u3::irrep& ir, int L) { return su3::kmax(ir, L); }
 
   // alternative called 'mult':
-  inline u3::mult_t mult(const u3::irrep& ir, u3::qn_t L) { return su3::kmax(ir, L); }
+  inline int mult(const u3::irrep& ir, int L) { return su3::kmax(ir, L); }
 
   struct physicalvector
   {
-    u3::irrep irr;
-    u3::qn_t L;
-    u3::mult_t kappa;
+    u3::irrep irr_;
+    u3::uqn_t L_;
+    u3::mult_t kappa_;
 
     // Default constructor
-    physicalvector() : kappa(0), L(0) { }
+    physicalvector() : kappa_(0), L_(0) { }
 
     // initialization
-    physicalvector(u3::irrep u3, u3::qn_t l)
-    {
-      irr = u3;
-      kappa = Kappa(u3, l);
-      L = l;
-    }
+    physicalvector(const u3::irrep& irr, u3::uqn_t L) 
+      : irr_(irr), kappa_(Kappa(irr, L)), L_(L)
+    { }
 
     // assignment operator
     physicalvector& operator=(const physicalvector& physvec)
     {
-      irr = physvec.irr;
-      kappa = physvec.kappa;
-      L = physvec.L;
+      irr_ = physvec.irr_;
+      kappa_ = physvec.kappa_;
+      L_ = physvec.L_;
       return *this;
     }
 
     // get SU(3)
-    auto lam() const { return irr.lam(); }
-    auto lambda() const { return irr.lam(); }
-    auto mu() const { return irr.mu(); }
+    int lam() const { return irr_.lam(); }
+    int lambda() const { return irr_.lam(); }
+    int mu() const { return irr_.mu(); }
+
+    const auto& irr() const {return irr_; }
+    int kappa() const { return static_cast<int>(kappa_); }
+    int L() const { return static_cast<int>(L_); }
   };
 
   // print out a physical basis vector
   inline std::ostream& operator<<(std::ostream& s, physicalvector& physvec)
   {
     return s << "(" << physvec.lam() << "," << physvec.mu()
-             << "), kappa=" << static_cast<int>(physvec.kappa) << ", L=" << physvec.L;
+             << "), kappa=" << physvec.kappa() << ", L=" << physvec.L();
   }
 
   // find all physical states associated with an irrep
   inline std::vector<u3::physicalvector> physicalBasis(const u3::irrep& u3)
   {
     std::vector<u3::physicalvector> basis;
-    for (u3::qn_t l = u3.n13() - u3.n33(); l >= 0; l--)
+    for (int l = u3.n13() - u3.n33(); l >= 0; l--)
     {
       u3::physicalvector physvec(u3, l);
-      if (physvec.kappa == 0)
+      if (physvec.kappa() == 0)
         continue;
       else
         basis.push_back(physvec);

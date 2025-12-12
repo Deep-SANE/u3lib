@@ -21,21 +21,21 @@ int main(int argc, char* argv[])
   std::cout << "Enter SU(3) quantum numbers (lambda != mu): ";
   std::cin >> lambda >> mu;
 
-  u3::irrep irr(lambda, mu), irr_conj(mu,lambda);
+  u3::irrep ir(lambda, mu), ir_conj(mu,lambda);
 
   // building the gelfand basis
-  std::vector<u3::gelfand> gArr = u3::gelfandBasis(irr),
-                           gArr_conj = u3::gelfandBasis(irr_conj);
+  std::vector<u3::gelfand> gArr = u3::gelfandBasis(ir),
+                           gArr_conj = u3::gelfandBasis(ir_conj);
 
   // building the physical basis excluding those which have zero multiplicity
-  std::vector<u3::physicalvector> pArr = u3::physicalBasis(irr);
+  std::vector<u3::physicalvector> pArr = u3::physicalBasis(ir);
 
   std::cout << "The physical basis states are: " << std::endl;
   for (int i = 0; i < pArr.size(); i++)
   {
     std::cout << "(" << i << "): |" << "(" << pArr[i].lam() << ","
-              << pArr[i].mu() << "), kappa_max=" << pArr[i].kappa
-              << ", L=" << pArr[i].L << ">" << std::endl;
+              << pArr[i].mu() << "), kappa_max=" << pArr[i].kappa()
+              << ", L=" << pArr[i].L() << ">" << std::endl;
   } 
 
   int index;
@@ -47,8 +47,8 @@ int main(int argc, char* argv[])
   std::cout << "Enter projection M <= L: ";
   std::cin >> M;
 
-  u3::physicalvector p_conj(irr_conj,p.L);
-  double p_phase = ((lambda + mu - p.L + M) % 2 == 0) ? 1.0 : -1.0;
+  u3::physicalvector p_conj(ir_conj,p.L());
+  double p_phase = ((lambda + mu - p.L() + M) % 2 == 0) ? 1.0 : -1.0;
 
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
 
   std::cout
       << "The Gelfand states and the expansion coefficients for kappa = 1,...,"
-      << p.kappa << " are:" << std::endl;
+      << p.kappa() << " are:" << std::endl;
 
   for (int i = 0; i < canoBasis.size(); i++)
   {

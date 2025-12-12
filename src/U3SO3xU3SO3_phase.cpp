@@ -82,24 +82,24 @@ int main(int argc, char* argv[])
   	{
   	  for (const auto& pC : pArrC)
   	  {
-  	  	auto [flag, cgcU3] = wigU3SO3db.get(lam1, mu1, pA.L,
-  	  										   lam2, mu2, pB.L, lam3, mu3, pC.L);
+  	  	auto [flag, cgcU3] = wigU3SO3db.get(lam1, mu1, pA.L(),
+  	  										   lam2, mu2, pB.L(), lam3, mu3, pC.L());
 
   	  	if (flag)
   	  	{
-  	  	  auto [flag_conj, cgcU3_conj] = wigU3SO3db.get(lam3, mu3, pC.L,
-  	  										               mu2, lam2, pB.L, lam1, mu1, pA.L);
+  	  	  auto [flag_conj, cgcU3_conj] = wigU3SO3db.get(lam3, mu3, pC.L(),
+  	  										               mu2, lam2, pB.L(), lam1, mu1, pA.L());
           assert(flag_conj);
 
-          int phi = lam1 + mu1 - pA.L - (lam3 + mu3 - pC.L) - pB.L;
+          int phi = lam1 + mu1 - pA.L() - (lam3 + mu3 - pC.L()) - pB.L();
 
   	  	  double phase = (phi % 2 == 0) ? 1.0 : -1.0;
   	  	  double factor = 
-  	  	  	std::sqrt((2.0 * pA.L + 1.0) * dimC / (2.0 * pC.L + 1.0) / dimA);
+  	  	  	std::sqrt((2.0 * pA.L() + 1.0) * dimC / (2.0 * pC.L() + 1.0) / dimA);
           
-          auto d = diff(pA.kappa, pB.kappa, pC.kappa, cgcU3, phase * factor * cgcU3_conj);
+          auto d = diff(pA.kappa(), pB.kappa(), pC.kappa(), cgcU3, phase * factor * cgcU3_conj);
 
-  	  	  std::cout << "\nl1 = " << pA.L << "; l2 = " << pB.L << "; l3 = " << pC.L 
+  	  	  std::cout << "\nl1 = " << pA.L() << "; l2 = " << pB.L() << "; l3 = " << pC.L() 
   	  	  			<< "\nCoupling:\n" << cgcU3 
   	  	  			<< "\nConjugate coupling:\n" << cgcU3_conj 
   	  	  			<< "\nDifference with factor: " << ((d.norm() > 1e-10) ? "Violated" : "")
