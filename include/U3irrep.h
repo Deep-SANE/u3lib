@@ -98,6 +98,7 @@ namespace su3
       qcx_utils::readBinary(s, mu_);
     }
   };
+  using irreps = std::vector<su3::irrep>;
 
   // output stream operator:
   inline std::ostream& operator<<(std::ostream& s, const irrep& su3)
@@ -179,6 +180,7 @@ namespace u3
       qcx_utils::readBinary(s, n33_);
     }
   };
+  using irreps = std::vector<u3::irrep>;
 
   // output stream operator:
   inline std::ostream& operator<<(std::ostream& s, const irrep& u3)
