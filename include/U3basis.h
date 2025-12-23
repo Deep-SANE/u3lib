@@ -187,6 +187,7 @@ namespace u3
     int kappamax() const { return kappa(); }
     int L() const { return static_cast<int>(L_); }
   };
+  using physicalvectors = std::vector<u3::physicalvector>;
 
   // print out a physical basis vector
   inline std::ostream& operator<<(std::ostream& s, physicalvector& physvec)
@@ -196,9 +197,9 @@ namespace u3
   }
 
   // find all physical states associated with an irrep
-  inline std::vector<u3::physicalvector> physicalBasis(const u3::irrep& u3)
+  inline u3::physicalvectors physicalBasis(const u3::irrep& u3)
   {
-    std::vector<u3::physicalvector> basis;
+    u3::physicalvectors basis;
     for (int l = u3.n13() - u3.n33(); l >= 0; l--)
     {
       u3::physicalvector physvec(u3, l);
