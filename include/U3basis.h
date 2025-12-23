@@ -155,8 +155,10 @@ namespace u3
     physicalvector() : kappa_(0), L_(0) { }
 
     // initialization
-    physicalvector(const u3::irrep& irr, u3::uqn_t L) 
-      : irr_(irr), kappa_(Kappa(irr, L)), L_(L)
+    physicalvector(const u3::irrep& irr, qcx_utils::UInt8 L) 
+      : irr_(irr), 
+        kappa_(qcx_utils::UInt8(Kappa(irr, L))), 
+        L_(L)
     { }
 
     // assignment operator
@@ -168,7 +170,7 @@ namespace u3
       return *this;
     }
 
-    const auto& irr() const {return irr_; }
+    const auto& irr() const { return irr_; }
 
     // get SU(3)
     int lam() const { return irr_.lam(); }
@@ -182,6 +184,7 @@ namespace u3
 
     // get SO(3)
     int kappa() const { return static_cast<int>(kappa_); }
+    int kappamax() const { return kappa(); }
     int L() const { return static_cast<int>(L_); }
   };
 

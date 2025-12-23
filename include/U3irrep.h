@@ -31,7 +31,7 @@ namespace su3
     // default constructor; creates (0,0):
     irrep() : lambda_(0), mu_(0) { }
 
-    irrep(rep_type l, rep_type m)
+    irrep(qcx_utils::UInt8 l, qcx_utils::UInt8 m)
         : lambda_(l), mu_(m) // conversion check is implicit
     { }
 
@@ -78,7 +78,7 @@ namespace su3
     }
 
     // conjugate irrep
-    su3::irrep conjugate() const { return su3::irrep(mu_, lambda_); }
+    su3::irrep conjugate() const { return su3::irrep(mu(), lambda()); }
     double conjugate_phase() const 
     { 
       return ((lambda() + mu()) % 2 == 0) ? 1.0 : -1.0;
@@ -117,16 +117,19 @@ namespace u3
     // default constructor; creates [0,0,0]:
     irrep() : n33_(0) { }
 
-    irrep(rep_type n1, rep_type n2, rep_type n3)
+    irrep(qcx_utils::UInt8 n1, qcx_utils::UInt8 n2, qcx_utils::UInt8 n3)
         : su3::irrep(n1 - n2, n2 - n3), n33_(n3)
-    { }
+    { 
+      assert(n1 >= n2);
+      assert(n2 >= n3);
+    }
 
-    irrep(rep_type l, rep_type m) : su3::irrep(l, m), n33_(0) { }
+    irrep(qcx_utils::UInt8 l, qcx_utils::UInt8 m) : su3::irrep(l, m), n33_(0) { }
 
     irrep(const su3::irrep& su3) : su3::irrep(su3), n33_(0) { }
 
     // SU(3)->U(3) conversion with the total number of quanta provided:
-    irrep(const su3::irrep& su3, rep_type N) : irrep(su3)
+    irrep(const su3::irrep& su3, int N) : irrep(su3)
     {
       assert(N >= 0);
       int n33 = N - su3.lambda() - 2 * su3.mu();

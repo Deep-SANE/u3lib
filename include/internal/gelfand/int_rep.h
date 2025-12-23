@@ -8,9 +8,9 @@
 namespace u3
 {
   // Define alias datatypes
-  using uqn_t = qcx_utils::UInt8;  // unsigned quantum numbers: 0 to 255
-  using qn_t = qcx_utils::Int8;    // signed quantum numbers: -128 to 127
-  using mult_t = qcx_utils::UInt8; // multiplicities: 0 to 255
+  using uqn_t = uint8_t;  // unsigned quantum numbers: 0 to 255
+  using qn_t = int8_t;    // signed quantum numbers: -128 to 127
+  using mult_t = uint8_t; // multiplicities: 0 to 255
 
   namespace internal
   {
@@ -25,7 +25,9 @@ namespace u3
       gelfand_int_rep() : n13_(0), n23_(0), n33_(0), n12_(0), n22_(0), n11_(0)
       { }
 
-      gelfand_int_rep(uqn_t n13, uqn_t n23, uqn_t n33, uqn_t n12, uqn_t n22, uqn_t n11)
+      gelfand_int_rep(qcx_utils::UInt8 n13, qcx_utils::UInt8 n23, 
+                      qcx_utils::UInt8 n33, qcx_utils::UInt8 n12, 
+                      qcx_utils::UInt8 n22, qcx_utils::UInt8 n11)
           : n13_(n13), n23_(n23), n33_(n33), n12_(n12), n22_(n22), n11_(n11)
       { }
 
@@ -36,12 +38,12 @@ namespace u3
       int n22() const { return static_cast<int>(n22_); }
       int n11() const { return static_cast<int>(n11_); }
 
-      void n13(uqn_t n13) { n13_ = n13; }
-      void n23(uqn_t n23) { n23_ = n23; }
-      void n33(uqn_t n33) { n33_ = n33; }
-      void n12(uqn_t n12) { n12_ = n12; }
-      void n22(uqn_t n22) { n22_ = n22; }
-      void n11(uqn_t n11) { n11_ = n11; }
+      void n13(qcx_utils::UInt8 n13) { n13_ = n13; }
+      void n23(qcx_utils::UInt8 n23) { n23_ = n23; }
+      void n33(qcx_utils::UInt8 n33) { n33_ = n33; }
+      void n12(qcx_utils::UInt8 n12) { n12_ = n12; }
+      void n22(qcx_utils::UInt8 n22) { n22_ = n22; }
+      void n11(qcx_utils::UInt8 n11) { n11_ = n11; }
 
       bool operator==(const gelfand_int_rep& other) const
       {
