@@ -1,18 +1,13 @@
+#include <qcx_utils.h>
 #include <so3Coeffs/SO3_CGC.h>
 
 #include <U3basis.h>
 #include <U3decomposition.h>
 #include <U3U2xU3U2.h>
 
-#ifdef USE_SLEPC
-#include <slepcsys.h>
-#endif
-
 int main(int argc, char* argv[])
 {
-#ifdef USE_SLEPC
-  SlepcInitialize(&argc, &argv, NULL, NULL);
-#endif
+  qcx_utils::initialize(&argc, &argv);
 
   u3::irrep A(2,0,0), B(2,2,0), C1(4,2,0), C2(0,0,0);
 
@@ -45,8 +40,8 @@ int main(int argc, char* argv[])
       {
         auto LamB = gB.Lambdax2(), MLamB = gB.MLambdax2();
 
-        double cgc1 = cgcs.compute(LamA, LamB, LamC1, MLamA, MLamB, MLamC1),
-               cgc2 = cgcs.compute(LamA, LamB, LamC2, MLamA, MLamB, MLamC2);
+        double cgc1 = cgcs.get({LamA, LamB, LamC1, MLamA, MLamB, MLamC1}),
+               cgc2 = cgcs.get({LamA, LamB, LamC2, MLamA, MLamB, MLamC2});
 
         auto [allow1, U3_1] = wigU3U2db.get(2,0,0,gA.n12(),gA.n22(),
                                             2,2,0,gB.n12(),gB.n22(),
@@ -68,10 +63,5 @@ int main(int argc, char* argv[])
     std::cout << "gC1: " << gC1 << " => sum = " << sum << std::endl;
   }
 
-
-#ifdef USE_SLEPC
-  SlepcFinalize();
-#endif
-
-  return 0;
+  qcx_utils::finalize();
 }

@@ -83,8 +83,7 @@ namespace u3
             const auto& transB = transformationB[LB - mB];
 
             double cgc1 =
-                cgcs.compute(2 * LA, 2 * LB, 2 * LC,
-                             2 * LA, 2 * mB, 2 * LC);
+                cgcs.get({2 * LA, 2 * LB, 2 * LC, 2 * LA, 2 * mB, 2 * LC});
 
             for (int iA = 0; iA < canoA.size(); iA++)
             {
@@ -110,8 +109,8 @@ namespace u3
                   if ((allow == false) || ((mm1 + mm2) != mm3))
                     continue;
 
-                  auto wigU3U2U1 = canoCoeffs *
-                                cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+                  auto wigU3U2U1 =
+                      canoCoeffs * cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
 
                   for (int r = 0; r < rhomax; r++)
                     for (int k1 = 0; k1 < KA; k1++)
@@ -183,8 +182,8 @@ namespace u3
               transformationA.push_back(transformationA_new);
             }
 
-            double cgc1 = cgcs.compute(2 * LA, 2 * LB, 2 * LC,
-                                       2 * mA, 2 * LB, 2 * LC);
+            double cgc1 =
+                cgcs.get({2 * LA, 2 * LB, 2 * LC, 2 * mA, 2 * LB, 2 * LC});
 
             for (int iA = 0; iA < canoBasisA[LA - mA_abs].size(); iA++)
             {
@@ -217,8 +216,8 @@ namespace u3
 
                   if ((allow == false) || ((mm1 + mm2) != mm3)) continue;
 
-                  auto wigU3U2U1 = canoCoeffs *
-                                cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+                  auto wigU3U2U1 =
+                      canoCoeffs * cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
 
                   int phase =
                       ((pArrA[i].lam() + LA +
@@ -290,8 +289,7 @@ namespace u3
       int mB = LC - LA;
       auto [canoB, transB] = u3::phys_to_cano(pB, mB, gArrB);
 
-      double cgc1 = cgcs_.compute(2 * LA, 2 * LB, 2 * LC,
-                                  2 * LA, 2 * mB, 2 * LC);
+      double cgc1 = cgcs_.get({2 * LA, 2 * LB, 2 * LC, 2 * LA, 2 * mB, 2 * LC});
 #else
       // find transformation for the 1st state
       int mA = LC - LB;
@@ -300,8 +298,7 @@ namespace u3
       // find transformation for the 2nd state
       auto [canoB, transB] = u3::phys_to_cano(pB, LB, gArrB);
 
-      double cgc1 = cgcs_.compute(2 * LA, 2 * LB, 2 * LC,
-                                  2 * mA, 2 * LB, 2 * LC);
+      double cgc1 = cgcs_.get({2 * LA, 2 * LB, 2 * LC, 2 * mA, 2 * LB, 2 * LC});
 #endif
 
       for (int iA = 0; iA < canoA.size(); iA++)
@@ -327,8 +324,8 @@ namespace u3
 
             if ((allow == false) || ((mm1 + mm2) != mm3)) continue;
 
-            auto wigU3U2U1 = canoCoeffs *
-                    cgcs_.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+            auto wigU3U2U1 =
+                canoCoeffs * cgcs_.get({jj1, jj2, jj3, mm1, mm2, mm3});
 
             for (int r = 0; r < rhomax; r++)
               for (int k1 = 0; k1 < KA; k1++)

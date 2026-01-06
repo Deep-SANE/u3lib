@@ -6,15 +6,11 @@
 #include <U3basis.h>
 #include <U3SO3_to_U3U2U1.h> 
 
-#ifdef USE_SLEPC
-#include <slepcsys.h>
-#endif
-  
+#include <qcx_utils.h>
+
 int main(int argc, char* argv[])
 {
-#ifdef USE_SLEPC
-  SlepcInitialize(&argc, &argv, NULL, NULL);
-#endif
+  qcx_utils::initialize(&argc, &argv);
 
 #ifdef ADD_SU3LIB_PHASE_U3SO3
   int lambda, mu;
@@ -101,9 +97,5 @@ int main(int argc, char* argv[])
   std::cout << "No phase enforced" << std::endl;
 #endif
 
-#ifdef USE_SLEPC
-  SlepcFinalize();
-#endif
-
-  return 0;
+  qcx_utils::finalize();
 }

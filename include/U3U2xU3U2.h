@@ -466,7 +466,7 @@ namespace u3
             jj2 = gArr2[i2].Lambdax2(), mm2 = gArr2[i2].MLambdax2(),
             jj3 = gArr3[0].Lambdax2(), mm3 = gArr3[0].MLambdax2();
 
-        double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+        double cgc = cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
 
         if (std::fabs(cgc) != 0.0)
           coeffs.set_row(acc, nullspace.row(i) / cgc);
@@ -524,7 +524,7 @@ namespace u3
         {
           double factor = g1_n12p1.e32_12();
 
-          double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+          double cgc = cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
           
           auto acc = coeffs.access(g1_n12p1.n12(), g1_n12p1.n22(), 
                                    gArr2[g2].n12(), gArr2[g2].n22(), 
@@ -547,7 +547,7 @@ namespace u3
         {
           double factor = g1_n22p1.e32_22();
 
-          double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+          double cgc = cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
 
           auto acc = coeffs.access(g1_n22p1.n12(), g1_n22p1.n22(), 
                                    gArr2[g2].n12(), gArr2[g2].n22(), 
@@ -571,7 +571,7 @@ namespace u3
         {
           double factor = g2_n12p1.e32_12();
 
-          double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+          double cgc = cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
 
           auto acc = coeffs.access(gArr1[g1].n12(), gArr1[g1].n22(), 
                                    g2_n12p1.n12(), g2_n12p1.n22(), 
@@ -594,7 +594,7 @@ namespace u3
         {
           double factor = g2_n22p1.e32_22();
 
-          double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+          double cgc = cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
 
           auto acc = coeffs.access(gArr1[g1].n12(), gArr1[g1].n22(), 
                                    g2_n22p1.n12(), g2_n22p1.n22(), 
@@ -649,7 +649,7 @@ namespace u3
         {
           double factor = g1_n12n11p1.e31_12();
 
-          double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+          double cgc = cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
 
           auto acc = coeffs.access(g1_n12n11p1.n12(), g1_n12n11p1.n22(),
                                    gArr2[g2].n12(), gArr2[g2].n22(),
@@ -673,7 +673,7 @@ namespace u3
         {
           double factor = g1_n22n11p1.e31_22();
 
-          double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+          double cgc = cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
 
           auto acc = coeffs.access(g1_n22n11p1.n12(), g1_n22n11p1.n22(),
                                    gArr2[g2].n12(), gArr2[g2].n22(),
@@ -698,7 +698,7 @@ namespace u3
         {
           double factor = g2_n12n11p1.e31_12();
 
-          double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+          double cgc = cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
 
           auto acc = coeffs.access(gArr1[g1].n12(), gArr1[g1].n22(),
                                    g2_n12n11p1.n12(), g2_n12n11p1.n22(),
@@ -722,7 +722,7 @@ namespace u3
         {
           double factor = g2_n22n11p1.e31_22();
 
-          double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+          double cgc = cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
 
           auto acc = coeffs.access(gArr1[g1].n12(), gArr1[g1].n22(),
                                    g2_n22n11p1.n12(), g2_n22n11p1.n22(),
@@ -883,7 +883,7 @@ namespace u3
                 jj2 = gArr2[i2].Lambdax2(), mm2 = gArr2[i2].MLambdax2(),
                 jj3 = gArr3[i3].Lambdax2(), mm3 = gArr3[i3].MLambdax2();
 
-            double cgc = cgcs.compute(jj1, jj2, jj3, mm1, mm2, mm3);
+            double cgc = cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
 
             //if ((mm1 + mm2) == mm3 && std::fabs(jj1 - jj2) <= jj3 &&
                 //(jj1 + jj2) >= jj3)

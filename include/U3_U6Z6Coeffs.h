@@ -82,7 +82,7 @@ namespace u3
                               llBC = u3BC.n13() - u3BC.n23(), llB = n12B - n22B, 
                               llAB = n12AB - n22AB, llC = n12C - n22C;
                           double racah =
-                              racahs.compute(llA, llB, ll, llC, llAB, llBC);
+                              racahs.get({llA, llB, ll, llC, llAB, llBC});
 
                           for (int rAB = 0; rAB < rhoABmax; rAB++)
                             for (int rAB_C = 0; rAB_C < rhoAB_Cmax; rAB_C++)
@@ -281,7 +281,7 @@ namespace u3
                           double phase =
                               ((llA + ll - llAB - llAC) % 4 == 0) ? 1 : -1;
                           double racah =
-                              racahs.compute(llB, llA, ll, llC, llAB, llAC);
+                              racahs.get({llB, llA, ll, llC, llAB, llAC});
 
                           for (int rAB = 0; rAB < rhoABmax; rAB++)
                             for (int rAB_C = 0; rAB_C < rhoAB_Cmax; rAB_C++)

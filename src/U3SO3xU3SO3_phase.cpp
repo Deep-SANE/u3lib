@@ -2,9 +2,7 @@
 #include <U3basis.h>
 #include <U3SO3xU3SO3.h> 
 
-#ifdef USE_SLEPC
-#include <slepcsys.h>
-#endif 
+#include <qcx_utils.h>
 
 auto diff(int k1, int k2, int k3,  
   const Eigen::MatrixXd& A, const Eigen::MatrixXd& B)
@@ -30,9 +28,7 @@ auto diff(int k1, int k2, int k3,
 
 int main(int argc, char* argv[])
 {
-#ifdef USE_SLEPC
-  SlepcInitialize(&argc, &argv, NULL, NULL);
-#endif
+  qcx_utils::initialize(&argc, &argv);
 
 #ifdef ADD_SU3LIB_PHASE_U3SO3
 
@@ -114,9 +110,5 @@ int main(int argc, char* argv[])
   std::cout << "No phase enforced" << std::endl;
 #endif
 
-#ifdef USE_SLEPC 
-  SlepcFinalize();
-#endif
-
-  return 0;
+  qcx_utils::finalize();
 }

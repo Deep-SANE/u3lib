@@ -6,15 +6,11 @@
 #include <U3basis.h>
 #include <U3SO3_to_U3U2U1.h> 
 
-#ifdef USE_SLEPC
-#include <slepcsys.h>
-#endif
-  
+#include <qcx_utils.h>
+
 int main(int argc, char* argv[])
 {
-#ifdef USE_SLEPC
-  SlepcInitialize(&argc, &argv, NULL, NULL);
-#endif
+  qcx_utils::initialize(&argc, &argv);
 
   int lambda, mu;
   std::cout << "Enter SU(3) quantum numbers (lambda,mu): ";
@@ -112,9 +108,5 @@ int main(int argc, char* argv[])
     std::cout << "Wrong mode" << std::endl;
   }
 
-#ifdef USE_SLEPC
-  SlepcFinalize();
-#endif
-
-  return 0;
+  qcx_utils::finalize();
 }
