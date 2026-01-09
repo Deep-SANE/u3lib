@@ -25,8 +25,10 @@ namespace u3
            const std::vector<u3::physicalvector>& pArrA,
            const std::vector<u3::physicalvector>& pArrB,
            const std::vector<u3::physicalvector>& pArrC,
-           qcx_utils::SO3_CGC& cgcs, u3::WigU3U2_db& wigU3U2db)
+           u3::WigU3U2_db& wigU3U2db)
   {
+    auto& cgcs = qcx_utils::cgcs();
+
     // build Gelfand basis
     std::vector<u3::gelfand> gArrA = u3::gelfandBasis(pArrA[0].irr()),
                              gArrB = u3::gelfandBasis(pArrB[0].irr()),
@@ -260,7 +262,7 @@ namespace u3
     std::map<key_type, Eigen::MatrixXd> map_;
 #endif
 
-    qcx_utils::SO3_CGC& cgcs_;
+    qcx_utils::SO3_CGC& cgcs_ = qcx_utils::cgcs();
     u3::WigU3U2_db& wigU3U2db_;
 
     // generate Wigner U3->SO(3) coefficients for specific l1, l2, l3
@@ -349,9 +351,7 @@ namespace u3
     }
 
   public:
-    WigU3SO3_db(qcx_utils::SO3_CGC& cgcs, u3::WigU3U2_db& wigU3U2db)
-        : cgcs_(cgcs), wigU3U2db_(wigU3U2db)
-    { }
+    WigU3SO3_db(u3::WigU3U2_db& wigU3U2db) : wigU3U2db_(wigU3U2db) { }
 
 #ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
     WigU3SO3_db(const WigU3SO3_db&) = delete;

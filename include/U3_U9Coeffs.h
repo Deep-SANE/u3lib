@@ -36,9 +36,11 @@ namespace u3
      const u3::irrep& u3BD, const std::vector<u3::gelfand>& gArrBD,
      const u3::irrep& u3ABCD, const std::vector<u3::gelfand>& gArrABCD,
      int rhoABmax, int rhoCDmax, int rhoAB_CDmax, int rhoACmax, int rhoBDmax,
-     int rhoAC_BDmax, qcx_utils::SO3_CGC& cgcs, qcx_utils::SO3_Racah& racahs,
+     int rhoAC_BDmax, qcx_utils::SO3_Racah& racahs,
      u3::WigU3U2_db& wigU3U2db)
   {
+    auto& cgcs = qcx_utils::cgcs();
+
     std::vector<double> U(rhoACmax * rhoBDmax * rhoAB_CDmax * rhoABmax *
                               rhoCDmax * rhoAC_BDmax, 0.0);
 
@@ -76,17 +78,17 @@ namespace u3
       std::vector<double> U6_1 =
           u3::U6(u3AC, gArrAC, u3B, gArrB, u3ABCD, gArrABCD, u3D, gArrD,
                  u3AB_C[i], gArrABC, rhomaxAC_B, rhoABC_Dmax, u3BD, gArrBD,
-                 rhoBDmax, rhoAC_BDmax, cgcs, racahs, wigU3U2db);
+                 rhoBDmax, rhoAC_BDmax, racahs, wigU3U2db);
 
       std::vector<double> U6_2 =
           u3::U6(u3AB, gArrAB, u3C, gArrC, u3ABCD, gArrABCD, u3D, gArrD,
                  u3AB_C[i], gArrABC, rhomaxsAB_C[i], rhoABC_Dmax, u3CD, gArrCD,
-                 rhoCDmax, rhoAB_CDmax, cgcs, racahs, wigU3U2db);
+                 rhoCDmax, rhoAB_CDmax, racahs, wigU3U2db);
 
       std::vector<double> Z6 =
           u3::Z6(u3B, gArrB, u3A, gArrA, u3AB_C[i], gArrABC, u3C, gArrC, u3AB,
                  gArrAB, rhoABmax, rhomaxsAB_C[i], u3AC, gArrAC, rhoACmax,
-                 rhomaxAC_B, cgcs, racahs, wigU3U2db);
+                 rhomaxAC_B, racahs, wigU3U2db);
 
       for (int rAC = 0; rAC < rhoACmax; rAC++)
       {
@@ -192,7 +194,7 @@ namespace u3
     using return_type = std::vector<double>;
 #endif
 
-    qcx_utils::SO3_CGC& cgcs_;
+    qcx_utils::SO3_CGC& cgcs_ = qcx_utils::cgcs();
     qcx_utils::SO3_Racah& racahs_;
     u3::WigU3U2_db& wigU3U2db_;
 
@@ -216,13 +218,13 @@ namespace u3
       return U9(u3A, gArrA, u3B, gArrB, u3C, gArrC, u3D, gArrD, u3AB, gArrAB,
                 u3CD, gArrCD, u3AC, gArrAC, u3BD, gArrBD, u3ABCD, gArrABCD,
                 rhoABmax, rhoCDmax, rhoAB_CDmax, rhoACmax, rhoBDmax,
-                rhoAC_BDmax, cgcs_, racahs_, wigU3U2db_);
+                rhoAC_BDmax, racahs_, wigU3U2db_);
     }
 
   public:
-    U3U9_db(qcx_utils::SO3_CGC& cgcs, qcx_utils::SO3_Racah& racahs,
+    U3U9_db(qcx_utils::SO3_Racah& racahs,
             u3::WigU3U2_db& wigU3U2db)
-        : cgcs_(cgcs), racahs_(racahs), wigU3U2db_(wigU3U2db)
+        : racahs_(racahs), wigU3U2db_(wigU3U2db)
     { }
 
     U3U9<return_type> get_U3U9(u3::irrep u3A, u3::irrep u3B, u3::irrep u3C,

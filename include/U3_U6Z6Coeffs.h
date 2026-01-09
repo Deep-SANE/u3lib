@@ -25,9 +25,11 @@ namespace u3
      const u3::irrep& u3AB, const std::vector<u3::gelfand>& gArrAB,
      int rhoABmax, int rhoAB_Cmax, const u3::irrep& u3BC,
      const std::vector<u3::gelfand>& gArrBC, int rhoBCmax, int rhoA_BCmax,
-     qcx_utils::SO3_CGC& cgcs, qcx_utils::SO3_Racah& racahs,
+     qcx_utils::SO3_Racah& racahs,
      u3::WigU3U2_db& wigU3U2db)
   {
+    auto& cgcs = qcx_utils::cgcs();
+
     Eigen::MatrixXd A(rhoA_BCmax, rhoA_BCmax);
     Eigen::MatrixXd B(rhoA_BCmax, rhoABmax * rhoAB_Cmax * rhoBCmax);
     B.setZero();
@@ -136,7 +138,7 @@ namespace u3
     std::map<key_type, std::vector<double>> map_;
 #endif
 
-    qcx_utils::SO3_CGC& cgcs_;
+    qcx_utils::SO3_CGC& cgcs_ = qcx_utils::cgcs();
     qcx_utils::SO3_Racah& racahs_;
     u3::WigU3U2_db& wigU3U2db_;
 
@@ -155,13 +157,13 @@ namespace u3
       return U6(u3A,gArrA,u3B,gArrB,u3ABC,gArrABC,u3C,gArrC,
                 u3AB,gArrAB,rhoABmax,rhoAB_Cmax,
                 u3BC,gArrBC,rhoBCmax,rhoA_BCmax,
-                cgcs_,racahs_,wigU3U2db_);
+                racahs_,wigU3U2db_);
     }
 
   public:
-    U3U6_db(qcx_utils::SO3_CGC& cgcs, qcx_utils::SO3_Racah& racahs,
+    U3U6_db(qcx_utils::SO3_Racah& racahs,
                                           u3::WigU3U2_db& wigU3U2db) 
-      : cgcs_(cgcs), racahs_(racahs), wigU3U2db_(wigU3U2db)
+      : racahs_(racahs), wigU3U2db_(wigU3U2db)
     {}
 
     auto get(int n13a, int n23a, int n33a, int n13b, int n23b, int n33b, 
@@ -220,9 +222,11 @@ namespace u3
      const u3::irrep& u3AB, const std::vector<u3::gelfand>& gArrAB,
      int rhoABmax, int rhoAB_Cmax, const u3::irrep& u3AC,
      const std::vector<u3::gelfand>& gArrAC, int rhoACmax, int rhoAC_Bmax,
-     qcx_utils::SO3_CGC& cgcs, qcx_utils::SO3_Racah& racahs,
+     qcx_utils::SO3_Racah& racahs,
      u3::WigU3U2_db& wigU3U2db)
   {
+    auto& cgcs = qcx_utils::cgcs();
+
     Eigen::MatrixXd A(rhoAC_Bmax, rhoAC_Bmax);
     Eigen::MatrixXd B(rhoAC_Bmax, rhoABmax * rhoAB_Cmax * rhoACmax);
     B.setZero();
@@ -336,7 +340,7 @@ namespace u3
     std::map<key_type, std::vector<double>> map_;
 #endif
 
-    qcx_utils::SO3_CGC& cgcs_;
+    qcx_utils::SO3_CGC& cgcs_ = qcx_utils::cgcs();
     qcx_utils::SO3_Racah& racahs_;
     u3::WigU3U2_db& wigU3U2db_;
 
@@ -355,13 +359,13 @@ namespace u3
       return U6(u3B,gArrB,u3A,gArrA,u3ABC,gArrABC,u3C,gArrC,
                 u3AB,gArrAB,rhoABmax,rhoAB_Cmax,
                 u3AC,gArrAC,rhoACmax,rhoAC_Bmax,
-                cgcs_,racahs_,wigU3U2db_);
+                racahs_,wigU3U2db_);
     }
 
   public:
-    U3Z6_db(qcx_utils::SO3_CGC& cgcs, qcx_utils::SO3_Racah& racahs,
+    U3Z6_db(qcx_utils::SO3_Racah& racahs,
                                           u3::WigU3U2_db& wigU3U2db) 
-      : cgcs_(cgcs), racahs_(racahs), wigU3U2db_(wigU3U2db)
+      : racahs_(racahs), wigU3U2db_(wigU3U2db)
     {}
 
     auto get(int n13b, int n23b, int n33b, int n13a, int n23a, int n33a,

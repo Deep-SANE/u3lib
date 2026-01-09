@@ -110,14 +110,14 @@ int main(int argc, char* argv[])
     std::vector<u3::gelfand> gArrBC = u3::gelfandBasis(u3bc[i_bc]);
     std::vector<u3::gelfand> gArrABC = u3::gelfandBasis(u3ab_c[i_ab_c]);
 
-    qcx_utils::SO3_CGC cgcs;
+    auto& cgcs = qcx_utils::cgcs();
     qcx_utils::SO3_Racah racahs;
-    u3::WigU3U2_db wigU3U2db(cgcs);
+    u3::WigU3U2_db wigU3U2db;
 
     std::vector<double> coeffs = u3::U6(
         u3a, gArrA, u3b, gArrB, u3ab_c[i_ab_c], gArrABC, u3c, gArrC, u3ab[i_ab],
         gArrAB, rhomaxsab[i_ab], rhomaxsab_c[i_ab_c], u3bc[i_bc], gArrBC,
-        rhomaxsbc[i_bc], rhomaxa_bc, cgcs, racahs, wigU3U2db);
+        rhomaxsbc[i_bc], rhomaxa_bc, racahs, wigU3U2db);
 
     // End time measurement
     auto t1 = std::chrono::high_resolution_clock::now();

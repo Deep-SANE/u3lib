@@ -149,16 +149,16 @@ int main(int argc, char* argv[])
     std::vector<u3::gelfand> gArrBD = u3::gelfandBasis(u3bd[i_bd]);
     std::vector<u3::gelfand> gArrABCD = u3::gelfandBasis(u3ab_cd[i_ab_cd]);
 
-    qcx_utils::SO3_CGC cgcs;
+    auto& cgcs = qcx_utils::cgcs;
     qcx_utils::SO3_Racah racahs;
-    u3::WigU3U2_db wigU3U2db(cgcs);
+    u3::WigU3U2_db wigU3U2db;
 
     std::vector<double> coeffs =
       u3::U9(u3a, gArrA, u3b, gArrB, u3c, gArrC, u3d, gArrD, u3ab[i_ab],
              gArrAB, u3cd[i_cd], gArrCD, u3ac[i_ac], gArrAC, u3bd[i_bd],
              gArrBD, u3ab_cd[i_ab_cd], gArrABCD, rhomaxsab[i_ab],
              rhomaxscd[i_cd], rhomaxsab_cd[i_ab_cd], rhomaxsac[i_ac],
-             rhomaxsbd[i_bd], rhomaxac_bd, cgcs, racahs, wigU3U2db);
+             rhomaxsbd[i_bd], rhomaxac_bd, racahs, wigU3U2db);
 
     // End time measurement
     auto t1 = std::chrono::high_resolution_clock::now();

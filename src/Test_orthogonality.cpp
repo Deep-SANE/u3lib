@@ -23,8 +23,8 @@ int main(int argc, char* argv[])
 
   assert(gC2s.size() == 1);
 
-  qcx_utils::SO3_CGC cgcs;
-  u3::WigU3U2_db wigU3U2db(cgcs);
+  auto& cgcs = qcx_utils::cgcs();
+  u3::WigU3U2_db wigU3U2db;
 
   for (const auto& gC1 : gC1s)
   {

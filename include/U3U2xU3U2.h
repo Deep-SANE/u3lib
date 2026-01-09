@@ -435,9 +435,10 @@ namespace u3
   inline void HighestWeightReducedCoeffs(const std::vector<u3::gelfand>& gArr1,
                                          const std::vector<u3::gelfand>& gArr2,
                                          const std::vector<u3::gelfand>& gArr3,
-                                         qcx_utils::SO3_CGC& cgcs,
                                          WigU3U2_coeffs& coeffs)
   {
+    auto& cgcs = qcx_utils::cgcs();
+
     std::vector<std::pair<int, int>> indices =
         expand_to_uncoupled(gArr3[0], gArr1, gArr2);
 
@@ -492,9 +493,10 @@ namespace u3
                   const std::vector<u3::gelfand>& gArr1,
                   const std::vector<u3::gelfand>& gArr2,
                   const std::vector<u3::gelfand>& gArr3, Eigen::MatrixXd& b,
-                  qcx_utils::SO3_CGC& cgcs,
                   std::vector<Eigen::MatrixXd>& E32E31, WigU3U2_coeffs& coeffs)
   {
+    auto& cgcs = qcx_utils::cgcs();
+
     int jj3 = gArr3[parent_g3].Lambdax2(), mm3 = gArr3[parent_g3].MLambdax2();
 
     // loop over daughter states
@@ -616,9 +618,10 @@ namespace u3
                   const std::vector<u3::gelfand>& gArr1,
                   const std::vector<u3::gelfand>& gArr2,
                   const std::vector<u3::gelfand>& gArr3, Eigen::MatrixXd& b,
-                  qcx_utils::SO3_CGC& cgcs,
                   std::vector<Eigen::MatrixXd>& E32E31, WigU3U2_coeffs& coeffs)
   {
+    auto& cgcs = qcx_utils::cgcs();
+
     int jj3 = gArr3[parent_g3].Lambdax2(), mm3 = gArr3[parent_g3].MLambdax2();
 
     // loop over daughter states
@@ -742,9 +745,10 @@ namespace u3
                                        const std::vector<u3::gelfand>& gArr3,
                                        int rhomax,
                                        std::vector<int>& same_weight_gArr3,
-                                       qcx_utils::SO3_CGC& cgcs,
                                        WigU3U2_coeffs& coeffs)
   {
+    auto& cgcs = qcx_utils::cgcs();
+
     // trace states with the same [w2,w1] (z-weight)
     for (int i = 0; i < same_weight_gArr3.size(); i++)
     {
@@ -794,7 +798,7 @@ namespace u3
           {
             actOnParent.push_back(p);
             E32(j, row, rhomax, same_weight_gArr3, uncoupled_same_weight_gArr3,
-                gArr1, gArr2, gArr3, b, cgcs, E32E31, coeffs);
+                gArr1, gArr2, gArr3, b, E32E31, coeffs);
             continue;
           }
         }
@@ -810,7 +814,7 @@ namespace u3
           {
             actOnParent.push_back(p);
             E32(j, row, rhomax, same_weight_gArr3, uncoupled_same_weight_gArr3,
-                gArr1, gArr2, gArr3, b, cgcs, E32E31, coeffs);
+                gArr1, gArr2, gArr3, b, E32E31, coeffs);
             continue;
           }
         }
@@ -827,7 +831,7 @@ namespace u3
           {
             actOnParent.push_back(p);
             E31(j, row, rhomax, same_weight_gArr3, uncoupled_same_weight_gArr3,
-                gArr1, gArr2, gArr3, b, cgcs, E32E31, coeffs);
+                gArr1, gArr2, gArr3, b, E32E31, coeffs);
             continue;
           }
         }
@@ -844,7 +848,7 @@ namespace u3
           {
             actOnParent.push_back(p);
             E31(j, row, rhomax, same_weight_gArr3, uncoupled_same_weight_gArr3,
-                gArr1, gArr2, gArr3, b, cgcs, E32E31, coeffs);
+                gArr1, gArr2, gArr3, b, E32E31, coeffs);
             continue;
           }
         }
@@ -913,12 +917,13 @@ namespace u3
                       const u3::irrep& u3C, int rhomax, int w2min,
                       const std::vector<u3::gelfand>& gArrA,
                       const std::vector<u3::gelfand>& gArrB,
-                      const std::vector<u3::gelfand>& gArrC,
-                      qcx_utils::SO3_CGC& cgcs)
+                      const std::vector<u3::gelfand>& gArrC)
   {
+    auto& cgcs = qcx_utils::cgcs();
+
     WigU3U2_coeffs coeffs(u3A, u3B, u3C, rhomax);
 
-    u3::HighestWeightReducedCoeffs(gArrA, gArrB, gArrC, cgcs, coeffs);
+    u3::HighestWeightReducedCoeffs(gArrA, gArrB, gArrC, coeffs);
 
     int w2max = u3C.n13() + u3C.n23();
     if (w2min < w2max)
@@ -938,7 +943,7 @@ namespace u3
       for (int w2 = w2max - 1; w2 >= w2min; w2--)
       {
         u3::LowerWeightReducedCoeffs(gArrA, gArrB, gArrC, rhomax,
-                                     all_same_weight_gArrC[w2max - w2], cgcs,
+                                     all_same_weight_gArrC[w2max - w2],
                                      coeffs);
       }
     }
@@ -964,7 +969,7 @@ namespace u3
     std::map<key_type, WigU3U2_coeffs> map_;
 #endif
 
-    qcx_utils::SO3_CGC& cgcs_;
+    qcx_utils::SO3_CGC& cgcs_ = qcx_utils::cgcs();
 
     auto calculate(const irrep& u3a, const irrep& u3b, const irrep& u3c)
     {
@@ -974,11 +979,11 @@ namespace u3
       auto gArrB = u3::gelfandBasis(u3b);
       auto gArrC = u3::gelfandBasis(u3c);
 
-      return WigU3U2(u3a, u3b, u3c, rhomax, -1, gArrA, gArrB, gArrC, cgcs_);
+      return WigU3U2(u3a, u3b, u3c, rhomax, -1, gArrA, gArrB, gArrC);
     }
 
   public:
-    WigU3U2_db(qcx_utils::SO3_CGC& cgcs) : cgcs_(cgcs) { }
+    WigU3U2_db() = default;
 
 #ifdef U3LIB_ENABLE_WIGU3U2_CACHE
     WigU3U2_db(const WigU3U2_db&) = delete;
