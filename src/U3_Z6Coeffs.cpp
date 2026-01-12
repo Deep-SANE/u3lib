@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
     std::vector<double> coeffs = u3::Z6(
         u3b, gArrB, u3a, gArrA, u3ab_c[i_ab_c], gArrABC, u3c, gArrC, u3ab[i_ab],
         gArrAB, rhomaxsab[i_ab], rhomaxsab_c[i_ab_c], u3ac[i_ac], gArrAC,
-        rhomaxsac[i_ac], rhomaxac_b, racahs, wigU3U2db);
+        rhomaxsac[i_ac], rhomaxac_b, wigU3U2db);
 
     // End time measurement
     auto t1 = std::chrono::high_resolution_clock::now();

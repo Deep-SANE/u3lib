@@ -262,13 +262,14 @@ namespace u3
     std::map<key_type, Eigen::MatrixXd> map_;
 #endif
 
-    qcx_utils::SO3_CGC& cgcs_ = qcx_utils::cgcs();
     u3::WigU3U2_db& wigU3U2db_;
 
     // generate Wigner U3->SO(3) coefficients for specific l1, l2, l3
     auto calculate(int rhomax, const u3::physicalvector& pA,
       const u3::physicalvector& pB, const u3::physicalvector& pC)
     {
+      auto& cgcs = qcx_utils::cgcs();
+
       // build Gelfand basis
       std::vector<u3::gelfand> gArrA = u3::gelfandBasis(pA.irr()),
                                gArrB = u3::gelfandBasis(pB.irr()),
@@ -291,7 +292,7 @@ namespace u3
       int mB = LC - LA;
       auto [canoB, transB] = u3::phys_to_cano(pB, mB, gArrB);
 
-      double cgc1 = cgcs_.get({2 * LA, 2 * LB, 2 * LC, 2 * LA, 2 * mB, 2 * LC});
+      double cgc1 = cgcs.get({2 * LA, 2 * LB, 2 * LC, 2 * LA, 2 * mB, 2 * LC});
 #else
       // find transformation for the 1st state
       int mA = LC - LB;
@@ -300,7 +301,7 @@ namespace u3
       // find transformation for the 2nd state
       auto [canoB, transB] = u3::phys_to_cano(pB, LB, gArrB);
 
-      double cgc1 = cgcs_.get({2 * LA, 2 * LB, 2 * LC, 2 * mA, 2 * LB, 2 * LC});
+      double cgc1 = cgcs.get({2 * LA, 2 * LB, 2 * LC, 2 * mA, 2 * LB, 2 * LC});
 #endif
 
       for (int iA = 0; iA < canoA.size(); iA++)
@@ -327,7 +328,7 @@ namespace u3
             if ((allow == false) || ((mm1 + mm2) != mm3)) continue;
 
             auto wigU3U2U1 =
-                canoCoeffs * cgcs_.get({jj1, jj2, jj3, mm1, mm2, mm3});
+                canoCoeffs * cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
 
             for (int r = 0; r < rhomax; r++)
               for (int k1 = 0; k1 < KA; k1++)

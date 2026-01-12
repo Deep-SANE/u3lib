@@ -158,7 +158,7 @@ int main(int argc, char* argv[])
              gArrAB, u3cd[i_cd], gArrCD, u3ac[i_ac], gArrAC, u3bd[i_bd],
              gArrBD, u3ab_cd[i_ab_cd], gArrABCD, rhomaxsab[i_ab],
              rhomaxscd[i_cd], rhomaxsab_cd[i_ab_cd], rhomaxsac[i_ac],
-             rhomaxsbd[i_bd], rhomaxac_bd, racahs, wigU3U2db);
+             rhomaxsbd[i_bd], rhomaxac_bd, wigU3U2db);
 
     // End time measurement
     auto t1 = std::chrono::high_resolution_clock::now();

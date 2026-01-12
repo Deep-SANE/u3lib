@@ -16,8 +16,6 @@
 
 class WigU3U2_coeffs
 {
-  qcx_utils::SO3_CGC cgcs_;
-
   std::optional<u3::WigU3U2_coeffs> coeffs_;
 
 public:
@@ -41,7 +39,7 @@ public:
     assert(rhomax > 0);
 
     coeffs_.emplace(
-        u3::WigU3U2(u3a, u3b, u3c, rhomax, -1, gArrA, gArrB, gArrC, cgcs_));
+        u3::WigU3U2(u3a, u3b, u3c, rhomax, -1, gArrA, gArrB, gArrC));
   }
 
   auto size() const { return coeffs_->size(); }

@@ -969,8 +969,6 @@ namespace u3
     std::map<key_type, WigU3U2_coeffs> map_;
 #endif
 
-    qcx_utils::SO3_CGC& cgcs_ = qcx_utils::cgcs();
-
     auto calculate(const irrep& u3a, const irrep& u3b, const irrep& u3c)
     {
       auto rhomax = Rho(u3a, u3b, u3c);
