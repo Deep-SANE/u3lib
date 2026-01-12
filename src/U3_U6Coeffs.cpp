@@ -111,7 +111,7 @@ int main(int argc, char* argv[])
     std::vector<u3::gelfand> gArrABC = u3::gelfandBasis(u3ab_c[i_ab_c]);
 
     auto& cgcs = qcx_utils::cgcs();
-    qcx_utils::SO3_Racah racahs;
+    auto& racahs = qcx_utils::racahs();
     u3::WigU3U2_db wigU3U2db;
 
     std::vector<double> coeffs = u3::U6(
