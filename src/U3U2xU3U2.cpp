@@ -10,6 +10,7 @@
 #include <qcx_utils.h>
 #include <so3Coeffs/SO3_CGC.h>
 
+#include <u3lib.h>
 #include <U3basis.h>
 #include <U3decomposition.h>
 #include <U3U2xU3U2.h>
@@ -17,6 +18,7 @@
 int main(int argc, char* argv[])
 {
   qcx_utils::initialize(&argc, &argv);
+  u3::initialize();
 
   int n13a, n23a, n33a;
   std::cout << "Enter the first irrep [n13a,n23a,n33a]: ";
@@ -97,5 +99,6 @@ int main(int argc, char* argv[])
   std::cout << "Elapsed time: " << duration.count() << " seconds or "
             << duration.count() / 60.0 << " minutes" << std::endl;
 
+  u3::finalize();
   qcx_utils::finalize();
 }

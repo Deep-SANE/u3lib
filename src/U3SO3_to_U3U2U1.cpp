@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 
+#include <u3lib.h>
 #include <U3basis.h>
 #include <U3SO3_to_U3U2U1.h> 
 
@@ -11,6 +12,7 @@
 int main(int argc, char* argv[])
 {
   qcx_utils::initialize(&argc, &argv);
+  u3::initialize();
 
   int lambda, mu;
   std::cout << "Enter SU(3) quantum numbers (lambda,mu): ";
@@ -108,5 +110,6 @@ int main(int argc, char* argv[])
     std::cout << "Wrong mode" << std::endl;
   }
 
+  u3::finalize();
   qcx_utils::finalize();
 }

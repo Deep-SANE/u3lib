@@ -1,6 +1,7 @@
 #include <chrono>
 #include <iostream>
 
+#include <u3lib.h>
 #include <U3basis.h>
 #include <U3generatorsRME.h>
 
@@ -9,6 +10,7 @@
 int main(int argc, char* argv[])
 {
   qcx_utils::initialize(&argc, &argv);
+  u3::initialize();
 
   int lambda, mu;
   std::cout << "Please enter SU(3) quantum numbers (lambda,mu): ";
@@ -73,5 +75,6 @@ int main(int argc, char* argv[])
   std::cout << "Elapsed time: " << duration.count() << " seconds or "
             << duration.count() / 60.0 << " minutes" << std::endl;
 
+  u3::finalize();
   qcx_utils::finalize();
 }

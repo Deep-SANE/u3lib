@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 
+#include <u3lib.h>
 #include <U3basis.h>
 #include <U3SO3_to_U3U2U1.h> 
 
@@ -11,6 +12,7 @@
 int main(int argc, char* argv[])
 {
   qcx_utils::initialize(&argc, &argv);
+  u3::initialize();
 
 #ifdef ADD_SU3LIB_PHASE_U3SO3
   int lambda, mu;
@@ -97,5 +99,6 @@ int main(int argc, char* argv[])
   std::cout << "No phase enforced" << std::endl;
 #endif
 
+  u3::finalize();
   qcx_utils::finalize();
 }

@@ -1,3 +1,4 @@
+#include <u3lib.h>
 #include <U3decomposition.h>
 #include <U3basis.h>
 #include <U3SO3xU3SO3.h> 
@@ -29,6 +30,7 @@ auto diff(int k1, int k2, int k3,
 int main(int argc, char* argv[])
 {
   qcx_utils::initialize(&argc, &argv);
+  u3::initialize();
 
 #ifdef ADD_SU3LIB_PHASE_U3SO3
 
@@ -110,5 +112,6 @@ int main(int argc, char* argv[])
   std::cout << "No phase enforced" << std::endl;
 #endif
 
+  u3::finalize();
   qcx_utils::finalize();
 }

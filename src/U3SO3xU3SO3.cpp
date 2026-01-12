@@ -7,6 +7,7 @@
 #include <tuple> 
 #include <vector> 
 
+#include <u3lib.h>
 #include <U3decomposition.h>
 #include <U3basis.h>
 #include <U3SO3xU3SO3.h> 
@@ -16,6 +17,7 @@
 int main(int argc, char* argv[])
 {
   qcx_utils::initialize(&argc, &argv);
+  u3::initialize();
 
   int lam1, mu1, lam2, mu2;
   std::cout << "Please enter lambda1, mu1: ";
@@ -169,5 +171,6 @@ int main(int argc, char* argv[])
   std::cout << "Elapsed time: " << duration.count() << " seconds or "
             << duration.count() / 60.0 << " minutes" << std::endl;
 
+  u3::finalize();
   qcx_utils::finalize();
 }

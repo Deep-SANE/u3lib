@@ -6,6 +6,7 @@
 #include <string> 
 #include <vector>
 
+#include <u3lib.h>
 #include <U3decomposition.h>
 #include <U3_U6Z6Coeffs.h> 
 #include <U3basis.h>
@@ -15,6 +16,7 @@
 int main(int argc, char* argv[])
 {
   qcx_utils::initialize(&argc, &argv);
+  u3::initialize();
 
   std::cout
       << "This program compute U6-recoupling coefficients of three U(3) irreps"
@@ -161,5 +163,6 @@ int main(int argc, char* argv[])
     std::cout << "Recoupling does not exist" << std::endl;
   }
 
+  u3::finalize();
   qcx_utils::finalize();
 }

@@ -1,6 +1,7 @@
 #include <qcx_utils.h>
 #include <so3Coeffs/SO3_CGC.h>
 
+#include <u3lib.h>
 #include <U3basis.h>
 #include <U3decomposition.h>
 #include <U3U2xU3U2.h>
@@ -8,6 +9,7 @@
 int main(int argc, char* argv[])
 {
   qcx_utils::initialize(&argc, &argv);
+  u3::initialize();
 
   u3::irrep A(2,0,0), B(2,2,0), C1(4,2,0), C2(0,0,0);
 
@@ -63,5 +65,6 @@ int main(int argc, char* argv[])
     std::cout << "gC1: " << gC1 << " => sum = " << sum << std::endl;
   }
 
+  u3::finalize();
   qcx_utils::finalize();
 }
