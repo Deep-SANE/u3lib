@@ -32,11 +32,9 @@ int main(int argc, char* argv[])
   qcx_utils::initialize(&argc, &argv);
   u3::initialize();
 
-#ifdef ADD_SU3LIB_PHASE_U3SO3
+  auto& wigU3SO3db = u3::wigU3SO3db();
 
-  auto& cgcs = qcx_utils::cgcs();
-  u3::WigU3U2_db wigU3U2db;
-  u3::WigU3SO3_db wigU3SO3db(wigU3U2db);
+#ifdef ADD_SU3LIB_PHASE_U3SO3
 
   int lam1, mu1, lam2, mu2;
   std::cout << "Please enter lambda1, mu1: ";

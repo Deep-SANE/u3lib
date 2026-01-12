@@ -62,8 +62,6 @@ int main(int argc, char* argv[])
                            gArrB = u3::gelfandBasis(u3b),
                            gArrC = u3::gelfandBasis(u3c);
 
-  auto& cgcs = qcx_utils::cgcs();
-
   auto coeffs =
       u3::WigU3U2(u3a, u3b, u3c, rhomaxs[index], -1, gArrA, gArrB, gArrC);
 

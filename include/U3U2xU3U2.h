@@ -980,14 +980,12 @@ namespace u3
       return WigU3U2(u3a, u3b, u3c, rhomax, -1, gArrA, gArrB, gArrC);
     }
 
-  public:
+    // This class is a singleton, and cannot be instantiated directly:
     WigU3U2_db() = default;
-
-#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
     WigU3U2_db(const WigU3U2_db&) = delete;
     WigU3U2_db& operator=(const WigU3U2_db&) = delete;
-#endif
 
+  public:
     auto get(int n13a, int n23a, int n33a, int n12a, int n22a, int n13b,
              int n23b, int n33b, int n12b, int n22b, int n13c, int n23c,
              int n33c, int n12c, int n22c)
@@ -1039,7 +1037,16 @@ namespace u3
 
       return std::make_pair(flag, row);
     }
+
+    friend WigU3U2_db& wigU3U2db();
   };
+
+  inline WigU3U2_db& wigU3U2db()
+  {
+    static WigU3U2_db wigU3U2db;
+
+    return wigU3U2db;
+  }
 } // namespace u3
 
 #endif

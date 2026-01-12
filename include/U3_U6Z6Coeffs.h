@@ -24,11 +24,11 @@ namespace u3
      const u3::irrep& u3C, const std::vector<u3::gelfand>& gArrC,
      const u3::irrep& u3AB, const std::vector<u3::gelfand>& gArrAB,
      int rhoABmax, int rhoAB_Cmax, const u3::irrep& u3BC,
-     const std::vector<u3::gelfand>& gArrBC, int rhoBCmax, int rhoA_BCmax,
-     u3::WigU3U2_db& wigU3U2db)
+     const std::vector<u3::gelfand>& gArrBC, int rhoBCmax, int rhoA_BCmax)
   {
     auto& cgcs = qcx_utils::cgcs();
     auto& racahs = qcx_utils::racahs();
+    auto& wigU3U2db = u3::wigU3U2db();
 
     Eigen::MatrixXd A(rhoA_BCmax, rhoA_BCmax);
     Eigen::MatrixXd B(rhoA_BCmax, rhoABmax * rhoAB_Cmax * rhoBCmax);
@@ -138,8 +138,6 @@ namespace u3
     std::map<key_type, std::vector<double>> map_;
 #endif
 
-    u3::WigU3U2_db& wigU3U2db_;
-
     auto calculate(const u3::irrep& u3A, const u3::irrep& u3B, 
                    const u3::irrep& u3ABC, const u3::irrep& u3C,
                    const u3::irrep& u3AB, int rhoABmax, int rhoAB_Cmax,
@@ -154,13 +152,15 @@ namespace u3
 
       return U6(u3A,gArrA,u3B,gArrB,u3ABC,gArrABC,u3C,gArrC,
                 u3AB,gArrAB,rhoABmax,rhoAB_Cmax,
-                u3BC,gArrBC,rhoBCmax,rhoA_BCmax,
-                wigU3U2db_);
+                u3BC,gArrBC,rhoBCmax,rhoA_BCmax);
     }
 
-  public:
-    U3U6_db(u3::WigU3U2_db& wigU3U2db) : wigU3U2db_(wigU3U2db) { }
+    // This class is a singleton, and cannot be instantiated directly:
+    U3U6_db() = default;
+    U3U6_db(const U3U6_db&) = delete;
+    U3U6_db& operator=(const U3U6_db&) = delete;
 
+  public:
     auto get(int n13a, int n23a, int n33a, int n13b, int n23b, int n33b, 
       int n13abc, int n23abc, int n33abc, int n13c, int n23c, int n33c, 
       int n13ab, int n23ab, int n33ab, int n13bc, int n23bc, int n33bc)
@@ -206,7 +206,16 @@ namespace u3
 
       return std::make_pair(flag, c);
     }
+
+    friend U3U6_db& u3u6db();
   };
+
+  inline U3U6_db& u3u6db()
+  {
+    static U3U6_db u3u6db;
+
+    return u3u6db; 
+  }
 
   // input by users: u3B, u3A, u3ABC, u3C, u3AB, u3AC
   inline std::vector<double>
@@ -216,11 +225,11 @@ namespace u3
      const u3::irrep& u3C, const std::vector<u3::gelfand>& gArrC,
      const u3::irrep& u3AB, const std::vector<u3::gelfand>& gArrAB,
      int rhoABmax, int rhoAB_Cmax, const u3::irrep& u3AC,
-     const std::vector<u3::gelfand>& gArrAC, int rhoACmax, int rhoAC_Bmax,
-     u3::WigU3U2_db& wigU3U2db)
+     const std::vector<u3::gelfand>& gArrAC, int rhoACmax, int rhoAC_Bmax)
   {
     auto& cgcs = qcx_utils::cgcs();
     auto& racahs = qcx_utils::racahs();
+    auto& wigU3U2db = u3::wigU3U2db();
 
     Eigen::MatrixXd A(rhoAC_Bmax, rhoAC_Bmax);
     Eigen::MatrixXd B(rhoAC_Bmax, rhoABmax * rhoAB_Cmax * rhoACmax);
@@ -335,8 +344,6 @@ namespace u3
     std::map<key_type, std::vector<double>> map_;
 #endif
 
-    u3::WigU3U2_db& wigU3U2db_;
-
     auto calculate(const u3::irrep& u3B, const u3::irrep& u3A, 
                    const u3::irrep& u3ABC, const u3::irrep& u3C,
                    const u3::irrep& u3AB, int rhoABmax, int rhoAB_Cmax,
@@ -351,13 +358,15 @@ namespace u3
 
       return U6(u3B,gArrB,u3A,gArrA,u3ABC,gArrABC,u3C,gArrC,
                 u3AB,gArrAB,rhoABmax,rhoAB_Cmax,
-                u3AC,gArrAC,rhoACmax,rhoAC_Bmax,
-                wigU3U2db_);
+                u3AC,gArrAC,rhoACmax,rhoAC_Bmax);
     }
 
-  public:
-    U3Z6_db(u3::WigU3U2_db& wigU3U2db) : wigU3U2db_(wigU3U2db) { }
+    // This class is a singleton, and cannot be instantiated directly:
+    U3Z6_db() = default;
+    U3Z6_db(const U3Z6_db&) = delete;
+    U3Z6_db& operator=(const U3Z6_db&) = delete;
 
+  public:
     auto get(int n13b, int n23b, int n33b, int n13a, int n23a, int n33a,
       int n13abc, int n23abc, int n33abc, int n13c, int n23c, int n33c, 
       int n13ab, int n23ab, int n33ab, int n13ac, int n23ac, int n33ac)
@@ -403,7 +412,16 @@ namespace u3
 
       return std::make_pair(flag, c);
     }
+
+    friend U3Z6_db& u3z6db();
   };
+
+  inline U3Z6_db& u3z6db()
+  {
+    static U3Z6_db u3z6db;
+
+    return u3z6db;
+  }
 
 } // namespace u3
 #endif

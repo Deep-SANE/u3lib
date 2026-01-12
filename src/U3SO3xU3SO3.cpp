@@ -130,11 +130,8 @@ int main(int argc, char* argv[])
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
 
-  auto& cgcs = qcx_utils::cgcs();
-  u3::WigU3U2_db wigU3U2db;
-
   auto [tArr, coeffs] = 
-    u3::WigU3SO3(rhomax, pArrA, pArrB, pArrC, wigU3U2db);
+    u3::WigU3SO3(rhomax, pArrA, pArrB, pArrC);
 
   // End time measurement
   auto t1 = std::chrono::high_resolution_clock::now();

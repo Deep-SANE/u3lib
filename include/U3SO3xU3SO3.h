@@ -24,10 +24,10 @@ namespace u3
   WigU3SO3(int rhomax, 
            const std::vector<u3::physicalvector>& pArrA,
            const std::vector<u3::physicalvector>& pArrB,
-           const std::vector<u3::physicalvector>& pArrC,
-           u3::WigU3U2_db& wigU3U2db)
+           const std::vector<u3::physicalvector>& pArrC)
   {
     auto& cgcs = qcx_utils::cgcs();
+    auto& wigU3U2db = u3::wigU3U2db();
 
     // build Gelfand basis
     std::vector<u3::gelfand> gArrA = u3::gelfandBasis(pArrA[0].irr()),
@@ -262,13 +262,12 @@ namespace u3
     std::map<key_type, Eigen::MatrixXd> map_;
 #endif
 
-    u3::WigU3U2_db& wigU3U2db_;
-
     // generate Wigner U3->SO(3) coefficients for specific l1, l2, l3
     auto calculate(int rhomax, const u3::physicalvector& pA,
       const u3::physicalvector& pB, const u3::physicalvector& pC)
     {
       auto& cgcs = qcx_utils::cgcs();
+      auto& wigU3U2db = u3::wigU3U2db();
 
       // build Gelfand basis
       std::vector<u3::gelfand> gArrA = u3::gelfandBasis(pA.irr()),
@@ -316,7 +315,7 @@ namespace u3
           {
             const auto& gC = gArrC[canoC[iC]];
 
-            auto [allow, canoCoeffs] = wigU3U2db_.get(
+            auto [allow, canoCoeffs] = wigU3U2db.get(
               gA.n13(), gA.n23(), gA.n33(), gA.n12(), gA.n22(),
               gB.n13(), gB.n23(), gB.n33(), gB.n12(), gB.n22(),
               gC.n13(), gC.n23(), gC.n33(), gC.n12(), gC.n22());
@@ -351,14 +350,12 @@ namespace u3
       return coeffs;
     }
 
-  public:
-    WigU3SO3_db(u3::WigU3U2_db& wigU3U2db) : wigU3U2db_(wigU3U2db) { }
-
-#ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
+    // This class is a singleton, and cannot be instantiated directly:
+    WigU3SO3_db() = default;
     WigU3SO3_db(const WigU3SO3_db&) = delete;
     WigU3SO3_db& operator=(const WigU3SO3_db&) = delete;
-#endif
 
+  public:
     auto get(int lam1, int mu1, int l1, 
              int lam2, int mu2, int l2,
              int lam3, int mu3, int l3)
@@ -396,7 +393,17 @@ namespace u3
 
       return std::make_pair(flag, m);
     }
+
+    friend WigU3SO3_db& wigU3SO3db();
   };
+
+  WigU3SO3_db& wigU3SO3db()
+  {
+    static WigU3SO3_db wigU3SO3db;
+
+    return wigU3SO3db;
+  }
+
 } // namespace u3
 
 #endif
