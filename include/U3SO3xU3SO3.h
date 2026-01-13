@@ -397,7 +397,7 @@ namespace u3
     friend WigU3SO3_db& wigU3SO3db();
   };
 
-  WigU3SO3_db& wigU3SO3db()
+  inline WigU3SO3_db& wigU3SO3db()
   {
     static WigU3SO3_db wigU3SO3db;
 
