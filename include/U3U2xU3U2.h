@@ -2,6 +2,7 @@
 #define U3LIB_U3U2XU3U2_H
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -19,12 +20,16 @@
 #include "U3basis.h"
 #include "U3decomposition.h"
 
+#include <qcx_Cache.h>
+#include <qcx_Int.h>
 #include <so3Coeffs/SO3_CGC.h>
 
 #include <nullspace_solver_qr.h>
 #ifdef USE_SLEPC
 #include <nullspace_solver_slepc.h>
 #endif
+
+#include <omp.h>
 
 namespace u3
 {
@@ -964,6 +969,159 @@ namespace u3
 #define U3LIB_ENABLE_WIGU3U2_CACHE
   class WigU3U2_db
   {
+    using db_value_type = Eigen::RowVectorXd;
+
+    using ht_key_type = std::array<uint8_t, 6>;
+    using ht_value_type = WigU3U2_coeffs;
+
+#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
+    qcx_utils::Cache<ht_key_type, ht_value_type> cache_;
+#endif
+
+    inline static db_value_type* p_result_ = nullptr;
+#pragma omp threadprivate(p_result_)
+
+  public:
+    static void initialize()
+    {
+      assert(p_result_ == nullptr);
+      p_result_ = new db_value_type;
+    }
+
+    static void finalize()
+    {
+      assert(p_result_ != nullptr);
+      delete p_result_;
+      p_result_ = nullptr;
+    }
+
+#ifdef USE_OPENMP
+    static void initialize_thread()
+    {
+      if (omp_get_thread_num() == 0)
+      {
+        assert(p_result_ != nullptr);
+      }
+      else
+      {
+        assert(p_result_ == nullptr);
+        p_result_ = new db_value_type;
+      }
+    }
+
+    static void finalize_thread()
+    {
+      if (omp_get_thread_num() != 0)
+      {
+        assert(p_result_ != nullptr);
+        delete p_result_;
+        p_result_ = nullptr;
+      }
+    }
+#endif
+
+  private:
+    // This class is a singleton, and cannot be instantiated directly:
+    WigU3U2_db() = default;
+    WigU3U2_db(const WigU3U2_db&) = delete;
+    WigU3U2_db& operator=(const WigU3U2_db&) = delete;
+
+    static ht_value_type compute(ht_key_type ht_key)
+    {
+      irrep u3a(ht_key[0], ht_key[1]);
+      irrep u3b(ht_key[2], ht_key[3]);
+      irrep u3c(ht_key[4], ht_key[5]);
+
+      auto rhomax = Rho(u3a, u3b, u3c);
+
+      auto gArrA = u3::gelfandBasis(u3a);
+      auto gArrB = u3::gelfandBasis(u3b);
+      auto gArrC = u3::gelfandBasis(u3c);
+
+      return WigU3U2(u3a, u3b, u3c, rhomax, -1, gArrA, gArrB, gArrC);
+    }
+
+  public:
+    std::pair<bool, const db_value_type&> get(int n13a, int n23a, int n33a,
+                                              int n12a, int n22a, int n13b,
+                                              int n23b, int n33b, int n12b,
+                                              int n22b, int n13c, int n23c,
+                                              int n33c, int n12c, int n22c)
+    {
+      assert(n13a >= n23a);
+      assert(n23a >= n33a);
+      assert(n13b >= n23b);
+      assert(n23b >= n33b);
+      assert(n13c >= n23c);
+      assert(n23c >= n33c);
+
+      // normalized irreps:
+      irrep u3a(n13a - n33a, n23a - n33a, 0);
+      irrep u3b(n13b - n33b, n23b - n33b, 0);
+      irrep u3c(n13c - n33c, n23c - n33c, 0);
+
+      int rhomax = Rho(u3a, u3b, u3c);
+
+      bool flag = false;
+
+      std::array<qcx_utils::UInt8, 6> ht_key_safe = {
+          u3a.n13(), u3a.n23(), u3b.n13(), u3b.n23(), u3c.n13(), u3c.n23()};
+
+      ht_key_type ht_key = {ht_key_safe[0], ht_key_safe[1], ht_key_safe[2],
+                            ht_key_safe[3], ht_key_safe[4], ht_key_safe[5]};
+
+      // normalized labels:
+      auto n12a_ = n12a - n33a;
+      auto n22a_ = n22a - n33a;
+      auto n12b_ = n12b - n33b;
+      auto n22b_ = n22b - n33b;
+      auto n12c_ = n12c - n33c;
+      auto n22c_ = n22c - n33c;
+
+#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
+      auto producer = [](ht_key_type ht_key) { return compute(ht_key); };
+
+      auto accessor = [&flag, n12a_, n22a_, n12b_, n22b_, n12c_,
+                       n22c_](const auto& element)
+      {
+        const auto& coeffs = element.second;
+
+        auto acc = coeffs.access(n12a_, n22a_, n12b_, n22b_, n12c_, n22c_);
+
+        flag = acc.allowed;
+        if (flag)
+        {
+          assert(acc.computed);
+          *p_result_ = coeffs.get_row(acc);
+        }
+      };
+
+      cache_.visit(ht_key, producer, accessor);
+#else
+      auto coeffs = compute(ht_key);
+
+      auto acc = coeffs.access(n12a_, n22a_, n12b_, n22b_, n12c_, n22c_);
+
+      flag = acc.allowed;
+      if (flag)
+      {
+        assert(acc.computed);
+        *p_result_ = coeffs.get_row(acc);
+      }
+#endif
+      
+      if (flag)
+        assert(p_result_->cols() == rhomax);
+
+      return {flag, *p_result_};
+    }
+
+    friend WigU3U2_db& wigU3U2db();
+  };
+
+  /*
+  class WigU3U2_db
+  {
 #ifdef U3LIB_ENABLE_WIGU3U2_CACHE
     using key_type = std::array<int, 6>;
     std::map<key_type, WigU3U2_coeffs> map_;
@@ -1040,7 +1198,8 @@ namespace u3
 
     friend WigU3U2_db& wigU3U2db();
   };
-
+  */
+ 
   inline WigU3U2_db& wigU3U2db()
   {
     static WigU3U2_db wigU3U2db;
