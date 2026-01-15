@@ -1030,9 +1030,9 @@ namespace u3
 
     static ht_value_type compute(ht_key_type ht_key)
     {
-      irrep u3a(ht_key[0], ht_key[1]);
-      irrep u3b(ht_key[2], ht_key[3]);
-      irrep u3c(ht_key[4], ht_key[5]);
+      irrep u3a(ht_key[0], ht_key[1], 0);
+      irrep u3b(ht_key[2], ht_key[3], 0);
+      irrep u3c(ht_key[4], ht_key[5], 0);
 
       auto rhomax = Rho(u3a, u3b, u3c);
 
