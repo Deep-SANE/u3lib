@@ -1062,8 +1062,6 @@ namespace u3
       irrep u3b(n13b - n33b, n23b - n33b, 0);
       irrep u3c(n13c - n33c, n23c - n33c, 0);
 
-      int rhomax = Rho(u3a, u3b, u3c);
-
       bool flag = false;
 
       std::array<qcx_utils::UInt8, 6> ht_key_safe = {
@@ -1111,9 +1109,9 @@ namespace u3
         *p_result_ = coeffs.get_row(acc);
       }
 #endif
-      
+
       if (flag)
-        assert(p_result_->cols() == rhomax);
+        assert((p_result_->cols() == Rho(u3a, u3b, u3c)));
 
       return {flag, *p_result_};
     }
