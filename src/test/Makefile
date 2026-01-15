@@ -1,11 +1,7 @@
-include ../../config.mk
-
 BIN = ../../bin/test
 
 SRCS = $(wildcard *.cpp)
 PRGS = $(addprefix $(BIN)/,$(basename $(SRCS)))
-
-CXXFLAGS += -I../../include
 
 .PHONY: all
 all: $(PRGS)
