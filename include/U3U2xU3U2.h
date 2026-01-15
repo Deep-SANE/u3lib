@@ -995,9 +995,9 @@ namespace u3
       p_result_ = nullptr;
     }
 
-#ifdef USE_OPENMP
     static void initialize_thread()
     {
+#ifdef USE_OPENMP
       if (omp_get_thread_num() == 0)
       {
         assert(p_result_ != nullptr);
@@ -1007,18 +1007,20 @@ namespace u3
         assert(p_result_ == nullptr);
         p_result_ = new db_value_type;
       }
+#endif
     }
 
     static void finalize_thread()
     {
+#ifdef USE_OPENMP
       if (omp_get_thread_num() != 0)
       {
         assert(p_result_ != nullptr);
         delete p_result_;
         p_result_ = nullptr;
       }
-    }
 #endif
+    }
 
   private:
     // This class is a singleton, and cannot be instantiated directly:

@@ -16,7 +16,6 @@ namespace u3
     WigU3U2_db::finalize();
   }
 
-#ifdef USE_OPENMP
   inline void initialize_thread()
   {
     WigU3U2_db::initialize_thread();
@@ -26,7 +25,6 @@ namespace u3
   {
     WigU3U2_db::finalize_thread();
   }
-#endif
 }
 
 #endif
