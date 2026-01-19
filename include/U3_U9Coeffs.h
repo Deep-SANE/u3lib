@@ -41,41 +41,44 @@ namespace u3
     auto& cgcs = qcx_utils::cgcs();
     auto& racahs = qcx_utils::racahs();
     auto& wigU3U2db = u3::wigU3U2db();
+    auto& u3u6db = u3::u3u6db();
+    auto& u3z6db = u3::u3z6db();
 
     std::vector<double> U(rhoACmax * rhoBDmax * rhoAB_CDmax * rhoABmax *
                               rhoCDmax * rhoAC_BDmax, 0.0);
 
     // couple u3AB and u3C
     auto [u3AB_C, rhomaxsAB_C] = u3::decomposition(u3AB, u3C);
-
-    /* an array to store the couple I-II-III irreps
-    std::vector<u3::irrep> u3ABC;
-    std::vector<int> rhoAB_Cmax, rhoAC_Bmax;
-
-    for (int i = 0; i < u3AB_C.size(); i++)
-    {
-      int rhomaxAC_B = u3::Rho(u3AC, u3B, u3AB_C[i]);
-      if (rhomaxAC_B > 0)
-      {
-        u3ABC.push_back(u3AB_C[i]);
-        rhoAB_Cmax.push_back(rhomaxsAB_C[i]);
-        rhoAC_Bmax.push_back(rhomaxAC_B);
-      }
-    } */
     
-    //for (int i = 0; i < u3ABC.size(); i++)
     for (int i = 0; i < u3AB_C.size(); i++)
     {
       int rhomaxAC_B = u3::Rho(u3AC, u3B, u3AB_C[i]);
-      if (rhomaxAC_B == 0)
-        continue;
+      if (rhomaxAC_B == 0) continue;
 
       int rhoABC_Dmax = u3::Rho(u3AB_C[i], u3D, u3ABCD);
-      if (rhoABC_Dmax == 0)
-        continue;
+      if (rhoABC_Dmax == 0) continue;
 
       std::vector<u3::gelfand> gArrABC = u3::gelfandBasis(u3AB_C[i]);
 
+#ifdef U3LIB_ENABLE_U3U6_CACHE
+      auto [allowU6_1, U6_1] = u3u6db.get(
+        u3AC.n13(), u3AC.n23(), u3AC.n33(),
+        u3B.n13(), u3B.n23(), u3B.n33(),
+        u3ABCD.n13(), u3ABCD.n23(), u3ABCD.n33(),
+        u3D.n13(), u3D.n23(), u3D.n33(),               
+        u3AB_C[i].n13(), u3AB_C[i].n23(), u3AB_C[i].n33(),
+        u3BD.n13(), u3BD.n23(), u3BD.n33());
+      if (!allowU6_1) continue;
+
+      auto [allowU6_2, U6_2] = u3u6db.get(
+        u3AB.n13(), u3AB.n23(), u3AB.n33(),
+        u3C.n13(), u3C.n23(), u3C.n33(),
+        u3ABCD.n13(), u3ABCD.n23(), u3ABCD.n33(),
+        u3D.n13(), u3D.n23(), u3D.n33(),               
+        u3AB_C[i].n13(), u3AB_C[i].n23(), u3AB_C[i].n33(),
+        u3CD.n13(), u3CD.n23(), u3CD.n33());
+      if (!allowU6_2) continue;
+#else
       std::vector<double> U6_1 =
           u3::U6(u3AC, gArrAC, u3B, gArrB, u3ABCD, gArrABCD, u3D, gArrD,
                  u3AB_C[i], gArrABC, rhomaxAC_B, rhoABC_Dmax, u3BD, gArrBD,
@@ -85,12 +88,24 @@ namespace u3
           u3::U6(u3AB, gArrAB, u3C, gArrC, u3ABCD, gArrABCD, u3D, gArrD,
                  u3AB_C[i], gArrABC, rhomaxsAB_C[i], rhoABC_Dmax, u3CD, gArrCD,
                  rhoCDmax, rhoAB_CDmax);
+#endif
 
+#ifdef U3LIB_ENABLE_U3Z6_CACHE
+      auto [allowZ6, Z6] = u3z6db.get(
+        u3B.n13(), u3B.n23(), u3B.n33(),
+        u3A.n13(), u3A.n23(), u3A.n33(),
+        u3AB_C[i].n13(), u3AB_C[i].n23(), u3AB_C[i].n33(),
+        u3C.n13(), u3C.n23(), u3C.n33(),               
+        u3AB.n13(), u3AB.n23(), u3AB.n33(),
+        u3AC.n13(), u3AC.n23(), u3AC.n33());
+      if (!allowZ6) continue;
+#else
       std::vector<double> Z6 =
           u3::Z6(u3B, gArrB, u3A, gArrA, u3AB_C[i], gArrABC, u3C, gArrC, u3AB,
                  gArrAB, rhoABmax, rhomaxsAB_C[i], u3AC, gArrAC, rhoACmax,
                  rhomaxAC_B);
-
+#endif
+      
       for (int rAC = 0; rAC < rhoACmax; rAC++)
       {
         for (int rBD = 0; rBD < rhoBDmax; rBD++)
@@ -129,8 +144,7 @@ namespace u3
     }
 
     for (int i = 0; i < U.size(); i++)
-      if (std::fabs(U[i]) < 1e-14)
-        U[i] = 0.0;
+      if (std::fabs(U[i]) < 1e-14) U[i] = 0.0;
 
     return U;
   }
