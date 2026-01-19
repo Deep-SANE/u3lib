@@ -44,66 +44,60 @@ namespace u3
             u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A,
             u3BC.n13(), u3BC.n23(), u3BC.n33(), u3BC.n13(), u3BC.n23(),
             u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
+        if (!allowA_BC) continue;
+        
+        A.row(r) = accA_BC;
 
-        if (allowA_BC == true)
+        for (int n12B = u3B.n13(); n12B >= u3B.n23(); n12B--)
         {
-          A.row(r) = accA_BC;
-
-          for (int n12B = u3B.n13(); n12B >= u3B.n23(); n12B--)
+          for (int n22B = u3B.n23(); n22B >= u3B.n33(); n22B--)
           {
-            for (int n22B = u3B.n23(); n22B >= u3B.n33(); n22B--)
+            for (int n12AB = u3AB.n13(); n12AB >= u3AB.n23(); n12AB--)
             {
-              for (int n12AB = u3AB.n13(); n12AB >= u3AB.n23(); n12AB--)
+              for (int n22AB = u3AB.n23(); n22AB >= u3AB.n33(); n22AB--)
               {
-                for (int n22AB = u3AB.n23(); n22AB >= u3AB.n33(); n22AB--)
+                auto [allowAB, accAB] = wigU3U2db.get(
+                  u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A,
+                  u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B,
+                  u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB);
+                if (!allowAB) continue;
+
+                for (int n12C = u3C.n13(); n12C >= u3C.n23(); n12C--)
                 {
-                  auto [allowAB, accAB] = wigU3U2db.get(
-                      u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A,
-                      u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B,
-                      u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB);
-                  
-                  if (allowAB == true)
+                  for (int n22C = u3C.n23(); n22C >= u3C.n33(); n22C--)
                   {
-                    for (int n12C = u3C.n13(); n12C >= u3C.n23(); n12C--)
-                    {
-                      for (int n22C = u3C.n23(); n22C >= u3C.n33(); n22C--)
-                      {
-                        auto [allowAB_C, accAB_C] = wigU3U2db.get(
-                          u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB,
-                          u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C,
-                          u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
+                    auto [allowAB_C, accAB_C] = wigU3U2db.get(
+                      u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB,
+                      u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C,
+                      u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
+                    if (!allowAB_C) continue;
 
-                        auto [allowBC, accBC] = wigU3U2db.get(
-                          u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B,
-                          u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C,
-                          u3BC.n13(), u3BC.n23(), u3BC.n33(), u3BC.n13(), u3BC.n23());
+                    auto [allowBC, accBC] = wigU3U2db.get(
+                      u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B,
+                      u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C,
+                      u3BC.n13(), u3BC.n23(), u3BC.n33(), u3BC.n13(), u3BC.n23());
+                    if (!allowBC) continue;
 
-                        if (allowAB_C == true && allowBC == true)
-                        {
-                          int llA = n12A - n22A, ll = u3ABC.n13() - u3ABC.n23(), 
-                              llBC = u3BC.n13() - u3BC.n23(), llB = n12B - n22B, 
-                              llAB = n12AB - n22AB, llC = n12C - n22C;
-                          double racah =
-                              racahs.get({llA, llB, ll, llC, llAB, llBC});
+                    int llA = n12A - n22A, ll = u3ABC.n13() - u3ABC.n23(), 
+                        llBC = u3BC.n13() - u3BC.n23(), llB = n12B - n22B, 
+                        llAB = n12AB - n22AB, llC = n12C - n22C;
+                    double racah = racahs.get({llA, llB, ll, llC, llAB, llBC});
 
-                          for (int rAB = 0; rAB < rhoABmax; rAB++)
-                            for (int rAB_C = 0; rAB_C < rhoAB_Cmax; rAB_C++)
-                              for (int rBC = 0; rBC < rhoBCmax; rBC++)
-                                B(r, (rAB * rhoAB_Cmax + rAB_C) * rhoBCmax + rBC) 
-                                  += racah * accAB(rAB) * accAB_C(rAB_C) * accBC(rBC);
-                        }
-                      }
-                    }
+                    for (int rAB = 0; rAB < rhoABmax; rAB++)
+                      for (int rAB_C = 0; rAB_C < rhoAB_Cmax; rAB_C++)
+                        for (int rBC = 0; rBC < rhoBCmax; rBC++)
+                          B(r, (rAB * rhoAB_Cmax + rAB_C) * rhoBCmax + rBC) 
+                            += racah * accAB(rAB) * accAB_C(rAB_C) * accBC(rBC);
+                        
                   }
                 }
               }
             }
           }
-          r++;
-
-          if (r == rhoA_BCmax)
-            done = true;
         }
+        r++;
+
+        if (r == rhoA_BCmax) done = true;
       }
     }
 
@@ -245,71 +239,61 @@ namespace u3
           u3AC.n13(), u3AC.n23(), u3AC.n33(), u3AC.n13(), u3AC.n23(), 
           u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B,
           u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
+        if (!allowAC_B) continue;
 
-        if (allowAC_B == true)
+        A.row(r) = accAC_B;
+
+        for (int n12A = u3A.n13(); n12A >= u3A.n23(); n12A--)
         {
-          A.row(r) = accAC_B;
-
-          for (int n12A = u3A.n13(); n12A >= u3A.n23(); n12A--)
+          for (int n22A = u3A.n23(); n22A >= u3A.n33(); n22A--)
           {
-            for (int n22A = u3A.n23(); n22A >= u3A.n33(); n22A--)
+            for (int n12AB = u3AB.n13(); n12AB >= u3AB.n23(); n12AB--)
             {
-              for (int n12AB = u3AB.n13(); n12AB >= u3AB.n23(); n12AB--)
+              for (int n22AB = u3AB.n23(); n22AB >= u3AB.n33(); n22AB--)
               {
-                for (int n22AB = u3AB.n23(); n22AB >= u3AB.n33(); n22AB--)
+                auto [allowAB, accAB] = wigU3U2db.get(
+                  u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A, 
+                  u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B, 
+                  u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB);
+                if (!allowAB) continue;
+                
+                for (int n12C = u3C.n13(); n12C >= u3C.n23(); n12C--)
                 {
-                  auto [allowAB, accAB] = wigU3U2db.get(
-                    u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A, 
-                    u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B, 
-                    u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB);
-
-                  if (allowAB == true)
+                  for (int n22C = u3C.n23(); n22C >= u3C.n33(); n22C--)
                   {
-                    for (int n12C = u3C.n13(); n12C >= u3C.n23(); n12C--)
-                    {
-                      for (int n22C = u3C.n23(); n22C >= u3C.n33(); n22C--)
-                      {
-                        auto [allowAB_C, accAB_C] = wigU3U2db.get(
-                            u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB, 
-                            u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C, 
-                            u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
-                        
-                        auto [allowAC, accAC] = wigU3U2db.get(
-                          u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A, 
-                          u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C,
-                          u3AC.n13(), u3AC.n23(), u3AC.n33(), u3AC.n13(), u3AC.n23());
+                    auto [allowAB_C, accAB_C] = wigU3U2db.get(
+                      u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB, 
+                      u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C, 
+                      u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
+                    if (!allowAB_C) continue;
 
-                        if (allowAB_C == true && allowAC == true)
-                        {
-                          int llA = n12A - n22A, llB = n12B - n22B,
-                              ll = u3ABC.n13() - u3ABC.n23(), llC = n12C - n22C,
-                              llAB = n12AB - n22AB,
-                              llAC = u3AC.n13() - u3AC.n23();
+                    auto [allowAC, accAC] = wigU3U2db.get(
+                      u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A, 
+                      u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C,
+                      u3AC.n13(), u3AC.n23(), u3AC.n33(), u3AC.n13(), u3AC.n23());
+                    if (!allowAC) continue;
 
-                          double phase =
-                              ((llA + ll - llAB - llAC) % 4 == 0) ? 1 : -1;
-                          double racah =
-                              racahs.get({llB, llA, ll, llC, llAB, llAC});
+                    int llA = n12A - n22A, llB = n12B - n22B,
+                        ll = u3ABC.n13() - u3ABC.n23(), llC = n12C - n22C,
+                        llAB = n12AB - n22AB, llAC = u3AC.n13() - u3AC.n23();
 
-                          for (int rAB = 0; rAB < rhoABmax; rAB++)
-                            for (int rAB_C = 0; rAB_C < rhoAB_Cmax; rAB_C++)
-                              for (int rAC = 0; rAC < rhoACmax; rAC++)
-                                B(r, (rAB * rhoAB_Cmax + rAB_C) * rhoACmax + rAC) 
-                                  += phase * racah * accAB(rAB) * accAB_C(rAB_C) 
-                                  * accAC(rAC);
-                        }
-                      }
-                    }
+                    double phase = ((llA + ll - llAB - llAC) % 4 == 0) ? 1 : -1;
+                    double racah = racahs.get({llB, llA, ll, llC, llAB, llAC});
+
+                    for (int rAB = 0; rAB < rhoABmax; rAB++)
+                      for (int rAB_C = 0; rAB_C < rhoAB_Cmax; rAB_C++)
+                        for (int rAC = 0; rAC < rhoACmax; rAC++)
+                          B(r, (rAB * rhoAB_Cmax + rAB_C) * rhoACmax + rAC) 
+                            += phase * racah * accAB(rAB) * accAB_C(rAB_C) * accAC(rAC);
                   }
                 }
               }
             }
           }
-          r++;
-
-          if (r == rhoAC_Bmax)
-            done = true;
         }
+        r++;
+
+        if (r == rhoAC_Bmax) done = true;
       }
     }
 

@@ -967,6 +967,7 @@ namespace u3
   }
 
 #define U3LIB_ENABLE_WIGU3U2_CACHE
+/*
   class WigU3U2_db
   {
     using db_value_type = Eigen::RowVectorXd;
@@ -1118,8 +1119,8 @@ namespace u3
 
     friend WigU3U2_db& wigU3U2db();
   };
-
-  /*
+*/
+  
   class WigU3U2_db
   {
 #ifdef U3LIB_ENABLE_WIGU3U2_CACHE
@@ -1198,7 +1199,7 @@ namespace u3
 
     friend WigU3U2_db& wigU3U2db();
   };
-  */
+  
  
   inline WigU3U2_db& wigU3U2db()
   {
