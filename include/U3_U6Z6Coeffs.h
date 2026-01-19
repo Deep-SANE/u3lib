@@ -340,7 +340,7 @@ namespace u3
                                gArrAC = u3::gelfandBasis(u3AC),
                                gArrABC = u3::gelfandBasis(u3ABC);
 
-      return U6(u3B,gArrB,u3A,gArrA,u3ABC,gArrABC,u3C,gArrC,
+      return Z6(u3B,gArrB,u3A,gArrA,u3ABC,gArrABC,u3C,gArrC,
                 u3AB,gArrAB,rhoABmax,rhoAB_Cmax,
                 u3AC,gArrAC,rhoACmax,rhoAC_Bmax);
     }
