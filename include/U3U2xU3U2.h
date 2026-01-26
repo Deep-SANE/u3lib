@@ -1045,11 +1045,10 @@ namespace u3
     }
 
   public:
-    std::pair<bool, db_value_type> get(int n13a, int n23a, int n33a,
-                                              int n12a, int n22a, int n13b,
-                                              int n23b, int n33b, int n12b,
-                                              int n22b, int n13c, int n23c,
-                                              int n33c, int n12c, int n22c)
+    std::pair<bool, db_value_type> get(
+      int n13a, int n23a, int n33a, int n12a, int n22a, 
+      int n13b, int n23b, int n33b, int n12b, int n22b, 
+      int n13c, int n23c, int n33c, int n12c, int n22c)
     {
       assert(n13a >= n23a);
       assert(n23a >= n33a);
