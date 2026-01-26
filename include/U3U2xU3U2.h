@@ -1029,13 +1029,11 @@ namespace u3
     WigU3U2_db(const WigU3U2_db&) = delete;
     WigU3U2_db& operator=(const WigU3U2_db&) = delete;
 
-    static ht_value_type compute(ht_key_type ht_key)
+    static ht_value_type compute(ht_key_type ht_key, int rhomax)
     {
       irrep u3a(ht_key[0], ht_key[1], 0);
       irrep u3b(ht_key[2], ht_key[3], 0);
       irrep u3c(ht_key[4], ht_key[5], 0);
-
-      auto rhomax = Rho(u3a, u3b, u3c);
 
       auto gArrA = u3::gelfandBasis(u3a);
       auto gArrB = u3::gelfandBasis(u3b);
@@ -1084,7 +1082,7 @@ namespace u3
                             ht_key_safe[3], ht_key_safe[4], ht_key_safe[5]};
 
 #ifdef U3LIB_ENABLE_WIGU3U2_CACHE
-      auto producer = [](ht_key_type ht_key) { return compute(ht_key); };
+      auto producer = [rhomax](ht_key_type ht_key) { return compute(ht_key, rhomax); };
 
       auto accessor = [&flag, n12a_, n22a_, n12b_, n22b_, n12c_,
                        n22c_](const auto& element)
@@ -1116,7 +1114,7 @@ namespace u3
 #endif
 
       if (flag)
-        assert((p_result_->cols() == Rho(u3a, u3b, u3c)));
+        assert((p_result_->cols() == rhomax));
 
       return {flag, *p_result_};
     }

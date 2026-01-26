@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 
   auto acc = coeffs.access(4, 2, 4, 0, 4, 2);
   assert(acc.allowed);
-  std::cout << "Single thread: " << coeffs.get_row(acc) << std::endl;
+  std::cout << "Single thread:\n" << coeffs.get_row(acc) << std::endl;
 
   /*
   const auto& [flag, row] =
@@ -39,6 +39,7 @@ int main(int argc, char* argv[])
   std::cout << row << std::endl;
   */
 
+std::cout << "Multiple threads:" << std::endl;
 #pragma omp parallel num_threads(3)
   {
     qcx_utils::initialize_thread();
@@ -47,7 +48,7 @@ int main(int argc, char* argv[])
     auto [flag, row] =
         u3::wigU3U2db().get(4, 2, 0, 4, 2, 4, 2, 0, 4, 0, 4, 2, 0, 4, 2);
     assert(flag);
-    std::cout << "Multiple threads: " << row << std::endl;
+    std::cout << row << std::endl;
 
     u3::finalize_thread();
     qcx_utils::finalize_thread();
