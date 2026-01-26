@@ -1063,13 +1063,7 @@ namespace u3
       irrep u3b(n13b - n33b, n23b - n33b, 0);
       irrep u3c(n13c - n33c, n23c - n33c, 0);
 
-      bool flag = false;
-
-      std::array<qcx_utils::UInt8, 6> ht_key_safe = {
-          u3a.n13(), u3a.n23(), u3b.n13(), u3b.n23(), u3c.n13(), u3c.n23()};
-
-      ht_key_type ht_key = {ht_key_safe[0], ht_key_safe[1], ht_key_safe[2],
-                            ht_key_safe[3], ht_key_safe[4], ht_key_safe[5]};
+      auto rhomax = Rho(u3a, u3b, u3c);
 
       // normalized labels:
       auto n12a_ = n12a - n33a;
@@ -1078,6 +1072,17 @@ namespace u3
       auto n22b_ = n22b - n33b;
       auto n12c_ = n12c - n33c;
       auto n22c_ = n22c - n33c;
+
+      if (rhomax == 0 || u2::mult(n12a_ - n22a_, n12b_ - n22b_, n12c_ - n22c_) == 0)
+        return {false, db_value_type()};
+
+      bool flag = false;
+
+      std::array<qcx_utils::UInt8, 6> ht_key_safe = {
+          u3a.n13(), u3a.n23(), u3b.n13(), u3b.n23(), u3c.n13(), u3c.n23()};
+
+      ht_key_type ht_key = {ht_key_safe[0], ht_key_safe[1], ht_key_safe[2],
+                            ht_key_safe[3], ht_key_safe[4], ht_key_safe[5]};
 
 #ifdef U3LIB_ENABLE_WIGU3U2_CACHE
       auto producer = [](ht_key_type ht_key) { return compute(ht_key); };
