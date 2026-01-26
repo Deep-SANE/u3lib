@@ -8,22 +8,22 @@ namespace u3
 
   inline void initialize()
   {
-    // WigU3U2_db::initialize();
+    WigU3U2_db::initialize();
   }
 
   inline void finalize()
   {
-    // WigU3U2_db::finalize();
+    WigU3U2_db::finalize();
   }
 
   inline void initialize_thread()
   {
-    // WigU3U2_db::initialize_thread();
+    WigU3U2_db::initialize_thread();
   }
 
   inline void finalize_thread()
   {
-    // WigU3U2_db::finalize_thread();
+    WigU3U2_db::finalize_thread();
   }
 }
 

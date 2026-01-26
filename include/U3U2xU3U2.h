@@ -967,7 +967,7 @@ namespace u3
   }
 
 #define U3LIB_ENABLE_WIGU3U2_CACHE
-/*
+
   class WigU3U2_db
   {
     using db_value_type = Eigen::RowVectorXd;
@@ -1045,7 +1045,7 @@ namespace u3
     }
 
   public:
-    std::pair<bool, const db_value_type&> get(int n13a, int n23a, int n33a,
+    std::pair<bool, db_value_type> get(int n13a, int n23a, int n33a,
                                               int n12a, int n22a, int n13b,
                                               int n23b, int n33b, int n12b,
                                               int n22b, int n13c, int n23c,
@@ -1119,8 +1119,8 @@ namespace u3
 
     friend WigU3U2_db& wigU3U2db();
   };
-*/
-  
+
+/*  
   class WigU3U2_db
   {
 #ifdef U3LIB_ENABLE_WIGU3U2_CACHE
@@ -1199,7 +1199,7 @@ namespace u3
 
     friend WigU3U2_db& wigU3U2db();
   };
-  
+*/  
  
   inline WigU3U2_db& wigU3U2db()
   {

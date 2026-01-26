@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 
   auto acc = coeffs.access(4, 2, 4, 0, 4, 2);
   assert(acc.allowed);
-  std::cout << coeffs.get_row(acc) << std::endl;
+  std::cout << "Single thread: " << coeffs.get_row(acc) << std::endl;
 
   /*
   const auto& [flag, row] =
@@ -44,10 +44,10 @@ int main(int argc, char* argv[])
     qcx_utils::initialize_thread();
     u3::initialize_thread();
 
-    const auto& [flag, row] =
+    auto [flag, row] =
         u3::wigU3U2db().get(4, 2, 0, 4, 2, 4, 2, 0, 4, 0, 4, 2, 0, 4, 2);
     assert(flag);
-    std::cout << row << std::endl;
+    std::cout << "Multiple threads: " << row << std::endl;
 
     u3::finalize_thread();
     qcx_utils::finalize_thread();
