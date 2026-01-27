@@ -415,9 +415,8 @@ namespace u3
       int rhomax = u3::Rho(u3a, u3b, u3c);
       u3::physicalvector pA(u3a, l1), pB(u3b, l2), pC(u3c, l3);
 
-      if (((rhomax > 0) && (pA.kappa() > 0) && (pB.kappa() > 0) &&
-           (pC.kappa() > 0) && (std::abs(l1 - l2) <= l3) &&
-           ((l1 + l2) >= l3)) == false)
+      if ((rhomax == 0) || (pA.kappa() == 0) || (pB.kappa() == 0) ||
+          (pC.kappa() == 0) || (u2::mult(l1, l2, l3) == 0))
         return {false, value_type()};
 
 #ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
