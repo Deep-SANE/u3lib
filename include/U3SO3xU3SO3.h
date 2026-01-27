@@ -15,6 +15,8 @@
 #include "U3SO3_to_U3U2U1.h"
 #include "U3U2xU3U2.h"
 
+#include <qcx_Cache.h>
+#include <qcx_Int.h>
 #include <so3Coeffs/SO3_CGC.h>
 
 namespace u3
@@ -255,16 +257,70 @@ namespace u3
   }
 
 #define U3LIB_ENABLE_WIGU3SO3_CACHE
+
   class WigU3SO3_db
   {
+    using key_type = std::array<uint8_t, 9>;
+    using value_type = Eigen::MatrixXd;
+
 #ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
-    using key_type = std::array<int, 9>;
-    std::map<key_type, Eigen::MatrixXd> map_;
+    qcx_utils::Cache<key_type, value_type> cache_;
 #endif
 
+    inline static value_type* p_result_ = nullptr;
+#pragma omp threadprivate(p_result_)
+
+  public:
+    static void initialize()
+    {
+      assert(p_result_ == nullptr);
+      p_result_ = new value_type;
+    }
+
+    static void finalize()
+    {
+      assert(p_result_ != nullptr);
+      delete p_result_;
+      p_result_ = nullptr;
+    }
+
+    static void initialize_thread()
+    {
+#ifdef USE_OPENMP
+      if (omp_get_thread_num() == 0)
+      {
+        assert(p_result_ != nullptr);
+      }
+      else
+      {
+        assert(p_result_ == nullptr);
+        p_result_ = new value_type;
+      }
+#endif
+    }
+
+    static void finalize_thread()
+    {
+#ifdef USE_OPENMP
+      if (omp_get_thread_num() != 0)
+      {
+        assert(p_result_ != nullptr);
+        delete p_result_;
+        p_result_ = nullptr;
+      }
+#endif
+    }
+
+  private:
+    // This class is a singleton, and cannot be instantiated directly:
+    WigU3SO3_db() = default;
+    WigU3SO3_db(const WigU3SO3_db&) = delete;
+    WigU3SO3_db& operator=(const WigU3SO3_db&) = delete;
+
     // generate Wigner U3->SO(3) coefficients for specific l1, l2, l3
-    auto calculate(int rhomax, const u3::physicalvector& pA,
-      const u3::physicalvector& pB, const u3::physicalvector& pC)
+    static value_type compute(int rhomax, const u3::physicalvector& pA,
+                              const u3::physicalvector& pB,
+                              const u3::physicalvector& pC)
     {
       auto& cgcs = qcx_utils::cgcs();
       auto& wigU3U2db = u3::wigU3U2db();
@@ -274,8 +330,8 @@ namespace u3
                                gArrB = u3::gelfandBasis(pB.irr()),
                                gArrC = u3::gelfandBasis(pC.irr());
 
-      int LA = pA.L(), LB = pB.L(), LC = pC.L(),
-          KA = pA.kappa(), KB = pB.kappa(), KC = pC.kappa();
+      int LA = pA.L(), LB = pB.L(), LC = pC.L(), KA = pA.kappa(),
+          KB = pB.kappa(), KC = pC.kappa();
 
       // find transformation for the 3rd state
       auto [canoC, transC] = u3::phys_to_cano(pC, LC, gArrC);
@@ -350,48 +406,39 @@ namespace u3
       return coeffs;
     }
 
-    // This class is a singleton, and cannot be instantiated directly:
-    WigU3SO3_db() = default;
-    WigU3SO3_db(const WigU3SO3_db&) = delete;
-    WigU3SO3_db& operator=(const WigU3SO3_db&) = delete;
-
   public:
-    auto get(int lam1, int mu1, int l1, 
-             int lam2, int mu2, int l2,
-             int lam3, int mu3, int l3)
+    std::pair<bool, value_type> get(int lam1, int mu1, int l1, int lam2,
+                                    int mu2, int l2, int lam3, int mu3, int l3)
     {
       // normalized irreps:
       u3::irrep u3a(lam1, mu1), u3b(lam2, mu2), u3c(lam3, mu3);
       int rhomax = u3::Rho(u3a, u3b, u3c);
-      u3::physicalvector pA(u3a, l1), pB(u3b, l2), pC(u3c, l3); 
+      u3::physicalvector pA(u3a, l1), pB(u3b, l2), pC(u3c, l3);
 
-      bool flag = false;
-      Eigen::MatrixXd m;
+      if (((rhomax > 0) && (pA.kappa() > 0) && (pB.kappa() > 0) &&
+           (pC.kappa() > 0) && (std::abs(l1 - l2) <= l3) &&
+           ((l1 + l2) >= l3)) == false)
+        return {false, value_type()};
 
-      if (rhomax > 0 && pA.kappa() > 0 && pB.kappa() > 0 && pC.kappa() > 0 
-          && std::fabs(l1 - l2) <= l3 && (l1 + l2) >= l3)
-      {
 #ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
-        key_type key = {lam1, mu1, l1,
-                        lam2, mu2, l2,
-                        lam3, mu3, l3};
+      std::array<qcx_utils::UInt8, 9> safe_key = {lam1, mu1,  l1,  lam2, mu2,
+                                                  l2,   lam3, mu3, l3};
 
-        auto iter = map_.find(key);
-        if (iter == map_.end())
-        {
-          auto p = map_.try_emplace(key, calculate(rhomax, pA, pB, pC));
-          assert(p.second);
-          iter = p.first;
-        }
+      key_type key = {safe_key[0], safe_key[1], safe_key[2],
+                      safe_key[3], safe_key[4], safe_key[5],
+                      safe_key[6], safe_key[7], safe_key[8]};
 
-        m = iter->second;
+      auto producer = [rhomax, &pA, &pB, &pC](key_type)
+      { return compute(rhomax, pA, pB, pC); };
+
+      auto accessor = [](const auto& element) { *p_result_ = element.second; };
+
+      cache_.visit(key, producer, accessor);
 #else
-        m = calculate(rhomax, pA, pB, pC);
+      *p_result_ = compute(rhomax, pA, pB, pC);
 #endif
-        flag = true;
-      }
 
-      return std::make_pair(flag, m);
+      return {true, *p_result_};
     }
 
     friend WigU3SO3_db& wigU3SO3db();
