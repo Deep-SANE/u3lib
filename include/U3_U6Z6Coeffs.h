@@ -6,11 +6,18 @@
 #include <map>
 #include <vector>
 
+// #define TIME_U3U6Z6
+#ifdef TIME_U3U6Z6
+#include <chrono>
+#endif
+
 #include <Eigen/Dense>
 
 #include "U3basis.h"
 #include "U3U2xU3U2.h"
 
+#include <qcx_Cache.h>
+#include <qcx_Int.h>
 #include <so3Coeffs/SO3_CGC.h>
 #include <so3Coeffs/SO3_Racah.h>
 
@@ -26,6 +33,12 @@ namespace u3
      int rhoABmax, int rhoAB_Cmax, const u3::irrep& u3BC,
      const std::vector<u3::gelfand>& gArrBC, int rhoBCmax, int rhoA_BCmax)
   {
+#ifdef TIME_U3U6Z6
+    static std::chrono::duration<double> u3u6_time(0);
+    static double u3u6_last_print = 0.0;
+    auto start = std::chrono::high_resolution_clock::now();
+#endif
+
     auto& cgcs = qcx_utils::cgcs();
     auto& racahs = qcx_utils::racahs();
     auto& wigU3U2db = u3::wigU3U2db();
@@ -121,21 +134,86 @@ namespace u3
               rA_BC] = X(rA_BC, col);
           }
 
+#ifdef TIME_U3U6Z6
+    auto end = std::chrono::high_resolution_clock::now();
+    u3u6_time += end - start;  // duration in seconds
+
+    // Print occasionally 
+    if (u3u6_time.count() - u3u6_last_print >= 1.0) 
+    {
+        std::cout << "Accumulated U3U6 time: " << u3u6_time.count() << " s\n";
+        u3u6_last_print = u3u6_time.count();
+    }
+#endif
+
     return U;
   }
 
 #define U3LIB_ENABLE_U3U6_CACHE
   class U3U6_db
   {
+    using key_type = std::array<uint8_t, 12>;
+    using value_type = std::vector<double>;
+
 #ifdef U3LIB_ENABLE_U3U6_CACHE
-    using key_type = std::array<int, 12>;
-    std::map<key_type, std::vector<double>> map_;
+    qcx_utils::Cache<key_type, value_type> cache_;
 #endif
 
-    auto calculate(const u3::irrep& u3A, const u3::irrep& u3B, 
-                   const u3::irrep& u3ABC, const u3::irrep& u3C,
-                   const u3::irrep& u3AB, int rhoABmax, int rhoAB_Cmax,
-                   const u3::irrep& u3BC, int rhoBCmax, int rhoA_BCmax)
+    inline static value_type* p_result_ = nullptr;
+#pragma omp threadprivate(p_result_)
+
+  public:
+    static void initialize()
+    {
+      assert(p_result_ == nullptr);
+      p_result_ = new value_type;
+    }
+
+    static void finalize()
+    {
+      assert(p_result_ != nullptr);
+      delete p_result_;
+      p_result_ = nullptr;
+    }
+
+    static void initialize_thread()
+    {
+#ifdef USE_OPENMP
+      if (omp_get_thread_num() == 0)
+      {
+        assert(p_result_ != nullptr);
+      }
+      else
+      {
+        assert(p_result_ == nullptr);
+        p_result_ = new value_type;
+      }
+#endif
+    }
+
+    static void finalize_thread()
+    {
+#ifdef USE_OPENMP
+      if (omp_get_thread_num() != 0)
+      {
+        assert(p_result_ != nullptr);
+        delete p_result_;
+        p_result_ = nullptr;
+      }
+#endif
+    }
+
+  private:
+    // This class is a singleton, and cannot be instantiated directly:
+    U3U6_db() = default;
+    U3U6_db(const U3U6_db&) = delete;
+    U3U6_db& operator=(const U3U6_db&) = delete;
+
+    static value_type compute(
+      const u3::irrep& u3A, const u3::irrep& u3B, 
+      const u3::irrep& u3ABC, const u3::irrep& u3C,
+      const u3::irrep& u3AB, int rhoABmax, int rhoAB_Cmax,
+      const u3::irrep& u3BC, int rhoBCmax, int rhoA_BCmax)
     {
       std::vector<u3::gelfand> gArrA = u3::gelfandBasis(u3A),
                                gArrB = u3::gelfandBasis(u3B),
@@ -149,13 +227,9 @@ namespace u3
                 u3BC,gArrBC,rhoBCmax,rhoA_BCmax);
     }
 
-    // This class is a singleton, and cannot be instantiated directly:
-    U3U6_db() = default;
-    U3U6_db(const U3U6_db&) = delete;
-    U3U6_db& operator=(const U3U6_db&) = delete;
-
   public:
-    auto get(int n13a, int n23a, int n33a, int n13b, int n23b, int n33b, 
+    value_type get(
+      int n13a, int n23a, int n33a, int n13b, int n23b, int n33b, 
       int n13abc, int n23abc, int n33abc, int n13c, int n23c, int n33c, 
       int n13ab, int n23ab, int n33ab, int n13bc, int n23bc, int n33bc)
     {
@@ -169,38 +243,39 @@ namespace u3
       int rhoABmax = Rho(u3A,u3B,u3AB), rhoAB_Cmax = Rho(u3AB,u3C,u3ABC),
           rhoBCmax = Rho(u3B,u3C,u3BC), rhoA_BCmax = Rho(u3A,u3BC,u3ABC);
 
-      bool flag = false;
-      std::vector<double> c;
-
-      if (rhoABmax > 0 && rhoAB_Cmax > 0 && rhoBCmax > 0 && rhoA_BCmax > 0)
-      {
+      if (rhoABmax == 0 || rhoAB_Cmax == 0 || rhoBCmax == 0 || rhoA_BCmax == 0)
+        return {}; 
+      
 #ifdef U3LIB_ENABLE_U3U6_CACHE
-        key_type key = {u3A.n13(), u3A.n23(),
-                        u3B.n13(), u3B.n23(),
-                        u3ABC.n13(), u3ABC.n23(),
-                        u3C.n13(), u3C.n23(),
-                        u3AB.n13(), u3AB.n23(),
-                        u3BC.n13(), u3BC.n23()};
-        auto iter = map_.find(key);
-        if (iter == map_.end())
-        {
-          auto p = map_.try_emplace(key, calculate(u3A, u3B, u3ABC, u3C, 
-                    u3AB, rhoABmax, rhoAB_Cmax, u3BC, rhoBCmax, rhoA_BCmax));
-          assert(p.second);
-          iter = p.first;
-        }
+      std::array<qcx_utils::UInt8, 12> safe_key = {
+        u3A.n13(), u3A.n23(), u3B.n13(), u3B.n23(),
+        u3ABC.n13(), u3ABC.n23(), u3C.n13(), u3C.n23(),
+        u3AB.n13(), u3AB.n23(), u3BC.n13(), u3BC.n23()};
 
-        c = iter->second;
+      key_type key = {safe_key[0], safe_key[1], safe_key[2],
+                      safe_key[3], safe_key[4], safe_key[5],
+                      safe_key[6], safe_key[7], safe_key[8],
+                      safe_key[9], safe_key[10], safe_key[11]};
+
+      auto producer = [&u3A, &u3B, &u3ABC, &u3C, 
+                       &u3AB, &rhoABmax, &rhoAB_Cmax, 
+                       &u3BC, &rhoBCmax, &rhoA_BCmax](key_type)
+      { 
+        return compute(u3A, u3B, u3ABC, u3C, u3AB, rhoABmax, rhoAB_Cmax,
+                                             u3BC, rhoBCmax, rhoA_BCmax);
+      };
+
+      auto accessor = [](const auto& element) { *p_result_ = element.second; };
+
+      cache_.visit(key, producer, accessor);
 #else
-        c = calculate(u3A, u3B, u3ABC, u3C, u3AB, rhoABmax, rhoAB_Cmax,
-                                            u3BC, rhoBCmax, rhoA_BCmax);
+      *p_result_ = compute(u3A, u3B, u3ABC, u3C, u3AB, rhoABmax, rhoAB_Cmax,
+                                                 u3BC, rhoBCmax, rhoA_BCmax);
 #endif
-        flag = true;
-      }
 
-      return std::make_pair(flag, c);
+      return *p_result_;
     }
-
+  
     friend U3U6_db& u3u6db();
   };
 
@@ -221,6 +296,12 @@ namespace u3
      int rhoABmax, int rhoAB_Cmax, const u3::irrep& u3AC,
      const std::vector<u3::gelfand>& gArrAC, int rhoACmax, int rhoAC_Bmax)
   {
+#ifdef TIME_U3U6Z6
+    static std::chrono::duration<double> u3z6_time(0);
+    static double u3z6_last_print = 0.0;
+    auto start = std::chrono::high_resolution_clock::now();
+#endif
+
     auto& cgcs = qcx_utils::cgcs();
     auto& racahs = qcx_utils::racahs();
     auto& wigU3U2db = u3::wigU3U2db();
@@ -317,21 +398,86 @@ namespace u3
               rAC_B] = X(rAC_B, col);
           }
 
+#ifdef TIME_U3U6Z6
+    auto end = std::chrono::high_resolution_clock::now();
+    u3z6_time += end - start;  // duration in seconds
+
+    // Print occasionally 
+    if (u3z6_time.count() - u3z6_last_print >= 1.0) 
+    {
+        std::cout << "Accumulated U3Z6 time: " << u3z6_time.count() << " s\n";
+        u3z6_last_print = u3z6_time.count();
+    }
+#endif
+
     return Z;
   }
 
 #define U3LIB_ENABLE_U3Z6_CACHE
   class U3Z6_db
   {
+    using key_type = std::array<uint8_t, 12>;
+    using value_type = std::vector<double>;
+
 #ifdef U3LIB_ENABLE_U3Z6_CACHE
-    using key_type = std::array<int, 12>;
-    std::map<key_type, std::vector<double>> map_;
+    qcx_utils::Cache<key_type, value_type> cache_;
 #endif
 
-    auto calculate(const u3::irrep& u3B, const u3::irrep& u3A, 
-                   const u3::irrep& u3ABC, const u3::irrep& u3C,
-                   const u3::irrep& u3AB, int rhoABmax, int rhoAB_Cmax,
-                   const u3::irrep& u3AC, int rhoACmax, int rhoAC_Bmax)
+    inline static value_type* p_result_ = nullptr;
+#pragma omp threadprivate(p_result_)
+
+  public:
+    static void initialize()
+    {
+      assert(p_result_ == nullptr);
+      p_result_ = new value_type;
+    }
+
+    static void finalize()
+    {
+      assert(p_result_ != nullptr);
+      delete p_result_;
+      p_result_ = nullptr;
+    }
+
+    static void initialize_thread()
+    {
+#ifdef USE_OPENMP
+      if (omp_get_thread_num() == 0)
+      {
+        assert(p_result_ != nullptr);
+      }
+      else
+      {
+        assert(p_result_ == nullptr);
+        p_result_ = new value_type;
+      }
+#endif
+    }
+
+    static void finalize_thread()
+    {
+#ifdef USE_OPENMP
+      if (omp_get_thread_num() != 0)
+      {
+        assert(p_result_ != nullptr);
+        delete p_result_;
+        p_result_ = nullptr;
+      }
+#endif
+    }
+
+  private:
+    // This class is a singleton, and cannot be instantiated directly:
+    U3Z6_db() = default;
+    U3Z6_db(const U3Z6_db&) = delete;
+    U3Z6_db& operator=(const U3Z6_db&) = delete;
+
+    static value_type compute(
+      const u3::irrep& u3B, const u3::irrep& u3A, 
+      const u3::irrep& u3ABC, const u3::irrep& u3C,
+      const u3::irrep& u3AB, int rhoABmax, int rhoAB_Cmax,
+      const u3::irrep& u3AC, int rhoACmax, int rhoAC_Bmax)
     {
       std::vector<u3::gelfand> gArrA = u3::gelfandBasis(u3A),
                                gArrB = u3::gelfandBasis(u3B),
@@ -345,13 +491,9 @@ namespace u3
                 u3AC,gArrAC,rhoACmax,rhoAC_Bmax);
     }
 
-    // This class is a singleton, and cannot be instantiated directly:
-    U3Z6_db() = default;
-    U3Z6_db(const U3Z6_db&) = delete;
-    U3Z6_db& operator=(const U3Z6_db&) = delete;
-
   public:
-    auto get(int n13b, int n23b, int n33b, int n13a, int n23a, int n33a,
+    value_type get(
+      int n13b, int n23b, int n33b, int n13a, int n23a, int n33a,
       int n13abc, int n23abc, int n33abc, int n13c, int n23c, int n33c, 
       int n13ab, int n23ab, int n33ab, int n13ac, int n23ac, int n33ac)
     {
@@ -365,36 +507,37 @@ namespace u3
       int rhoABmax = Rho(u3A,u3B,u3AB), rhoAB_Cmax = Rho(u3AB,u3C,u3ABC),
           rhoACmax = Rho(u3A,u3C,u3AC), rhoAC_Bmax = Rho(u3AC,u3B,u3ABC);
 
-      bool flag = false;
-      std::vector<double> c;
-
-      if (rhoABmax > 0 && rhoAB_Cmax > 0 && rhoACmax > 0 && rhoAC_Bmax > 0)
-      {
+      if (rhoABmax == 0 || rhoAB_Cmax == 0 || rhoACmax == 0 || rhoAC_Bmax == 0)
+        return {}; 
+      
 #ifdef U3LIB_ENABLE_U3Z6_CACHE
-        key_type key = {u3B.n13(), u3B.n23(),
-                        u3A.n13(), u3A.n23(),
-                        u3ABC.n13(), u3ABC.n23(),
-                        u3C.n13(), u3C.n23(),
-                        u3AB.n13(), u3AB.n23(),
-                        u3AC.n13(), u3AC.n23()};
-        auto iter = map_.find(key);
-        if (iter == map_.end())
-        {
-          auto p = map_.try_emplace(key, calculate(u3B, u3A, u3ABC, u3C, 
-                    u3AB, rhoABmax, rhoAB_Cmax, u3AC, rhoACmax, rhoAC_Bmax));
-          assert(p.second);
-          iter = p.first;
-        }
+      std::array<qcx_utils::UInt8, 12> safe_key = {
+        u3B.n13(), u3B.n23(), u3A.n13(), u3A.n23(),
+        u3ABC.n13(), u3ABC.n23(), u3C.n13(), u3C.n23(),
+        u3AB.n13(), u3AB.n23(), u3AC.n13(), u3AC.n23()};
 
-        c = iter->second;
+      key_type key = {safe_key[0], safe_key[1], safe_key[2],
+                      safe_key[3], safe_key[4], safe_key[5],
+                      safe_key[6], safe_key[7], safe_key[8],
+                      safe_key[9], safe_key[10], safe_key[11]};
+
+      auto producer = [&u3B, &u3A, &u3ABC, &u3C, 
+                       &u3AB, &rhoABmax, &rhoAB_Cmax,
+                       &u3AC, &rhoACmax, &rhoAC_Bmax](key_type)
+      { 
+        return compute(u3B, u3A, u3ABC, u3C, u3AB, rhoABmax, rhoAB_Cmax,
+                                             u3AC, rhoACmax, rhoAC_Bmax);
+      };
+
+      auto accessor = [](const auto& element) { *p_result_ = element.second; };
+
+      cache_.visit(key, producer, accessor);
 #else
-        c = calculate(u3B, u3A, u3ABC, u3C, u3AB, rhoABmax, rhoAB_Cmax,
-                                            u3AC, rhoACmax, rhoAC_Bmax);
+      *p_result_ = compute(u3B, u3A, u3ABC, u3C, u3AB, rhoABmax, rhoAB_Cmax,
+                                                 u3AC, rhoACmax, rhoAC_Bmax);
 #endif
-        flag = true;
-      }
 
-      return std::make_pair(flag, c);
+      return *p_result_;
     }
 
     friend U3Z6_db& u3z6db();

@@ -10,6 +10,11 @@
 #include <utility>
 #include <vector>
 
+// #define TIME_U3U9
+#ifdef TIME_U3U9
+#include <chrono>
+#endif
+
 #include <Eigen/Dense>
 
 #include "U3decomposition.h"
@@ -38,6 +43,12 @@ namespace u3
      int rhoABmax, int rhoCDmax, int rhoAB_CDmax, int rhoACmax, int rhoBDmax,
      int rhoAC_BDmax)
   {
+#ifdef TIME_U3U9
+    static std::chrono::duration<double> u3u9_time(0);
+    static double u3u9_last_print = 0.0;
+    auto start = std::chrono::high_resolution_clock::now();
+#endif
+
     auto& cgcs = qcx_utils::cgcs();
     auto& racahs = qcx_utils::racahs();
     auto& wigU3U2db = u3::wigU3U2db();
@@ -61,23 +72,23 @@ namespace u3
       std::vector<u3::gelfand> gArrABC = u3::gelfandBasis(u3AB_C[i]);
 
 #ifdef U3LIB_ENABLE_U3U6_CACHE
-      auto [allowU6_1, U6_1] = u3u6db.get(
+      auto U6_1 = u3u6db.get(
         u3AC.n13(), u3AC.n23(), u3AC.n33(),
         u3B.n13(), u3B.n23(), u3B.n33(),
         u3ABCD.n13(), u3ABCD.n23(), u3ABCD.n33(),
         u3D.n13(), u3D.n23(), u3D.n33(),               
         u3AB_C[i].n13(), u3AB_C[i].n23(), u3AB_C[i].n33(),
         u3BD.n13(), u3BD.n23(), u3BD.n33());
-      if (!allowU6_1) continue;
+      if (U6_1.empty()) continue;
 
-      auto [allowU6_2, U6_2] = u3u6db.get(
+      auto U6_2 = u3u6db.get(
         u3AB.n13(), u3AB.n23(), u3AB.n33(),
         u3C.n13(), u3C.n23(), u3C.n33(),
         u3ABCD.n13(), u3ABCD.n23(), u3ABCD.n33(),
         u3D.n13(), u3D.n23(), u3D.n33(),               
         u3AB_C[i].n13(), u3AB_C[i].n23(), u3AB_C[i].n33(),
         u3CD.n13(), u3CD.n23(), u3CD.n33());
-      if (!allowU6_2) continue;
+      if (U6_2.empty()) continue;
 #else
       std::vector<double> U6_1 =
           u3::U6(u3AC, gArrAC, u3B, gArrB, u3ABCD, gArrABCD, u3D, gArrD,
@@ -91,14 +102,14 @@ namespace u3
 #endif
 
 #ifdef U3LIB_ENABLE_U3Z6_CACHE
-      auto [allowZ6, Z6] = u3z6db.get(
+      auto Z6 = u3z6db.get(
         u3B.n13(), u3B.n23(), u3B.n33(),
         u3A.n13(), u3A.n23(), u3A.n33(),
         u3AB_C[i].n13(), u3AB_C[i].n23(), u3AB_C[i].n33(),
         u3C.n13(), u3C.n23(), u3C.n33(),               
         u3AB.n13(), u3AB.n23(), u3AB.n33(),
         u3AC.n13(), u3AC.n23(), u3AC.n33());
-      if (!allowZ6) continue;
+      if (Z6.empty()) continue;
 #else
       std::vector<double> Z6 =
           u3::Z6(u3B, gArrB, u3A, gArrA, u3AB_C[i], gArrABC, u3C, gArrC, u3AB,
@@ -145,6 +156,18 @@ namespace u3
 
     for (int i = 0; i < U.size(); i++)
       if (std::fabs(U[i]) < 1e-14) U[i] = 0.0;
+
+#ifdef TIME_U3U9
+    auto end = std::chrono::high_resolution_clock::now();
+    u3u9_time += end - start;  // duration in seconds
+
+    // Print occasionally 
+    if (u3u9_time.count() - u3u9_last_print >= 1.0) 
+    {
+        std::cout << "Accumulated U3U9 time: " << u3u9_time.count() << " s\n";
+        u3u9_last_print = u3u9_time.count();
+    }
+#endif
 
     return U;
   }
@@ -200,21 +223,74 @@ namespace u3
 #define U3LIB_ENABLE_U3U9_CACHE
   class U3U9_db
   {
-#ifdef U3LIB_ENABLE_U3U9_CACHE
-    using key_type = std::array<int, 18>;
-    std::map<key_type, std::vector<double>> map_;
+    using key_type = std::array<uint8_t, 18>;
+    using value_type = std::vector<double>;
 
+#ifdef U3LIB_ENABLE_U3U9_CACHE
+    qcx_utils::Cache<key_type, value_type> cache_;
     using return_type = std::span<const double>;
 #else
     using return_type = std::vector<double>;
 #endif
 
-    auto calculate(const u3::irrep& u3A, const u3::irrep& u3B,
-                   const u3::irrep& u3C, const u3::irrep& u3D,
-                   const u3::irrep& u3AB, const u3::irrep& u3CD,
-                   const u3::irrep& u3AC, const u3::irrep& u3BD,
-                   const u3::irrep& u3ABCD, int rhoABmax, int rhoCDmax,
-                   int rhoAB_CDmax, int rhoACmax, int rhoBDmax, int rhoAC_BDmax)
+    inline static value_type* p_result_ = nullptr;
+#pragma omp threadprivate(p_result_)
+
+  public:
+    static void initialize()
+    {
+      assert(p_result_ == nullptr);
+      p_result_ = new value_type;
+    }
+
+    static void finalize()
+    {
+      assert(p_result_ != nullptr);
+      delete p_result_;
+      p_result_ = nullptr;
+    }
+
+    static void initialize_thread()
+    {
+#ifdef USE_OPENMP
+      if (omp_get_thread_num() == 0)
+      {
+        assert(p_result_ != nullptr);
+      }
+      else
+      {
+        assert(p_result_ == nullptr);
+        p_result_ = new value_type;
+      }
+#endif
+    }
+
+    static void finalize_thread()
+    {
+#ifdef USE_OPENMP
+      if (omp_get_thread_num() != 0)
+      {
+        assert(p_result_ != nullptr);
+        delete p_result_;
+        p_result_ = nullptr;
+      }
+#endif
+    }
+
+  private:
+    // This class is a singleton, and cannot be instantiated directly:
+    U3U9_db() = default;
+    U3U9_db(const U3U9_db&) = delete;
+    U3U9_db& operator=(const U3U9_db&) = delete;
+
+    static value_type compute(
+      const u3::irrep& u3A, const u3::irrep& u3B,
+      const u3::irrep& u3C, const u3::irrep& u3D,
+      const u3::irrep& u3AB, const u3::irrep& u3CD,
+      const u3::irrep& u3AC, const u3::irrep& u3BD,
+      const u3::irrep& u3ABCD, 
+      int rhoABmax, int rhoCDmax, int rhoAB_CDmax, 
+      int rhoACmax, int rhoBDmax, int rhoAC_BDmax)
     {
       std::vector<u3::gelfand> gArrA = u3::gelfandBasis(u3A),
                                gArrB = u3::gelfandBasis(u3B),
@@ -232,17 +308,16 @@ namespace u3
                 rhoAC_BDmax);
     }
 
-    // This class is a singleton, and cannot be instantiated directly:
-    U3U9_db() = default;
-    U3U9_db(const U3U9_db&) = delete;
-    U3U9_db& operator=(const U3U9_db&) = delete;
-
   public:
-    U3U9<return_type> get_U3U9(u3::irrep u3A, u3::irrep u3B, u3::irrep u3C,
-                               u3::irrep u3D, u3::irrep u3AB, u3::irrep u3CD,
-                               u3::irrep u3AC, u3::irrep u3BD, u3::irrep u3ABCD,
-                               int rhoACmax, int rhoBDmax, int rhoABCDmax,
-                               int rhoABmax, int rhoCDmax, int rhoACBDmax)
+    // pass by references to avoid copies
+    U3U9<return_type> get_U3U9(
+      const u3::irrep& u3A, const u3::irrep& u3B, 
+      const u3::irrep& u3C, const u3::irrep& u3D,
+      const u3::irrep& u3AB, const u3::irrep& u3CD,
+      const u3::irrep& u3AC, const u3::irrep& u3BD, 
+      const u3::irrep& u3ABCD,
+      int rhoACmax, int rhoBDmax, int rhoABCDmax,
+      int rhoABmax, int rhoCDmax, int rhoACBDmax)
     {
       if ((rhoACmax == 0) || (rhoBDmax == 0) || (rhoABCDmax == 0) ||
           (rhoABmax == 0) || (rhoCDmax == 0) || (rhoACBDmax == 0))
@@ -261,23 +336,7 @@ namespace u3
               static_cast<size_t>(rhoACBDmax)};
     }
 
-    /*
-    auto get(u3::irrep u3A, u3::irrep u3B, u3::irrep u3C, u3::irrep u3D,
-             u3::irrep u3AB, u3::irrep u3CD, u3::irrep u3AC, u3::irrep u3BD,
-             u3::irrep u3ABCD)
-    {
-      auto rhoABmax = Rho(u3A, u3B, u3AB);
-      auto rhoCDmax = Rho(u3C, u3D, u3CD);
-      auto rhoABCDmax = Rho(u3AB, u3CD, u3ABCD);
-      auto rhoACmax = Rho(u3A, u3C, u3AC);
-      auto rhoBDmax = Rho(u3B, u3D, u3BD);
-      auto rhoACBDmax = Rho(u3AC, u3BD, u3ABCD);
-
-      return get(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD, rhoABmax,
-                 rhoCDmax, rhoABCDmax, rhoACmax, rhoBDmax, rhoACBDmax);
-    }
-    */
-
+    // pass by values to normalize irreps
     return_type get(u3::irrep u3A, u3::irrep u3B, u3::irrep u3C, u3::irrep u3D,
                     u3::irrep u3AB, u3::irrep u3CD, u3::irrep u3AC,
                     u3::irrep u3BD, u3::irrep u3ABCD, int rhoABmax,
@@ -306,38 +365,48 @@ namespace u3
         return {};
 
 #ifdef U3LIB_ENABLE_U3U9_CACHE
-      key_type key = {u3A.n13(),    u3A.n23(),   u3B.n13(),  u3B.n23(),
-                      u3C.n13(),    u3C.n23(),   u3D.n13(),  u3D.n23(),
-                      u3AB.n13(),   u3AB.n23(),  u3CD.n13(), u3CD.n23(),
-                      u3AC.n13(),   u3AC.n23(),  u3BD.n13(), u3BD.n23(),
-                      u3ABCD.n13(), u3ABCD.n23()};
+      std::array<qcx_utils::UInt8, 18> safe_key = {
+        u3A.n13(), u3A.n23(), u3B.n13(), u3B.n23(),
+        u3C.n13(), u3C.n23(), u3D.n13(), u3D.n23(),
+        u3AB.n13(), u3AB.n23(), u3CD.n13(), u3CD.n23(),
+        u3AC.n13(), u3AC.n23(), u3BD.n13(), u3BD.n23(),
+        u3ABCD.n13(), u3ABCD.n23()};
 
-      auto iter = map_.find(key);
-      if (iter == map_.end())
-      {
-        auto p = map_.try_emplace(key, calculate(u3A, u3B, u3C, u3D, u3AB, u3CD,
-                                                 u3AC, u3BD, u3ABCD, rhoABmax,
-                                                 rhoCDmax, rhoABCDmax, rhoACmax,
-                                                 rhoBDmax, rhoACBDmax));
+      key_type key = {safe_key[0], safe_key[1], safe_key[2],
+                      safe_key[3], safe_key[4], safe_key[5],
+                      safe_key[6], safe_key[7], safe_key[8],
+                      safe_key[9], safe_key[10], safe_key[11],
+                      safe_key[12], safe_key[13], safe_key[14],
+                      safe_key[15], safe_key[16], safe_key[17]};
 
-        assert(p.second);
-        iter = p.first;
-      }
+      auto producer = [&u3A, &u3B, &u3C, &u3D, &u3AB, &u3CD, &u3AC, &u3BD, &u3ABCD, 
+                       &rhoABmax, &rhoCDmax, &rhoABCDmax,
+                       &rhoACmax, &rhoBDmax, &rhoACBDmax](key_type)
+      { 
+        return compute(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD, 
+                       rhoABmax, rhoCDmax, rhoABCDmax,
+                       rhoACmax, rhoBDmax, rhoACBDmax);
+      };
 
-      return iter->second;
+      auto accessor = [](const auto& element) { *p_result_ = element.second; };
+
+      cache_.visit(key, producer, accessor);
 #else
-      return calculate(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD,
-                       rhoABmax, rhoCDmax, rhoABCDmax, rhoACmax, rhoBDmax,
-                       rhoACBDmax);
+      *p_result_ = compute(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD, 
+                           rhoABmax, rhoCDmax, rhoABCDmax,
+                           rhoACmax, rhoBDmax, rhoACBDmax);
 #endif
+
+      return *p_result_;
     }
 
     // TO BE REMOVED IN THE FUTURE:
-    auto get(int n13a, int n23a, int n33a, int n13b, int n23b, int n33b, 
-             int n13c, int n23c, int n33c, int n13d, int n23d, int n33d,
-             int n13ab, int n23ab, int n33ab, int n13cd, int n23cd, int n33cd,
-             int n13ac, int n23ac, int n33ac, int n13bd, int n23bd, int n33bd,
-             int n13abcd, int n23abcd, int n33abcd)
+    value_type get(
+      int n13a, int n23a, int n33a, int n13b, int n23b, int n33b, 
+      int n13c, int n23c, int n33c, int n13d, int n23d, int n33d,
+      int n13ab, int n23ab, int n33ab, int n13cd, int n23cd, int n33cd,
+      int n13ac, int n23ac, int n33ac, int n13bd, int n23bd, int n33bd,
+      int n13abcd, int n23abcd, int n33abcd)
     {
       u3::irrep u3A(n13a - n33a, n23a - n33a, 0), 
                 u3B(n13b - n33b, n23b - n33b, 0), 
@@ -351,44 +420,47 @@ namespace u3
 
       int rhoABmax = Rho(u3A,u3B,u3AB), rhoCDmax = Rho(u3C,u3D,u3CD),
           rhoACmax = Rho(u3A,u3C,u3AC), rhoBDmax = Rho(u3B,u3D,u3BD),
-          rhoAB_CDmax = Rho(u3AB,u3CD,u3ABCD), 
-          rhoAC_BDmax = Rho(u3AC,u3BD,u3ABCD);
+          rhoABCDmax = Rho(u3AB,u3CD,u3ABCD), 
+          rhoACBDmax = Rho(u3AC,u3BD,u3ABCD);
 
-      bool flag = false;
-      std::vector<double> c;
+      if (rhoABmax == 0 || rhoCDmax == 0 || rhoACmax == 0 || 
+          rhoBDmax == 0 || rhoABCDmax == 0 || rhoACBDmax == 0)
+        return {};
 
-      if (rhoABmax > 0 && rhoCDmax > 0 && rhoACmax > 0 && rhoBDmax > 0
-          && rhoAB_CDmax > 0 && rhoAC_BDmax > 0)
-      {
 #ifdef U3LIB_ENABLE_U3U9_CACHE
-        key_type key = {u3A.n13(), u3A.n23(),
-                        u3B.n13(), u3B.n23(),
-                        u3C.n13(), u3C.n23(),
-                        u3D.n13(), u3D.n23(),
-                        u3AB.n13(), u3AB.n23(),
-                        u3CD.n13(), u3CD.n23(),
-                        u3AC.n13(), u3AC.n23(),
-                        u3BD.n13(), u3BD.n23(),
-                        u3ABCD.n13(), u3ABCD.n23()};
-        auto iter = map_.find(key);
-        if (iter == map_.end())
-        {
-          auto p = map_.try_emplace(key, 
-            calculate(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD, 
-              rhoABmax,rhoCDmax,rhoAB_CDmax,rhoACmax,rhoBDmax,rhoAC_BDmax));
-          assert(p.second);
-          iter = p.first;
-        }
+      std::array<qcx_utils::UInt8, 18> safe_key = {
+        u3A.n13(), u3A.n23(), u3B.n13(), u3B.n23(),
+        u3C.n13(), u3C.n23(), u3D.n13(), u3D.n23(),
+        u3AB.n13(), u3AB.n23(), u3CD.n13(), u3CD.n23(),
+        u3AC.n13(), u3AC.n23(), u3BD.n13(), u3BD.n23(),
+        u3ABCD.n13(), u3ABCD.n23()};
 
-        c = iter->second;
+      key_type key = {safe_key[0], safe_key[1], safe_key[2],
+                      safe_key[3], safe_key[4], safe_key[5],
+                      safe_key[6], safe_key[7], safe_key[8],
+                      safe_key[9], safe_key[10], safe_key[11],
+                      safe_key[12], safe_key[13], safe_key[14],
+                      safe_key[15], safe_key[16], safe_key[17]};
+
+      auto producer = [&u3A, &u3B, &u3C, &u3D, &u3AB, &u3CD, &u3AC, &u3BD, &u3ABCD, 
+                       rhoABmax, rhoCDmax, rhoABCDmax,
+                       rhoACmax, rhoBDmax, rhoACBDmax](key_type)
+      { 
+        return compute(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD, 
+                       rhoABmax, rhoCDmax, rhoABCDmax,
+                       rhoACmax, rhoBDmax, rhoACBDmax);
+      };
+
+      auto accessor = [](const auto& element) { *p_result_ = element.second; };
+
+      cache_.visit(key, producer, accessor);
 #else
-        c = calculate(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD, 
-              rhoABmax,rhoCDmax,rhoAB_CDmax,rhoACmax,rhoBDmax,rhoAC_BDmax);
+      *p_result_ = compute(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD, 
+                           rhoABmax, rhoCDmax, rhoABCDmax,
+                           rhoACmax, rhoBDmax, rhoACBDmax);
 #endif
-        flag = true;
-      }
 
-      return std::make_pair(flag, c);
+      return *p_result_;
     }
     
     friend U3U9_db& u3u9db();
