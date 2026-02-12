@@ -152,7 +152,8 @@ namespace u3
 #define U3LIB_ENABLE_U3U6_CACHE
   class U3U6_db
   {
-    using key_type = std::array<uint8_t, 12>;
+    // using key_type = std::array<uint8_t, 12>;
+    using key_type = std::pair<uint64_t, uint32_t>;
     using value_type = std::vector<double>;
 
 #ifdef U3LIB_ENABLE_U3U6_CACHE
@@ -252,10 +253,23 @@ namespace u3
         u3ABC.n13(), u3ABC.n23(), u3C.n13(), u3C.n23(),
         u3AB.n13(), u3AB.n23(), u3BC.n13(), u3BC.n23()};
 
+      uint64_t key_1 = 
+        (uint64_t(safe_key[0]) << 56) | (uint64_t(safe_key[1]) << 48) |
+        (uint64_t(safe_key[2]) << 40) | (uint64_t(safe_key[3]) << 32) |
+        (uint64_t(safe_key[4]) << 24) | (uint64_t(safe_key[5]) << 16) |
+        (uint64_t(safe_key[6]) << 8) | uint64_t(safe_key[7]);
+
+      uint32_t key_2 = 
+        (uint32_t(safe_key[8]) << 24) | (uint32_t(safe_key[9]) << 16) |
+        (uint32_t(safe_key[10]) << 8) | uint32_t(safe_key[11]);
+
+      key_type key = {key_1, key_2};
+      /*
       key_type key = {safe_key[0], safe_key[1], safe_key[2],
                       safe_key[3], safe_key[4], safe_key[5],
                       safe_key[6], safe_key[7], safe_key[8],
                       safe_key[9], safe_key[10], safe_key[11]};
+      */
 
       auto producer = [&u3A, &u3B, &u3ABC, &u3C, 
                        &u3AB, &rhoABmax, &rhoAB_Cmax, 
@@ -416,7 +430,8 @@ namespace u3
 #define U3LIB_ENABLE_U3Z6_CACHE
   class U3Z6_db
   {
-    using key_type = std::array<uint8_t, 12>;
+    // using key_type = std::array<uint8_t, 12>;
+    using key_type = std::pair<uint64_t, uint32_t>;
     using value_type = std::vector<double>;
 
 #ifdef U3LIB_ENABLE_U3Z6_CACHE
@@ -516,11 +531,23 @@ namespace u3
         u3ABC.n13(), u3ABC.n23(), u3C.n13(), u3C.n23(),
         u3AB.n13(), u3AB.n23(), u3AC.n13(), u3AC.n23()};
 
+      uint64_t key_1 = 
+        (uint64_t(safe_key[0]) << 56) | (uint64_t(safe_key[1]) << 48) |
+        (uint64_t(safe_key[2]) << 40) | (uint64_t(safe_key[3]) << 32) |
+        (uint64_t(safe_key[4]) << 24) | (uint64_t(safe_key[5]) << 16) |
+        (uint64_t(safe_key[6]) << 8) | uint64_t(safe_key[7]);
+
+      uint32_t key_2 = 
+        (uint32_t(safe_key[8]) << 24) | (uint32_t(safe_key[9]) << 16) |
+        (uint32_t(safe_key[10]) << 8) | uint32_t(safe_key[11]);
+
+      key_type key = {key_1, key_2};
+      /*
       key_type key = {safe_key[0], safe_key[1], safe_key[2],
                       safe_key[3], safe_key[4], safe_key[5],
                       safe_key[6], safe_key[7], safe_key[8],
                       safe_key[9], safe_key[10], safe_key[11]};
-
+      */
       auto producer = [&u3B, &u3A, &u3ABC, &u3C, 
                        &u3AB, &rhoABmax, &rhoAB_Cmax,
                        &u3AC, &rhoACmax, &rhoAC_Bmax](key_type)

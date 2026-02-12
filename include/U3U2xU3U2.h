@@ -972,7 +972,8 @@ namespace u3
   {
     using db_value_type = Eigen::RowVectorXd;
 
-    using ht_key_type = std::array<uint8_t, 6>;
+    // using ht_key_type = std::array<uint8_t, 6>;
+    using ht_key_type = uint64_t;
     using ht_value_type = WigU3U2_coeffs;
 
 #ifdef U3LIB_ENABLE_WIGU3U2_CACHE
@@ -1029,11 +1030,12 @@ namespace u3
     WigU3U2_db(const WigU3U2_db&) = delete;
     WigU3U2_db& operator=(const WigU3U2_db&) = delete;
 
-    static ht_value_type compute(ht_key_type ht_key, int rhomax)
+    static ht_value_type compute(const irrep& u3a,
+      const irrep& u3b, const irrep& u3c, int rhomax)
     {
-      irrep u3a(ht_key[0], ht_key[1], 0);
-      irrep u3b(ht_key[2], ht_key[3], 0);
-      irrep u3c(ht_key[4], ht_key[5], 0);
+      // irrep u3a(ht_key[0], ht_key[1], 0);
+      // irrep u3b(ht_key[2], ht_key[3], 0);
+      // irrep u3c(ht_key[4], ht_key[5], 0);
 
       auto gArrA = u3::gelfandBasis(u3a);
       auto gArrB = u3::gelfandBasis(u3b);
@@ -1078,11 +1080,20 @@ namespace u3
       std::array<qcx_utils::UInt8, 6> ht_key_safe = {
           u3a.n13(), u3a.n23(), u3b.n13(), u3b.n23(), u3c.n13(), u3c.n23()};
 
-      ht_key_type ht_key = {ht_key_safe[0], ht_key_safe[1], ht_key_safe[2],
-                            ht_key_safe[3], ht_key_safe[4], ht_key_safe[5]};
+      // ht_key_type ht_key = {ht_key_safe[0], ht_key_safe[1], ht_key_safe[2],
+      //                       ht_key_safe[3], ht_key_safe[4], ht_key_safe[5]};
+
+      ht_key_type ht_key = 
+        (uint64_t(ht_key_safe[0]) << 56) | (uint64_t(ht_key_safe[1]) << 48) |
+        (uint64_t(ht_key_safe[2]) << 40) | (uint64_t(ht_key_safe[3]) << 32) |
+        (uint64_t(ht_key_safe[4]) << 24) | (uint64_t(ht_key_safe[5]) << 16);
 
 #ifdef U3LIB_ENABLE_WIGU3U2_CACHE
-      auto producer = [rhomax](ht_key_type ht_key) { return compute(ht_key, rhomax); };
+      auto producer = [&u3a, &u3b, &u3c, rhomax](ht_key_type ht_key) 
+      { 
+        // return compute(ht_key, rhomax); 
+        return compute(u3a, u3b, u3c, rhomax); 
+      };
 
       auto accessor = [&flag, n12a_, n22a_, n12b_, n22b_, n12c_,
                        n22c_](const auto& element)
@@ -1101,7 +1112,7 @@ namespace u3
 
       cache_.visit(ht_key, producer, accessor);
 #else
-      auto coeffs = compute(ht_key);
+      auto coeffs = compute(u3a, u3b, u3c, rhomax);
 
       auto acc = coeffs.access(n12a_, n22a_, n12b_, n22b_, n12c_, n22c_);
 
@@ -1122,87 +1133,6 @@ namespace u3
     friend WigU3U2_db& wigU3U2db();
   };
 
-/*  
-  class WigU3U2_db
-  {
-#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
-    using key_type = std::array<int, 6>;
-    std::map<key_type, WigU3U2_coeffs> map_;
-#endif
-
-    auto calculate(const irrep& u3a, const irrep& u3b, const irrep& u3c)
-    {
-      auto rhomax = Rho(u3a, u3b, u3c);
-
-      auto gArrA = u3::gelfandBasis(u3a);
-      auto gArrB = u3::gelfandBasis(u3b);
-      auto gArrC = u3::gelfandBasis(u3c);
-
-      return WigU3U2(u3a, u3b, u3c, rhomax, -1, gArrA, gArrB, gArrC);
-    }
-
-    // This class is a singleton, and cannot be instantiated directly:
-    WigU3U2_db() = default;
-    WigU3U2_db(const WigU3U2_db&) = delete;
-    WigU3U2_db& operator=(const WigU3U2_db&) = delete;
-
-  public:
-    auto get(int n13a, int n23a, int n33a, int n12a, int n22a, int n13b,
-             int n23b, int n33b, int n12b, int n22b, int n13c, int n23c,
-             int n33c, int n12c, int n22c)
-    {
-      // normalized irreps:
-      irrep u3a(n13a - n33a, n23a - n33a, 0);
-      irrep u3b(n13b - n33b, n23b - n33b, 0);
-      irrep u3c(n13c - n33c, n23c - n33c, 0);
-      int rhomax = Rho(u3a, u3b, u3c);
-
-      bool flag = false;
-
-      Eigen::RowVectorXd row;
-
-      if (rhomax > 0)
-      {
-#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
-        key_type key = {u3a.n13(), u3a.n23(), u3b.n13(),
-                        u3b.n23(), u3c.n13(), u3c.n23()};
-
-        auto iter = map_.find(key);
-        if (iter == map_.end())
-        {
-          auto p = map_.try_emplace(key, calculate(u3a, u3b, u3c));
-          assert(p.second);
-          iter = p.first;
-        }
-
-        const auto& coeffs_ref = iter->second;
-#else
-        auto coeffs = calculate(u3a, u3b, u3c);
-        const auto& coeffs_ref = coeffs;
-#endif
-
-        auto acc = coeffs_ref.access(n12a - n33a, n22a - n33a, n12b - n33b,
-                                     n22b - n33b, n12c - n33c, n22c - n33c);
-        
-        flag = acc.allowed;
-
-        if (flag)
-        {
-          assert(acc.computed);
-
-          row = coeffs_ref.get_row(acc);
-
-          assert(row.cols() == rhomax);
-        }
-      }
-
-      return std::make_pair(flag, row);
-    }
-
-    friend WigU3U2_db& wigU3U2db();
-  };
-*/  
- 
   inline WigU3U2_db& wigU3U2db()
   {
     static WigU3U2_db wigU3U2db;

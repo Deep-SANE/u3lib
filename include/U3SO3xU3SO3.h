@@ -260,7 +260,8 @@ namespace u3
 
   class WigU3SO3_db
   {
-    using key_type = std::array<uint8_t, 9>;
+    // using key_type = std::array<uint8_t, 9>;
+    using key_type = std::pair<uint64_t, uint8_t>;
     using value_type = Eigen::MatrixXd;
 
 #ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
@@ -423,10 +424,18 @@ namespace u3
       std::array<qcx_utils::UInt8, 9> safe_key = {lam1, mu1,  l1,  lam2, mu2,
                                                   l2,   lam3, mu3, l3};
 
+      uint64_t key_1 = 
+        (uint64_t(safe_key[0]) << 56) | (uint64_t(safe_key[1]) << 48) |
+        (uint64_t(safe_key[2]) << 40) | (uint64_t(safe_key[3]) << 32) |
+        (uint64_t(safe_key[4]) << 24) | (uint64_t(safe_key[5]) << 16) |
+        (uint64_t(safe_key[6]) << 8) | uint64_t(safe_key[7]);
+
+      key_type key = {key_1, safe_key[8]};
+      /*
       key_type key = {safe_key[0], safe_key[1], safe_key[2],
                       safe_key[3], safe_key[4], safe_key[5],
                       safe_key[6], safe_key[7], safe_key[8]};
-
+      */
       auto producer = [rhomax, &pA, &pB, &pC](key_type)
       { return compute(rhomax, pA, pB, pC); };
 

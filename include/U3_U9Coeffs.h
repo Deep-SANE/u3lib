@@ -69,9 +69,7 @@ namespace u3
       int rhoABC_Dmax = u3::Rho(u3AB_C[i], u3D, u3ABCD);
       if (rhoABC_Dmax == 0) continue;
 
-      std::vector<u3::gelfand> gArrABC = u3::gelfandBasis(u3AB_C[i]);
-
-#ifdef U3LIB_ENABLE_U3U6_CACHE
+#if defined(U3LIB_ENABLE_U3U6_CACHE) && defined(U3LIB_ENABLE_U3Z6_CACHE)
       auto U6_1 = u3u6db.get(
         u3AC.n13(), u3AC.n23(), u3AC.n33(),
         u3B.n13(), u3B.n23(), u3B.n33(),
@@ -89,19 +87,7 @@ namespace u3
         u3AB_C[i].n13(), u3AB_C[i].n23(), u3AB_C[i].n33(),
         u3CD.n13(), u3CD.n23(), u3CD.n33());
       if (U6_2.empty()) continue;
-#else
-      std::vector<double> U6_1 =
-          u3::U6(u3AC, gArrAC, u3B, gArrB, u3ABCD, gArrABCD, u3D, gArrD,
-                 u3AB_C[i], gArrABC, rhomaxAC_B, rhoABC_Dmax, u3BD, gArrBD,
-                 rhoBDmax, rhoAC_BDmax);
 
-      std::vector<double> U6_2 =
-          u3::U6(u3AB, gArrAB, u3C, gArrC, u3ABCD, gArrABCD, u3D, gArrD,
-                 u3AB_C[i], gArrABC, rhomaxsAB_C[i], rhoABC_Dmax, u3CD, gArrCD,
-                 rhoCDmax, rhoAB_CDmax);
-#endif
-
-#ifdef U3LIB_ENABLE_U3Z6_CACHE
       auto Z6 = u3z6db.get(
         u3B.n13(), u3B.n23(), u3B.n33(),
         u3A.n13(), u3A.n23(), u3A.n33(),
@@ -111,6 +97,17 @@ namespace u3
         u3AC.n13(), u3AC.n23(), u3AC.n33());
       if (Z6.empty()) continue;
 #else
+      std::vector<u3::gelfand> gArrABC = u3::gelfandBasis(u3AB_C[i]);
+
+      std::vector<double> U6_1 =
+          u3::U6(u3AC, gArrAC, u3B, gArrB, u3ABCD, gArrABCD, u3D, gArrD,
+                 u3AB_C[i], gArrABC, rhomaxAC_B, rhoABC_Dmax, u3BD, gArrBD,
+                 rhoBDmax, rhoAC_BDmax);
+
+      std::vector<double> U6_2 =
+          u3::U6(u3AB, gArrAB, u3C, gArrC, u3ABCD, gArrABCD, u3D, gArrD,
+                 u3AB_C[i], gArrABC, rhomaxsAB_C[i], rhoABC_Dmax, u3CD, gArrCD,
+                 rhoCDmax, rhoAB_CDmax);
       std::vector<double> Z6 =
           u3::Z6(u3B, gArrB, u3A, gArrA, u3AB_C[i], gArrABC, u3C, gArrC, u3AB,
                  gArrAB, rhoABmax, rhomaxsAB_C[i], u3AC, gArrAC, rhoACmax,
@@ -223,7 +220,8 @@ namespace u3
 #define U3LIB_ENABLE_U3U9_CACHE
   class U3U9_db
   {
-    using key_type = std::array<uint8_t, 18>;
+    // using key_type = std::array<uint8_t, 18>;
+    using key_type = std::tuple<uint64_t, uint64_t, uint16_t>;
     using value_type = std::vector<double>;
 
 #ifdef U3LIB_ENABLE_U3U9_CACHE
@@ -372,13 +370,30 @@ namespace u3
         u3AC.n13(), u3AC.n23(), u3BD.n13(), u3BD.n23(),
         u3ABCD.n13(), u3ABCD.n23()};
 
+      uint64_t key_1 = 
+        (uint64_t(safe_key[0]) << 56) | (uint64_t(safe_key[1]) << 48) |
+        (uint64_t(safe_key[2]) << 40) | (uint64_t(safe_key[3]) << 32) |
+        (uint64_t(safe_key[4]) << 24) | (uint64_t(safe_key[5]) << 16) |
+        (uint64_t(safe_key[6]) << 8) | uint64_t(safe_key[7]);
+
+      uint64_t key_2 = 
+        (uint64_t(safe_key[8]) << 56) | (uint64_t(safe_key[9]) << 48) |
+        (uint64_t(safe_key[10]) << 40) | (uint64_t(safe_key[11]) << 32) |
+        (uint64_t(safe_key[12]) << 24) | (uint64_t(safe_key[13]) << 16) |
+        (uint64_t(safe_key[14]) << 8) | uint64_t(safe_key[15]);
+
+      uint16_t key_3 = 
+        (uint16_t(safe_key[16]) << 8) | uint16_t(safe_key[17]);
+
+      key_type key = {key_1, key_2, key_3};
+      /*
       key_type key = {safe_key[0], safe_key[1], safe_key[2],
                       safe_key[3], safe_key[4], safe_key[5],
                       safe_key[6], safe_key[7], safe_key[8],
                       safe_key[9], safe_key[10], safe_key[11],
                       safe_key[12], safe_key[13], safe_key[14],
                       safe_key[15], safe_key[16], safe_key[17]};
-
+      */
       auto producer = [&u3A, &u3B, &u3C, &u3D, &u3AB, &u3CD, &u3AC, &u3BD, &u3ABCD, 
                        &rhoABmax, &rhoCDmax, &rhoABCDmax,
                        &rhoACmax, &rhoBDmax, &rhoACBDmax](key_type)
@@ -435,13 +450,30 @@ namespace u3
         u3AC.n13(), u3AC.n23(), u3BD.n13(), u3BD.n23(),
         u3ABCD.n13(), u3ABCD.n23()};
 
+      uint64_t key_1 = 
+        (uint64_t(safe_key[0]) << 56) | (uint64_t(safe_key[1]) << 48) |
+        (uint64_t(safe_key[2]) << 40) | (uint64_t(safe_key[3]) << 32) |
+        (uint64_t(safe_key[4]) << 24) | (uint64_t(safe_key[5]) << 16) |
+        (uint64_t(safe_key[6]) << 8) | uint64_t(safe_key[7]);
+
+      uint64_t key_2 = 
+        (uint64_t(safe_key[8]) << 56) | (uint64_t(safe_key[9]) << 48) |
+        (uint64_t(safe_key[10]) << 40) | (uint64_t(safe_key[11]) << 32) |
+        (uint64_t(safe_key[12]) << 24) | (uint64_t(safe_key[13]) << 16) |
+        (uint64_t(safe_key[14]) << 8) | uint64_t(safe_key[15]);
+
+      uint16_t key_3 = 
+        (uint16_t(safe_key[16]) << 8) | uint16_t(safe_key[17]);
+
+      key_type key = {key_1, key_2, key_3};
+      /*
       key_type key = {safe_key[0], safe_key[1], safe_key[2],
                       safe_key[3], safe_key[4], safe_key[5],
                       safe_key[6], safe_key[7], safe_key[8],
                       safe_key[9], safe_key[10], safe_key[11],
                       safe_key[12], safe_key[13], safe_key[14],
                       safe_key[15], safe_key[16], safe_key[17]};
-
+      */
       auto producer = [&u3A, &u3B, &u3C, &u3D, &u3AB, &u3CD, &u3AC, &u3BD, &u3ABCD, 
                        rhoABmax, rhoCDmax, rhoABCDmax,
                        rhoACmax, rhoBDmax, rhoACBDmax](key_type)
