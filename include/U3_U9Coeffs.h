@@ -10,13 +10,13 @@
 #include <utility>
 #include <vector>
 
-// #define TIME_U3U9
 #ifdef TIME_U3U9
 #include <chrono>
 #endif
 
 #include <Eigen/Dense>
 
+#include "GlobalDefinitions.h"
 #include "U3decomposition.h"
 #include "U3_U6Z6Coeffs.h"
 #include "U3basis.h"
@@ -27,7 +27,6 @@
 
 namespace u3
 {
-
   // input by users: u3a, u3b, u3c, u3d, u3ab, u3cd, u3ac, u3bd, u3abcd
   // all normalized
   inline std::vector<double>
@@ -70,31 +69,19 @@ namespace u3
       if (rhoABC_Dmax == 0) continue;
 
 #if defined(U3LIB_ENABLE_U3U6_CACHE) && defined(U3LIB_ENABLE_U3Z6_CACHE)
-      auto U6_1 = u3u6db.get(
-        u3AC.n13(), u3AC.n23(), u3AC.n33(),
-        u3B.n13(), u3B.n23(), u3B.n33(),
-        u3ABCD.n13(), u3ABCD.n23(), u3ABCD.n33(),
-        u3D.n13(), u3D.n23(), u3D.n33(),               
-        u3AB_C[i].n13(), u3AB_C[i].n23(), u3AB_C[i].n33(),
-        u3BD.n13(), u3BD.n23(), u3BD.n33());
+      auto U6_1 = u3u6db.get_U3U6(u3AC, u3B, u3ABCD, u3D,
+                                  u3AB_C[i], rhomaxAC_B, rhoABC_Dmax, 
+                                  u3BD, rhoBDmax, rhoAC_BDmax);
       if (U6_1.empty()) continue;
 
-      auto U6_2 = u3u6db.get(
-        u3AB.n13(), u3AB.n23(), u3AB.n33(),
-        u3C.n13(), u3C.n23(), u3C.n33(),
-        u3ABCD.n13(), u3ABCD.n23(), u3ABCD.n33(),
-        u3D.n13(), u3D.n23(), u3D.n33(),               
-        u3AB_C[i].n13(), u3AB_C[i].n23(), u3AB_C[i].n33(),
-        u3CD.n13(), u3CD.n23(), u3CD.n33());
+      auto U6_2 = u3u6db.get_U3U6(u3AB, u3C, u3ABCD, u3D,
+                                  u3AB_C[i], rhomaxsAB_C[i], rhoABC_Dmax, 
+                                  u3CD, rhoCDmax, rhoAB_CDmax);
       if (U6_2.empty()) continue;
-
-      auto Z6 = u3z6db.get(
-        u3B.n13(), u3B.n23(), u3B.n33(),
-        u3A.n13(), u3A.n23(), u3A.n33(),
-        u3AB_C[i].n13(), u3AB_C[i].n23(), u3AB_C[i].n33(),
-        u3C.n13(), u3C.n23(), u3C.n33(),               
-        u3AB.n13(), u3AB.n23(), u3AB.n33(),
-        u3AC.n13(), u3AC.n23(), u3AC.n33());
+    
+      auto Z6 = u3z6db.get_U3Z6(u3B, u3A, u3AB_C[i], u3C, 
+                                u3AB, rhoABmax, rhomaxsAB_C[i], 
+                                u3AC, rhoACmax, rhomaxAC_B);
       if (Z6.empty()) continue;
 #else
       std::vector<u3::gelfand> gArrABC = u3::gelfandBasis(u3AB_C[i]);
@@ -115,23 +102,22 @@ namespace u3
 #endif
       
       for (int rAC = 0; rAC < rhoACmax; rAC++)
-      {
         for (int rBD = 0; rBD < rhoBDmax; rBD++)
-        {
           for (int rAB_CD = 0; rAB_CD < rhoAB_CDmax; rAB_CD++)
-          {
             for (int rAB = 0; rAB < rhoABmax; rAB++)
-            {
               for (int rCD = 0; rCD < rhoCDmax; rCD++)
-              {
                 for (int rAC_BD = 0; rAC_BD < rhoAC_BDmax; rAC_BD++)
-                {
                   for (int rAC_B = 0; rAC_B < rhomaxAC_B; rAC_B++)
-                  {
                     for (int rAB_C = 0; rAB_C < rhomaxsAB_C[i]; rAB_C++)
-                    {
                       for (int rABC_D = 0; rABC_D < rhoABC_Dmax; rABC_D++)
                       {
+#if defined(U3LIB_ENABLE_U3U6_CACHE) && defined(U3LIB_ENABLE_U3Z6_CACHE)
+                        U[((((rAC * rhoBDmax + rBD) * rhoAB_CDmax + rAB_CD) *
+                        rhoABmax + rAB) * rhoCDmax + rCD) * rhoAC_BDmax + rAC_BD] 
+                        += U6_1.get(rAC_B, rABC_D, rBD, rAC_BD) 
+                         * Z6.get(rAB, rAB_C, rAC, rAC_B) 
+                         * U6_2.get(rAB_C, rABC_D, rCD, rAB_CD);
+#else
                         U[((((rAC * rhoBDmax + rBD) * rhoAB_CDmax + rAB_CD) *
                         rhoABmax + rAB) * rhoCDmax + rCD) * rhoAC_BDmax + rAC_BD] 
                         += U6_1[((rAC_B * rhoABC_Dmax + rABC_D) * rhoBDmax +
@@ -140,15 +126,8 @@ namespace u3
                                 rAC) * rhomaxAC_B + rAC_B] 
                          * U6_2[((rAB_C * rhoABC_Dmax + rABC_D) * rhoCDmax +
                                   rCD) * rhoAB_CDmax + rAB_CD];
+#endif
                       }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
     }
 
     for (int i = 0; i < U.size(); i++)
@@ -169,6 +148,7 @@ namespace u3
     return U;
   }
 
+  // Custom class for holding U9 coefficients
   template <typename T>
   class U3U9
   {
@@ -217,7 +197,7 @@ namespace u3
     }
   };
 
-#define U3LIB_ENABLE_U3U9_CACHE
+  // Database of U9 coefficients
   class U3U9_db
   {
     // using key_type = std::array<uint8_t, 18>;
@@ -317,10 +297,6 @@ namespace u3
       int rhoACmax, int rhoBDmax, int rhoABCDmax,
       int rhoABmax, int rhoCDmax, int rhoACBDmax)
     {
-      if ((rhoACmax == 0) || (rhoBDmax == 0) || (rhoABCDmax == 0) ||
-          (rhoABmax == 0) || (rhoCDmax == 0) || (rhoACBDmax == 0))
-        return {};
-
       auto coeffs =
           get(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD, rhoABmax,
               rhoCDmax, rhoABCDmax, rhoACmax, rhoBDmax, rhoACBDmax);
@@ -341,6 +317,10 @@ namespace u3
                     int rhoCDmax, int rhoABCDmax, int rhoACmax, int rhoBDmax,
                     int rhoACBDmax)
     {
+      if ((rhoACmax == 0) || (rhoBDmax == 0) || (rhoABCDmax == 0) ||
+          (rhoABmax == 0) || (rhoCDmax == 0) || (rhoACBDmax == 0))
+        return {};
+
       u3A.normalize();
       u3B.normalize();
       u3C.normalize();
@@ -357,10 +337,6 @@ namespace u3
       assert(rhoACmax == Rho(u3A, u3C, u3AC));
       assert(rhoBDmax == Rho(u3B, u3D, u3BD));
       assert(rhoACBDmax == Rho(u3AC, u3BD, u3ABCD));
-
-      if ((rhoABmax == 0) || (rhoCDmax == 0) || (rhoABCDmax == 0) ||
-          (rhoACmax == 0) || (rhoBDmax == 0) || (rhoACBDmax == 0))
-        return {};
 
 #ifdef U3LIB_ENABLE_U3U9_CACHE
       std::array<qcx_utils::UInt8, 18> safe_key = {

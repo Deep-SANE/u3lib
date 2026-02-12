@@ -17,6 +17,7 @@
 #include <Eigen/Sparse>
 #endif
 
+#include "GlobalDefinitions.h"
 #include "U3basis.h"
 #include "U3decomposition.h"
 
@@ -966,8 +967,7 @@ namespace u3
     return coeffs;
   }
 
-#define U3LIB_ENABLE_WIGU3U2_CACHE
-
+  // Database of coupling coefficients
   class WigU3U2_db
   {
     using db_value_type = Eigen::RowVectorXd;
