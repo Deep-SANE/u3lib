@@ -6,24 +6,25 @@
 #include <map>
 #include <vector>
 
-// #define TIME_U3U6Z6
 #ifdef TIME_U3U6Z6
 #include <chrono>
 #endif
 
 #include <Eigen/Dense>
 
+#include "GlobalDefinitions.h"
 #include "U3basis.h"
 #include "U3U2xU3U2.h"
 
 #include <qcx_Cache.h>
 #include <qcx_Int.h>
+#include <qcx_ND.h>
 #include <so3Coeffs/SO3_CGC.h>
 #include <so3Coeffs/SO3_Racah.h>
 
 namespace u3
 {
-  // input by users: u3A, u3B, u3ABC, u3C, u3AB, u3BC, all normalized
+  // Input by users: u3A, u3B, u3ABC, u3C, u3AB, u3BC, all normalized
   inline std::vector<double>
   U6(const u3::irrep& u3A, const std::vector<u3::gelfand>& gArrA,
      const u3::irrep& u3B, const std::vector<u3::gelfand>& gArrB,
@@ -124,15 +125,22 @@ namespace u3
     for (int rAB = 0; rAB < rhoABmax; rAB++)
       for (int rAB_C = 0; rAB_C < rhoAB_Cmax; rAB_C++)
         for (int rBC = 0; rBC < rhoBCmax; rBC++)
+        {
+          int col = (rAB * rhoAB_Cmax + rAB_C) * rhoBCmax + rBC;
+
           for (int rA_BC = 0; rA_BC < rhoA_BCmax; rA_BC++)
           {
-            int col = (rAB * rhoAB_Cmax + rAB_C) * rhoBCmax + rBC;
+            /*
             if (std::fabs(X(rA_BC, col)) < 1e-14)
               X(rA_BC, col) = 0.0;
 
             U[((rAB * rhoAB_Cmax + rAB_C) * rhoBCmax + rBC) * rhoA_BCmax +
               rA_BC] = X(rA_BC, col);
+            */
+            U[col * rhoA_BCmax + rA_BC] = 
+              (std::fabs(X(rA_BC, col)) < 1e-14) ? 0.0 : X(rA_BC, col);
           }
+        }
 
 #ifdef TIME_U3U6Z6
     auto end = std::chrono::high_resolution_clock::now();
@@ -149,7 +157,52 @@ namespace u3
     return U;
   }
 
-#define U3LIB_ENABLE_U3U6_CACHE
+  // Custom class for holding U6 coefficients
+  template <typename T>
+  class U3U6
+  {
+    T coeffs_;
+    qcx_utils::NDIndex4 ndi_;
+
+  public:
+    U3U6()
+    {
+      ndi_.add_dimensions(0, 0, 0, 0);
+      assert(coeffs_.size() == ndi_.cardinality());
+    }
+
+    U3U6(T&& coeffs, size_t rhoABmax, size_t rhoAB_Cmax, 
+                     size_t rhoBCmax, size_t rhoA_BCmax)
+        : coeffs_(std::move(coeffs))
+    {
+      ndi_.add_dimensions(rhoABmax, rhoAB_Cmax, rhoBCmax, rhoA_BCmax);
+      assert(coeffs_.size() == ndi_.cardinality());
+    }
+
+    size_t size() const { return coeffs_.size(); }
+
+    bool empty() const { return size() == 0; }
+
+    size_t rhoABmax() const { return ndi_.dimension(0); }
+    size_t rhoAB_Cmax() const { return ndi_.dimension(1); }
+    size_t rhoBCmax() const { return ndi_.dimension(2); }
+    size_t rhoA_BCmax() const { return ndi_.dimension(3); }
+
+    double operator[](size_t i) const
+    {
+      assert(i < coeffs_.size());
+      return coeffs_[i];
+    }
+
+    double get(size_t rhoAB, size_t rhoAB_C, size_t rhoBC, size_t rhoA_BC)
+    {
+      std::array multi_index = {rhoAB, rhoAB_C, rhoBC, rhoA_BC};
+      size_t i = ndi_.to_linear(multi_index);
+      return operator[](i);
+    }
+  };
+
+  // Database of U6 coefficients
   class U3U6_db
   {
     // using key_type = std::array<uint8_t, 12>;
@@ -158,6 +211,8 @@ namespace u3
 
 #ifdef U3LIB_ENABLE_U3U6_CACHE
     qcx_utils::Cache<key_type, value_type> cache_;
+#else
+    using return_type = std::vector<double>;
 #endif
 
     inline static value_type* p_result_ = nullptr;
@@ -229,6 +284,87 @@ namespace u3
     }
 
   public:
+    // pass by references to avoid copies
+    U3U6<value_type> get_U3U6(
+      const u3::irrep& u3A, const u3::irrep& u3B, 
+      const u3::irrep& u3ABC, const u3::irrep& u3C,
+      const u3::irrep& u3AB, int rhoABmax, int rhoAB_Cmax,
+      const u3::irrep& u3BC, int rhoBCmax, int rhoA_BCmax)
+    {
+      auto coeffs = get(u3A, u3B, u3ABC, u3C, u3AB, rhoABmax, rhoAB_Cmax,
+                                              u3BC, rhoBCmax, rhoA_BCmax);
+
+      return {std::move(coeffs),
+              static_cast<size_t>(rhoABmax),
+              static_cast<size_t>(rhoAB_Cmax),
+              static_cast<size_t>(rhoBCmax),
+              static_cast<size_t>(rhoA_BCmax)};
+    }
+
+    // pass by values to normalize irreps
+    value_type get(u3::irrep u3A, u3::irrep u3B, u3::irrep u3ABC, u3::irrep u3C, 
+                    u3::irrep u3AB, int rhoABmax, int rhoAB_Cmax,
+                    u3::irrep u3BC, int rhoBCmax, int rhoA_BCmax)
+    {
+      if (rhoABmax == 0 || rhoAB_Cmax == 0 || rhoBCmax == 0 || rhoA_BCmax == 0)
+        return {};
+
+      u3A.normalize();
+      u3B.normalize();
+      u3C.normalize();
+      u3AB.normalize();
+      u3BC.normalize();
+      u3ABC.normalize();
+
+      assert(rhoABmax == Rho(u3A,u3B,u3AB)); 
+      assert(rhoAB_Cmax == Rho(u3AB,u3C,u3ABC));
+      assert(rhoBCmax == Rho(u3B,u3C,u3BC)); 
+      assert(rhoA_BCmax == Rho(u3A,u3BC,u3ABC));
+      
+#ifdef U3LIB_ENABLE_U3U6_CACHE
+      std::array<qcx_utils::UInt8, 12> safe_key = {
+        u3A.n13(), u3A.n23(), u3B.n13(), u3B.n23(),
+        u3ABC.n13(), u3ABC.n23(), u3C.n13(), u3C.n23(),
+        u3AB.n13(), u3AB.n23(), u3BC.n13(), u3BC.n23()};
+
+      uint64_t key_1 = 
+        (uint64_t(safe_key[0]) << 56) | (uint64_t(safe_key[1]) << 48) |
+        (uint64_t(safe_key[2]) << 40) | (uint64_t(safe_key[3]) << 32) |
+        (uint64_t(safe_key[4]) << 24) | (uint64_t(safe_key[5]) << 16) |
+        (uint64_t(safe_key[6]) << 8) | uint64_t(safe_key[7]);
+
+      uint32_t key_2 = 
+        (uint32_t(safe_key[8]) << 24) | (uint32_t(safe_key[9]) << 16) |
+        (uint32_t(safe_key[10]) << 8) | uint32_t(safe_key[11]);
+
+      key_type key = {key_1, key_2};
+      /*
+      key_type key = {safe_key[0], safe_key[1], safe_key[2],
+                      safe_key[3], safe_key[4], safe_key[5],
+                      safe_key[6], safe_key[7], safe_key[8],
+                      safe_key[9], safe_key[10], safe_key[11]};
+      */
+
+      auto producer = [&u3A, &u3B, &u3ABC, &u3C, 
+                       &u3AB, &rhoABmax, &rhoAB_Cmax, 
+                       &u3BC, &rhoBCmax, &rhoA_BCmax](key_type)
+      { 
+        return compute(u3A, u3B, u3ABC, u3C, u3AB, rhoABmax, rhoAB_Cmax,
+                                             u3BC, rhoBCmax, rhoA_BCmax);
+      };
+
+      auto accessor = [](const auto& element) { *p_result_ = element.second; };
+
+      cache_.visit(key, producer, accessor);
+#else
+      *p_result_ = compute(u3A, u3B, u3ABC, u3C, u3AB, rhoABmax, rhoAB_Cmax,
+                                                 u3BC, rhoBCmax, rhoA_BCmax);
+#endif
+
+      return *p_result_;
+    }
+
+    // TO BE REMOVED IN THE FUTURE:
     value_type get(
       int n13a, int n23a, int n33a, int n13b, int n23b, int n33b, 
       int n13abc, int n23abc, int n33abc, int n13c, int n23c, int n33c, 
@@ -300,7 +436,7 @@ namespace u3
     return u3u6db; 
   }
 
-  // input by users: u3B, u3A, u3ABC, u3C, u3AB, u3AC
+  // Input by users: u3B, u3A, u3ABC, u3C, u3AB, u3AC
   inline std::vector<double>
   Z6(const u3::irrep& u3B, const std::vector<u3::gelfand>& gArrB,
      const u3::irrep& u3A, const std::vector<u3::gelfand>& gArrA,
@@ -402,15 +538,21 @@ namespace u3
     for (int rAB = 0; rAB < rhoABmax; rAB++)
       for (int rAB_C = 0; rAB_C < rhoAB_Cmax; rAB_C++)
         for (int rAC = 0; rAC < rhoACmax; rAC++)
+        {
+          int col = (rAB * rhoAB_Cmax + rAB_C) * rhoACmax + rAC;
           for (int rAC_B = 0; rAC_B < rhoAC_Bmax; rAC_B++)
           {
-            int col = (rAB * rhoAB_Cmax + rAB_C) * rhoACmax + rAC;
+            /*
             if (std::fabs(X(rAC_B, col)) < 1e-14)
               X(rAC_B, col) = 0.0;
 
             Z[((rAB * rhoAB_Cmax + rAB_C) * rhoACmax + rAC) * rhoAC_Bmax +
               rAC_B] = X(rAC_B, col);
+            */
+            Z[col * rhoAC_Bmax + rAC_B] =
+              (std::fabs(X(rAC_B, col)) < 1e-14) ? 0.0 : X(rAC_B, col);
           }
+        }
 
 #ifdef TIME_U3U6Z6
     auto end = std::chrono::high_resolution_clock::now();
@@ -427,7 +569,52 @@ namespace u3
     return Z;
   }
 
-#define U3LIB_ENABLE_U3Z6_CACHE
+  // Custom class for holding Z6 coefficients
+  template <typename T>
+  class U3Z6
+  {
+    T coeffs_;
+    qcx_utils::NDIndex4 ndi_;
+
+  public:
+    U3Z6()
+    {
+      ndi_.add_dimensions(0, 0, 0, 0);
+      assert(coeffs_.size() == ndi_.cardinality());
+    }
+
+    U3Z6(T&& coeffs, size_t rhoABmax, size_t rhoAB_Cmax, 
+                     size_t rhoACmax, size_t rhoAC_Bmax)
+        : coeffs_(std::move(coeffs))
+    {
+      ndi_.add_dimensions(rhoABmax, rhoAB_Cmax, rhoACmax, rhoAC_Bmax);
+      assert(coeffs_.size() == ndi_.cardinality());
+    }
+
+    size_t size() const { return coeffs_.size(); }
+
+    bool empty() const { return size() == 0; }
+
+    size_t rhoABmax() const { return ndi_.dimension(0); }
+    size_t rhoAB_Cmax() const { return ndi_.dimension(1); }
+    size_t rhoBCmax() const { return ndi_.dimension(2); }
+    size_t rhoA_BCmax() const { return ndi_.dimension(3); }
+
+    double operator[](size_t i) const
+    {
+      assert(i < coeffs_.size());
+      return coeffs_[i];
+    }
+
+    double get(size_t rhoAB, size_t rhoAB_C, size_t rhoAC, size_t rhoAC_B)
+    {
+      std::array multi_index = {rhoAB, rhoAB_C, rhoAC, rhoAC_B};
+      size_t i = ndi_.to_linear(multi_index);
+      return operator[](i);
+    }
+  };
+
+  // Database of Z6 coefficients
   class U3Z6_db
   {
     // using key_type = std::array<uint8_t, 12>;
@@ -436,6 +623,9 @@ namespace u3
 
 #ifdef U3LIB_ENABLE_U3Z6_CACHE
     qcx_utils::Cache<key_type, value_type> cache_;
+    using return_type = std::span<const double>;
+#else
+    using return_type = std::vector<double>;
 #endif
 
     inline static value_type* p_result_ = nullptr;
@@ -507,6 +697,86 @@ namespace u3
     }
 
   public:
+    // pass by references to avoid copies
+    U3Z6<value_type> get_U3Z6(
+      const u3::irrep& u3B, const u3::irrep& u3A, 
+      const u3::irrep& u3ABC, const u3::irrep& u3C,
+      const u3::irrep& u3AB, int rhoABmax, int rhoAB_Cmax,
+      const u3::irrep& u3AC, int rhoACmax, int rhoAC_Bmax)
+    {
+      auto coeffs = get(u3B, u3A, u3ABC, u3C, u3AB, rhoABmax, rhoAB_Cmax,
+                                              u3AC, rhoACmax, rhoAC_Bmax);
+
+      return {std::move(coeffs),
+              static_cast<size_t>(rhoABmax),
+              static_cast<size_t>(rhoAB_Cmax),
+              static_cast<size_t>(rhoACmax),
+              static_cast<size_t>(rhoAC_Bmax)};
+    }
+
+    // pass by values to normalize irreps
+    value_type get(u3::irrep u3B, u3::irrep u3A, u3::irrep u3ABC, u3::irrep u3C,
+                   u3::irrep u3AB, int rhoABmax, int rhoAB_Cmax,
+                   u3::irrep u3AC, int rhoACmax, int rhoAC_Bmax)
+    {
+      if (rhoABmax == 0 || rhoAB_Cmax == 0 || rhoACmax == 0 || rhoAC_Bmax == 0)
+        return {};
+
+      u3A.normalize();
+      u3B.normalize();
+      u3C.normalize();
+      u3AB.normalize();
+      u3AC.normalize();
+      u3ABC.normalize();
+
+      assert(rhoABmax == Rho(u3A,u3B,u3AB)); 
+      assert(rhoAB_Cmax == Rho(u3AB,u3C,u3ABC));
+      assert(rhoACmax == Rho(u3A,u3C,u3AC)); 
+      assert(rhoAC_Bmax == Rho(u3AC,u3B,u3ABC));
+
+#ifdef U3LIB_ENABLE_U3Z6_CACHE
+      std::array<qcx_utils::UInt8, 12> safe_key = {
+        u3B.n13(), u3B.n23(), u3A.n13(), u3A.n23(),
+        u3ABC.n13(), u3ABC.n23(), u3C.n13(), u3C.n23(),
+        u3AB.n13(), u3AB.n23(), u3AC.n13(), u3AC.n23()};
+
+      uint64_t key_1 = 
+        (uint64_t(safe_key[0]) << 56) | (uint64_t(safe_key[1]) << 48) |
+        (uint64_t(safe_key[2]) << 40) | (uint64_t(safe_key[3]) << 32) |
+        (uint64_t(safe_key[4]) << 24) | (uint64_t(safe_key[5]) << 16) |
+        (uint64_t(safe_key[6]) << 8) | uint64_t(safe_key[7]);
+
+      uint32_t key_2 = 
+        (uint32_t(safe_key[8]) << 24) | (uint32_t(safe_key[9]) << 16) |
+        (uint32_t(safe_key[10]) << 8) | uint32_t(safe_key[11]);
+
+      key_type key = {key_1, key_2};
+      /*
+      key_type key = {safe_key[0], safe_key[1], safe_key[2],
+                      safe_key[3], safe_key[4], safe_key[5],
+                      safe_key[6], safe_key[7], safe_key[8],
+                      safe_key[9], safe_key[10], safe_key[11]};
+      */
+      auto producer = [&u3B, &u3A, &u3ABC, &u3C, 
+                       &u3AB, &rhoABmax, &rhoAB_Cmax,
+                       &u3AC, &rhoACmax, &rhoAC_Bmax](key_type)
+      { 
+        return compute(u3B, u3A, u3ABC, u3C, u3AB, rhoABmax, rhoAB_Cmax,
+                                             u3AC, rhoACmax, rhoAC_Bmax);
+      };
+
+      auto accessor = [](const auto& element) { *p_result_ = element.second; };
+
+      cache_.visit(key, producer, accessor);
+#else
+      *p_result_ = compute(u3B, u3A, u3ABC, u3C, u3AB, rhoABmax, rhoAB_Cmax,
+                                                 u3AC, rhoACmax, rhoAC_Bmax);
+#endif
+
+      return *p_result_;
+    }
+
+    // TO BE REMOVED IN THE FUTURE:
     value_type get(
       int n13b, int n23b, int n33b, int n13a, int n23a, int n33a,
       int n13abc, int n23abc, int n33abc, int n13c, int n23c, int n33c, 
