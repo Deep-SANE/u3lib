@@ -12,20 +12,18 @@
 
 #include <Eigen/Dense>
 
-#include "GlobalDefinitions.h"
 #include "U3basis.h"
 #include "U3U2xU3U2.h"
 
 #include <qcx_Cache.h>
 #include <qcx_Int.h>
-#include <qcx_ND.h>
 #include <so3Coeffs/SO3_CGC.h>
 #include <so3Coeffs/SO3_Racah.h>
 
 namespace u3
 {
   // Input by users: u3A, u3B, u3ABC, u3C, u3AB, u3BC, all normalized
-  inline std::vector<double>
+  inline auto
   U6(const u3::irrep& u3A, const std::vector<u3::gelfand>& gArrA,
      const u3::irrep& u3B, const std::vector<u3::gelfand>& gArrB,
      const u3::irrep& u3ABC, const std::vector<u3::gelfand>& gArrABC,
@@ -40,7 +38,6 @@ namespace u3
     auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-    auto& cgcs = qcx_utils::cgcs();
     auto& racahs = qcx_utils::racahs();
     auto& wigU3U2db = u3::wigU3U2db();
 
@@ -54,11 +51,11 @@ namespace u3
     {
       for (int n22A = u3A.n23(); n22A >= u3A.n33() && !done; n22A--)
       {
-        auto [allowA_BC, accA_BC] = wigU3U2db.get(
+        auto accA_BC = wigU3U2db.get(
             u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A,
             u3BC.n13(), u3BC.n23(), u3BC.n33(), u3BC.n13(), u3BC.n23(),
             u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
-        if (!allowA_BC) continue;
+        if (accA_BC.size() == 0) continue;
         
         A.row(r) = accA_BC;
 
@@ -70,27 +67,27 @@ namespace u3
             {
               for (int n22AB = u3AB.n23(); n22AB >= u3AB.n33(); n22AB--)
               {
-                auto [allowAB, accAB] = wigU3U2db.get(
+                auto accAB = wigU3U2db.get(
                   u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A,
                   u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B,
                   u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB);
-                if (!allowAB) continue;
+                if (accAB.size() == 0) continue;
 
                 for (int n12C = u3C.n13(); n12C >= u3C.n23(); n12C--)
                 {
                   for (int n22C = u3C.n23(); n22C >= u3C.n33(); n22C--)
                   {
-                    auto [allowAB_C, accAB_C] = wigU3U2db.get(
+                    auto accAB_C = wigU3U2db.get(
                       u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB,
                       u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C,
                       u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
-                    if (!allowAB_C) continue;
+                    if (accAB_C.size() == 0) continue;
 
-                    auto [allowBC, accBC] = wigU3U2db.get(
+                    auto accBC = wigU3U2db.get(
                       u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B,
                       u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C,
                       u3BC.n13(), u3BC.n23(), u3BC.n33(), u3BC.n13(), u3BC.n23());
-                    if (!allowBC) continue;
+                    if (accBC.size() == 0) continue;
 
                     int llA = n12A - n22A, ll = u3ABC.n13() - u3ABC.n23(), 
                         llBC = u3BC.n13() - u3BC.n23(), llB = n12B - n22B, 
@@ -120,7 +117,8 @@ namespace u3
 
     Eigen::MatrixXd X = A.householderQr().solve(B);
 
-    std::vector<double> U(rhoABmax * rhoAB_Cmax * rhoBCmax * rhoA_BCmax);
+    // std::vector<double> U(rhoABmax * rhoAB_Cmax * rhoBCmax * rhoA_BCmax);
+    U3U6<coeffs_t> U(rhoABmax, rhoAB_Cmax, rhoBCmax, rhoA_BCmax);
 
     for (int rAB = 0; rAB < rhoABmax; rAB++)
       for (int rAB_C = 0; rAB_C < rhoAB_Cmax; rAB_C++)
@@ -157,62 +155,15 @@ namespace u3
     return U;
   }
 
-  // Custom class for holding U6 coefficients
-  template <typename T>
-  class U3U6
-  {
-    T coeffs_;
-    qcx_utils::NDIndex4 ndi_;
-
-  public:
-    U3U6()
-    {
-      ndi_.add_dimensions(0, 0, 0, 0);
-      assert(coeffs_.size() == ndi_.cardinality());
-    }
-
-    U3U6(T&& coeffs, size_t rhoABmax, size_t rhoAB_Cmax, 
-                     size_t rhoBCmax, size_t rhoA_BCmax)
-        : coeffs_(std::move(coeffs))
-    {
-      ndi_.add_dimensions(rhoABmax, rhoAB_Cmax, rhoBCmax, rhoA_BCmax);
-      assert(coeffs_.size() == ndi_.cardinality());
-    }
-
-    size_t size() const { return coeffs_.size(); }
-
-    bool empty() const { return size() == 0; }
-
-    size_t rhoABmax() const { return ndi_.dimension(0); }
-    size_t rhoAB_Cmax() const { return ndi_.dimension(1); }
-    size_t rhoBCmax() const { return ndi_.dimension(2); }
-    size_t rhoA_BCmax() const { return ndi_.dimension(3); }
-
-    double operator[](size_t i) const
-    {
-      assert(i < coeffs_.size());
-      return coeffs_[i];
-    }
-
-    double get(size_t rhoAB, size_t rhoAB_C, size_t rhoBC, size_t rhoA_BC)
-    {
-      std::array multi_index = {rhoAB, rhoAB_C, rhoBC, rhoA_BC};
-      size_t i = ndi_.to_linear(multi_index);
-      return operator[](i);
-    }
-  };
-
   // Database of U6 coefficients
   class U3U6_db
   {
     // using key_type = std::array<uint8_t, 12>;
     using key_type = std::pair<uint64_t, uint32_t>;
-    using value_type = std::vector<double>;
+    using value_type = coeffs_t;
 
 #ifdef U3LIB_ENABLE_U3U6_CACHE
     qcx_utils::Cache<key_type, value_type> cache_;
-#else
-    using return_type = std::vector<double>;
 #endif
 
     inline static value_type* p_result_ = nullptr;
@@ -280,7 +231,7 @@ namespace u3
 
       return U6(u3A,gArrA,u3B,gArrB,u3ABC,gArrABC,u3C,gArrC,
                 u3AB,gArrAB,rhoABmax,rhoAB_Cmax,
-                u3BC,gArrBC,rhoBCmax,rhoA_BCmax);
+                u3BC,gArrBC,rhoBCmax,rhoA_BCmax).data();
     }
 
   public:
@@ -437,7 +388,7 @@ namespace u3
   }
 
   // Input by users: u3B, u3A, u3ABC, u3C, u3AB, u3AC
-  inline std::vector<double>
+  inline auto
   Z6(const u3::irrep& u3B, const std::vector<u3::gelfand>& gArrB,
      const u3::irrep& u3A, const std::vector<u3::gelfand>& gArrA,
      const u3::irrep& u3ABC, const std::vector<u3::gelfand>& gArrABC,
@@ -452,7 +403,6 @@ namespace u3
     auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-    auto& cgcs = qcx_utils::cgcs();
     auto& racahs = qcx_utils::racahs();
     auto& wigU3U2db = u3::wigU3U2db();
 
@@ -466,11 +416,11 @@ namespace u3
     {
       for (int n22B = u3B.n23(); n22B >= u3B.n33() && !done; n22B--)
       {
-        auto [allowAC_B, accAC_B] = wigU3U2db.get(
+        auto accAC_B = wigU3U2db.get(
           u3AC.n13(), u3AC.n23(), u3AC.n33(), u3AC.n13(), u3AC.n23(), 
           u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B,
           u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
-        if (!allowAC_B) continue;
+        if (accAC_B.size() == 0) continue;
 
         A.row(r) = accAC_B;
 
@@ -482,27 +432,27 @@ namespace u3
             {
               for (int n22AB = u3AB.n23(); n22AB >= u3AB.n33(); n22AB--)
               {
-                auto [allowAB, accAB] = wigU3U2db.get(
+                auto accAB = wigU3U2db.get(
                   u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A, 
                   u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B, 
                   u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB);
-                if (!allowAB) continue;
+                if (accAB.size() == 0) continue;
                 
                 for (int n12C = u3C.n13(); n12C >= u3C.n23(); n12C--)
                 {
                   for (int n22C = u3C.n23(); n22C >= u3C.n33(); n22C--)
                   {
-                    auto [allowAB_C, accAB_C] = wigU3U2db.get(
+                    auto accAB_C = wigU3U2db.get(
                       u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB, 
                       u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C, 
                       u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
-                    if (!allowAB_C) continue;
+                    if (accAB_C.size() == 0) continue;
 
-                    auto [allowAC, accAC] = wigU3U2db.get(
+                    auto accAC = wigU3U2db.get(
                       u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A, 
                       u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C,
                       u3AC.n13(), u3AC.n23(), u3AC.n33(), u3AC.n13(), u3AC.n23());
-                    if (!allowAC) continue;
+                    if (accAC.size() == 0) continue;
 
                     int llA = n12A - n22A, llB = n12B - n22B,
                         ll = u3ABC.n13() - u3ABC.n23(), llC = n12C - n22C,
@@ -533,7 +483,8 @@ namespace u3
 
     Eigen::MatrixXd X = A.householderQr().solve(B);
 
-    std::vector<double> Z(rhoABmax * rhoAB_Cmax * rhoACmax * rhoAC_Bmax);
+    // std::vector<double> Z(rhoABmax * rhoAB_Cmax * rhoACmax * rhoAC_Bmax);
+    U3Z6<coeffs_t> Z(rhoABmax, rhoAB_Cmax, rhoACmax, rhoAC_Bmax);
 
     for (int rAB = 0; rAB < rhoABmax; rAB++)
       for (int rAB_C = 0; rAB_C < rhoAB_Cmax; rAB_C++)
@@ -569,63 +520,15 @@ namespace u3
     return Z;
   }
 
-  // Custom class for holding Z6 coefficients
-  template <typename T>
-  class U3Z6
-  {
-    T coeffs_;
-    qcx_utils::NDIndex4 ndi_;
-
-  public:
-    U3Z6()
-    {
-      ndi_.add_dimensions(0, 0, 0, 0);
-      assert(coeffs_.size() == ndi_.cardinality());
-    }
-
-    U3Z6(T&& coeffs, size_t rhoABmax, size_t rhoAB_Cmax, 
-                     size_t rhoACmax, size_t rhoAC_Bmax)
-        : coeffs_(std::move(coeffs))
-    {
-      ndi_.add_dimensions(rhoABmax, rhoAB_Cmax, rhoACmax, rhoAC_Bmax);
-      assert(coeffs_.size() == ndi_.cardinality());
-    }
-
-    size_t size() const { return coeffs_.size(); }
-
-    bool empty() const { return size() == 0; }
-
-    size_t rhoABmax() const { return ndi_.dimension(0); }
-    size_t rhoAB_Cmax() const { return ndi_.dimension(1); }
-    size_t rhoBCmax() const { return ndi_.dimension(2); }
-    size_t rhoA_BCmax() const { return ndi_.dimension(3); }
-
-    double operator[](size_t i) const
-    {
-      assert(i < coeffs_.size());
-      return coeffs_[i];
-    }
-
-    double get(size_t rhoAB, size_t rhoAB_C, size_t rhoAC, size_t rhoAC_B)
-    {
-      std::array multi_index = {rhoAB, rhoAB_C, rhoAC, rhoAC_B};
-      size_t i = ndi_.to_linear(multi_index);
-      return operator[](i);
-    }
-  };
-
   // Database of Z6 coefficients
   class U3Z6_db
   {
     // using key_type = std::array<uint8_t, 12>;
     using key_type = std::pair<uint64_t, uint32_t>;
-    using value_type = std::vector<double>;
+    using value_type = coeffs_t;
 
 #ifdef U3LIB_ENABLE_U3Z6_CACHE
     qcx_utils::Cache<key_type, value_type> cache_;
-    using return_type = std::span<const double>;
-#else
-    using return_type = std::vector<double>;
 #endif
 
     inline static value_type* p_result_ = nullptr;
@@ -693,7 +596,7 @@ namespace u3
 
       return Z6(u3B,gArrB,u3A,gArrA,u3ABC,gArrABC,u3C,gArrC,
                 u3AB,gArrAB,rhoABmax,rhoAB_Cmax,
-                u3AC,gArrAC,rhoACmax,rhoAC_Bmax);
+                u3AC,gArrAC,rhoACmax,rhoAC_Bmax).data();
     }
 
   public:

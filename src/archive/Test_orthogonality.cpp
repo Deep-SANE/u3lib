@@ -45,15 +45,15 @@ int main(int argc, char* argv[])
         double cgc1 = cgcs.get({LamA, LamB, LamC1, MLamA, MLamB, MLamC1}),
                cgc2 = cgcs.get({LamA, LamB, LamC2, MLamA, MLamB, MLamC2});
 
-        auto [allow1, U3_1] = wigU3U2db.get(2,0,0,gA.n12(),gA.n22(),
-                                            2,2,0,gB.n12(),gB.n22(),
-                                            4,2,0,gC1.n12(),gC1.n22());
+        auto U3_1 = wigU3U2db.get(2,0,0,gA.n12(),gA.n22(),
+                                  2,2,0,gB.n12(),gB.n22(),
+                                  4,2,0,gC1.n12(),gC1.n22());
 
-        auto [allow2, U3_2] = wigU3U2db.get(2,0,0,gA.n12(),gA.n22(),
+        auto U3_2 = wigU3U2db.get(2,0,0,gA.n12(),gA.n22(),
                                             2,2,0,gB.n12(),gB.n22(),
                                             0,0,0,0,0);
 
-        if (!allow1 || !allow2) continue;
+        if (U3_1.size() == 0 or U3_2.size() == 0) continue;
 
         assert(U3_1.size() == 1);
         assert(U3_2.size() == 1);

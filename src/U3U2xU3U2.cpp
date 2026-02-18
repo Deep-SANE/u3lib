@@ -58,9 +58,9 @@ int main(int argc, char* argv[])
   // Start time measurement
   auto t0 = std::chrono::high_resolution_clock::now();
 
-  std::vector<u3::gelfand> gArrA = u3::gelfandBasis(u3a),
-                           gArrB = u3::gelfandBasis(u3b),
-                           gArrC = u3::gelfandBasis(u3c);
+  u3::gelfands gArrA = u3::gelfandBasis(u3a),
+               gArrB = u3::gelfandBasis(u3b),
+               gArrC = u3::gelfandBasis(u3c);
 
   auto coeffs =
       u3::WigU3U2(u3a, u3b, u3c, rhomaxs[index], -1, gArrA, gArrB, gArrC);

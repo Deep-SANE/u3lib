@@ -21,7 +21,7 @@
 
 namespace u3
 {
-  // generate Wigner U3->SO(3) coefficients for multiple values of l1, l2, l3
+  // Generate Wigner U3->SO(3) coefficients for multiple values of l1, l2, l3
   inline auto
   WigU3SO3(int rhomax, 
            const std::vector<u3::physicalvector>& pArrA,
@@ -43,7 +43,8 @@ namespace u3
       std::tie(canoBasisC[i], transformationC[i]) =
           u3::phys_to_cano(pArrC[i], pArrC[i].L(), gArrC);
 
-    std::vector<Eigen::MatrixXd> coeffs;
+    // arrays to store the results
+    std::vector<U3SO3<coeffs_t>> coeffs;
     std::vector<std::tuple<int, int, int>> tArr;
 
 #ifdef ADD_SU3LIB_PHASE_U3SO3
@@ -79,9 +80,8 @@ namespace u3
           {
             tArr.emplace_back(i, j, k);
 
-            Eigen::MatrixXd coeffs_temp(KA * KB * KC, rhomax);
-            coeffs_temp.setZero();
-
+            U3SO3<coeffs_t> coeffs_temp(KA, KB, KC, rhomax);
+            
             int mB = LC - LA;
             const auto& canoB = canoBasisB[LB - mB];
             const auto& transB = transformationB[LB - mB];
@@ -101,7 +101,7 @@ namespace u3
                 {
                   const auto& gC = gArrC[canoC[iC]];
 
-                  auto [allow, canoCoeffs] = wigU3U2db.get(
+                  auto canoCoeffs = wigU3U2db.get(
                     gA.n13(), gA.n23(), gA.n33(), gA.n12(), gA.n22(),
                     gB.n13(), gB.n23(), gB.n33(), gB.n12(), gB.n22(),
                     gC.n13(), gC.n23(), gC.n33(), gC.n12(), gC.n22());
@@ -110,7 +110,7 @@ namespace u3
                       jj2 = gB.Lambdax2(), mm2 = gB.MLambdax2(),
                       jj3 = gC.Lambdax2(), mm3 = gC.MLambdax2();
 
-                  if ((allow == false) || ((mm1 + mm2) != mm3))
+                  if ((canoCoeffs.size() == 0) || ((mm1 + mm2) != mm3))
                     continue;
 
                   auto wigU3U2U1 =
@@ -120,7 +120,7 @@ namespace u3
                     for (int k1 = 0; k1 < KA; k1++)
                       for (int k2 = 0; k2 < KB; k2++)
                         for (int k3 = 0; k3 < KC; k3++)
-                          coeffs_temp((k1 * KB + k2) * KC + k3, r) +=
+                          coeffs_temp(k1, k2, k3, r) +=
                                        transA(iA, k1) * transB(iB, k2) *
                                        transC(iC, k3) * wigU3U2U1(r);
                 }
@@ -165,8 +165,7 @@ namespace u3
           {
             tArr.emplace_back(i, j, k);
 
-            Eigen::MatrixXd coeffs_temp(KA * KB * KC, rhomax);
-            coeffs_temp.setZero();
+            U3SO3<coeffs_t> coeffs_temp(KA, KB, KC, rhomax);
 
             int mA = LC - LB, mA_abs;
             if (mA >= 0) mA_abs = mA;
@@ -205,7 +204,7 @@ namespace u3
                   //auto acc =
                   //    canoCoeffs.access(n12A, n22A, n12B, n22B, n12C, n22C);
 
-                  auto [allow, canoCoeffs] = wigU3U2db.get(
+                  auto canoCoeffs = wigU3U2db.get(
                     pArrA[0].n13(), pArrA[0].n23(), pArrA[0].n33(), n12A, n22A,
                     pArrB[0].n13(), pArrB[0].n23(), pArrB[0].n33(), n12B, n22B,
                     pArrC[0].n13(), pArrC[0].n23(), pArrC[0].n33(), n12C, n22C);
@@ -218,7 +217,7 @@ namespace u3
                       mm3 = gArrC[canoBasisC[k][iC]].MLambdax2();
                   if (mA < 0) mm1 *= -1;
 
-                  if ((allow == false) || ((mm1 + mm2) != mm3)) continue;
+                  if ((canoCoeffs.size() == 0) || ((mm1 + mm2) != mm3)) continue;
 
                   auto wigU3U2U1 =
                       canoCoeffs * cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
@@ -233,12 +232,12 @@ namespace u3
                       for (int k2 = 0; k2 < KB; k2++)
                         for (int k3 = 0; k3 < KC; k3++)
                           if (mA >= 0)
-                            coeffs_temp((k1 * KB + k2) * KC + k3, r) +=
+                            coeffs_temp(k1, k2, k3, r) +=
                                 transformationA[LA - mA_abs](iA, k1) *
                                 transformationB[j](iB, k2) *
                                 transformationC[k](iC, k3) * wigU3U2U1(r);
                           else
-                            coeffs_temp((k1 * KB + k2) * KC + k3, r) += phase *
+                            coeffs_temp(k1, k2, k3, r) += phase *
                                 transformationA[LA - mA_abs](iA, k1) *
                                 transformationB[j](iB, k2) *
                                 transformationC[k](iC, k3) * wigU3U2U1(r);
@@ -256,13 +255,13 @@ namespace u3
     return std::make_pair(tArr, coeffs);
   }
 
-#define U3LIB_ENABLE_WIGU3SO3_CACHE
-
+  // Database of Wigner U3->SO(3) coefficients
   class WigU3SO3_db
   {
     // using key_type = std::array<uint8_t, 9>;
     using key_type = std::pair<uint64_t, uint8_t>;
-    using value_type = Eigen::MatrixXd;
+
+    using value_type = coeffs_t;
 
 #ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
     qcx_utils::Cache<key_type, value_type> cache_;
@@ -337,8 +336,7 @@ namespace u3
       // find transformation for the 3rd state
       auto [canoC, transC] = u3::phys_to_cano(pC, LC, gArrC);
 
-      Eigen::MatrixXd coeffs(KA * KB * KC, rhomax);
-      coeffs.setZero();
+      U3SO3<coeffs_t> coeffs(KA, KB, KC, rhomax);
 
 #ifdef ADD_SU3LIB_PHASE_U3SO3
       // find transformation for the 1st state
@@ -372,7 +370,7 @@ namespace u3
           {
             const auto& gC = gArrC[canoC[iC]];
 
-            auto [allow, canoCoeffs] = wigU3U2db.get(
+            auto canoCoeffs = wigU3U2db.get(
               gA.n13(), gA.n23(), gA.n33(), gA.n12(), gA.n22(),
               gB.n13(), gB.n23(), gB.n33(), gB.n12(), gB.n22(),
               gC.n13(), gC.n23(), gC.n33(), gC.n12(), gC.n22());
@@ -381,7 +379,7 @@ namespace u3
                 jj2 = gB.Lambdax2(), mm2 = gB.MLambdax2(),
                 jj3 = gC.Lambdax2(), mm3 = gC.MLambdax2();
 
-            if ((allow == false) || ((mm1 + mm2) != mm3)) continue;
+            if ((canoCoeffs.size() == 0) || ((mm1 + mm2) != mm3)) continue;
 
             auto wigU3U2U1 =
                 canoCoeffs * cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
@@ -390,26 +388,26 @@ namespace u3
               for (int k1 = 0; k1 < KA; k1++)
                 for (int k2 = 0; k2 < KB; k2++)
                   for (int k3 = 0; k3 < KC; k3++)
-                    coeffs((k1 * KB + k2) * KC + k3, r) 
-                      += transA(iA, k1) * transB(iB, k2) *
-                         transC(iC, k3) * wigU3U2U1(r);
+                  {
+                    coeffs(k1, k2, k3, r) += transA(iA, k1) 
+                      * transB(iB, k2) * transC(iC, k3) * wigU3U2U1(r);
+                  }
           }
         }
       }
 
-      coeffs /= cgc1;
+      for (size_t i = 0; i < coeffs.size(); i++)
+      {
+        if (std::fabs(coeffs[i]) < 1e-12) coeffs[i] = 0.0;
+        else coeffs[i] /= cgc1;
+      }
 
-      for (size_t i = 0; i < coeffs.rows(); i++)
-        for (size_t j = 0; j < coeffs.cols(); j++)
-          if (std::fabs(coeffs(i, j)) < 1e-12)
-            coeffs(i, j) = 0.0;
-    
-      return coeffs;
+      return coeffs.data();
     }
 
   public:
-    std::pair<bool, value_type> get(int lam1, int mu1, int l1, int lam2,
-                                    int mu2, int l2, int lam3, int mu3, int l3)
+    U3SO3<value_type> get_U3SO3(int lam1, int mu1, int l1, int lam2,
+                                int mu2, int l2, int lam3, int mu3, int l3)
     {
       // normalized irreps:
       u3::irrep u3a(lam1, mu1), u3b(lam2, mu2), u3c(lam3, mu3);
@@ -418,7 +416,7 @@ namespace u3
 
       if ((rhomax == 0) || (pA.kappa() == 0) || (pB.kappa() == 0) ||
           (pC.kappa() == 0) || (u2::mult(l1, l2, l3) == 0))
-        return {false, value_type()};
+        return {};
 
 #ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
       std::array<qcx_utils::UInt8, 9> safe_key = {lam1, mu1,  l1,  lam2, mu2,
@@ -446,7 +444,52 @@ namespace u3
       *p_result_ = compute(rhomax, pA, pB, pC);
 #endif
 
-      return {true, *p_result_};
+      return {std::move(*p_result_), 
+              static_cast<size_t>(pA.kappa()),
+              static_cast<size_t>(pB.kappa()),
+              static_cast<size_t>(pC.kappa()), 
+              static_cast<size_t>(rhomax)};
+    }
+
+    value_type get(int lam1, int mu1, int l1, int lam2,
+                   int mu2, int l2, int lam3, int mu3, int l3)
+    {
+      // normalized irreps:
+      u3::irrep u3a(lam1, mu1), u3b(lam2, mu2), u3c(lam3, mu3);
+      int rhomax = u3::Rho(u3a, u3b, u3c);
+      u3::physicalvector pA(u3a, l1), pB(u3b, l2), pC(u3c, l3);
+
+      if ((rhomax == 0) || (pA.kappa() == 0) || (pB.kappa() == 0) ||
+          (pC.kappa() == 0) || (u2::mult(l1, l2, l3) == 0))
+        return {};
+
+#ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
+      std::array<qcx_utils::UInt8, 9> safe_key = {lam1, mu1,  l1,  lam2, mu2,
+                                                  l2,   lam3, mu3, l3};
+
+      uint64_t key_1 = 
+        (uint64_t(safe_key[0]) << 56) | (uint64_t(safe_key[1]) << 48) |
+        (uint64_t(safe_key[2]) << 40) | (uint64_t(safe_key[3]) << 32) |
+        (uint64_t(safe_key[4]) << 24) | (uint64_t(safe_key[5]) << 16) |
+        (uint64_t(safe_key[6]) << 8) | uint64_t(safe_key[7]);
+
+      key_type key = {key_1, safe_key[8]};
+      /*
+      key_type key = {safe_key[0], safe_key[1], safe_key[2],
+                      safe_key[3], safe_key[4], safe_key[5],
+                      safe_key[6], safe_key[7], safe_key[8]};
+      */
+      auto producer = [rhomax, &pA, &pB, &pC](key_type)
+      { return compute(rhomax, pA, pB, pC); };
+
+      auto accessor = [](const auto& element) { *p_result_ = element.second; };
+
+      cache_.visit(key, producer, accessor);
+#else
+      *p_result_ = compute(rhomax, pA, pB, pC);
+#endif
+
+      return *p_result_;
     }
 
     friend WigU3SO3_db& wigU3SO3db();

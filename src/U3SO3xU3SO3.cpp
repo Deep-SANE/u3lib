@@ -146,19 +146,7 @@ int main(int argc, char* argv[])
               << ") k1 " << pArrA[i].L() << " ; (" << lam2 << "," << mu2
               << ") k2 " << pArrB[j].L() << " || "
               << "(" << u3C.lam() << "," << u3C.mu() << ") k3 " << pArrC[k].L()
-              << " > "
-              << "for rho = 1 ... " << rhomax << std::endl;
-    std::cout << "k1\tk2\tk3" << std::endl;
-
-    Eigen::MatrixXd coeffs_temp = coeffs[t];
-
-    for (int k1 = 0; k1 < pArrA[i].kappa(); k1++)
-      for (int k2 = 0; k2 < pArrB[j].kappa(); k2++)
-        for (int k3 = 0; k3 < pArrC[k].kappa(); k3++)
-          std::cout << "" << k1 + 1 << "\t" << k2 + 1 << "\t" << k3 + 1 << "\t"
-                    << coeffs_temp.row(
-                           (k1 * pArrB[j].kappa() + k2) * pArrC[k].kappa() + k3)
-                    << std::endl;
+              << " >\n" << coeffs[t] << std::endl;
   }
 
   // Calculate the duration

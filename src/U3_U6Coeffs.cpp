@@ -105,14 +105,14 @@ int main(int argc, char* argv[])
     // Start time measurement
     auto t0 = std::chrono::high_resolution_clock::now();
 
-    std::vector<u3::gelfand> gArrA = u3::gelfandBasis(u3a);
-    std::vector<u3::gelfand> gArrB = u3::gelfandBasis(u3b);
-    std::vector<u3::gelfand> gArrC = u3::gelfandBasis(u3c);
-    std::vector<u3::gelfand> gArrAB = u3::gelfandBasis(u3ab[i_ab]);
-    std::vector<u3::gelfand> gArrBC = u3::gelfandBasis(u3bc[i_bc]);
-    std::vector<u3::gelfand> gArrABC = u3::gelfandBasis(u3ab_c[i_ab_c]);
+    u3::gelfands gArrA = u3::gelfandBasis(u3a);
+    u3::gelfands gArrB = u3::gelfandBasis(u3b);
+    u3::gelfands gArrC = u3::gelfandBasis(u3c);
+    u3::gelfands gArrAB = u3::gelfandBasis(u3ab[i_ab]);
+    u3::gelfands gArrBC = u3::gelfandBasis(u3bc[i_bc]);
+    u3::gelfands gArrABC = u3::gelfandBasis(u3ab_c[i_ab_c]);
 
-    std::vector<double> coeffs = u3::U6(
+    auto coeffs = u3::U6(
         u3a, gArrA, u3b, gArrB, u3ab_c[i_ab_c], gArrABC, u3c, gArrC, u3ab[i_ab],
         gArrAB, rhomaxsab[i_ab], rhomaxsab_c[i_ab_c], u3bc[i_bc], gArrBC,
         rhomaxsbc[i_bc], rhomaxa_bc);
@@ -127,25 +127,7 @@ int main(int argc, char* argv[])
               << u3c << ";" << u3ab[i_ab] << ",\t    " << u3bc[i_bc]
               << std::endl;
 
-    for (int rab = 0; rab < rhomaxsab[i_ab]; rab++)
-    {
-      for (int rab_c = 0; rab_c < rhomaxsab_c[i_ab_c]; rab_c++)
-      {
-        for (int rbc = 0; rbc < rhomaxsbc[i_bc]; rbc++)
-        {
-          for (int ra_bc = 0; ra_bc < rhomaxa_bc; ra_bc++)
-          {
-            std::cout << "\t\t\t\t\t  " << rab + 1 << "   " << rab_c + 1
-                      << "\t\t     " << rbc + 1 << "  " << ra_bc + 1 << "\t -> "
-                      << coeffs[((rab * rhomaxsab_c[i_ab_c] + rab_c) *
-                                     rhomaxsbc[i_bc] +
-                                 rbc) *
-                                    rhomaxa_bc + ra_bc]
-                      << std::endl;
-          }
-        }
-      }
-    }
+    std::cout << coeffs << std::endl;
 
     // Calculate the duration
     std::chrono::duration<double> duration = t1 - t0;

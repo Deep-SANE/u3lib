@@ -16,7 +16,6 @@
 
 #include <Eigen/Dense>
 
-#include "GlobalDefinitions.h"
 #include "U3decomposition.h"
 #include "U3_U6Z6Coeffs.h"
 #include "U3basis.h"
@@ -29,7 +28,7 @@ namespace u3
 {
   // input by users: u3a, u3b, u3c, u3d, u3ab, u3cd, u3ac, u3bd, u3abcd
   // all normalized
-  inline std::vector<double>
+  inline auto
   U9(const u3::irrep& u3A, const std::vector<u3::gelfand>& gArrA,
      const u3::irrep& u3B, const std::vector<u3::gelfand>& gArrB,
      const u3::irrep& u3C, const std::vector<u3::gelfand>& gArrC,
@@ -53,9 +52,12 @@ namespace u3
     auto& wigU3U2db = u3::wigU3U2db();
     auto& u3u6db = u3::u3u6db();
     auto& u3z6db = u3::u3z6db();
-
+/*
     std::vector<double> U(rhoACmax * rhoBDmax * rhoAB_CDmax * rhoABmax *
                               rhoCDmax * rhoAC_BDmax, 0.0);
+*/
+    U3U9<coeffs_t> U(rhoACmax, rhoBDmax, rhoAB_CDmax, 
+                     rhoABmax, rhoCDmax, rhoAC_BDmax);
 
     // couple u3AB and u3C
     auto [u3AB_C, rhomaxsAB_C] = u3::decomposition(u3AB, u3C);
@@ -69,33 +71,33 @@ namespace u3
       if (rhoABC_Dmax == 0) continue;
 
 #if defined(U3LIB_ENABLE_U3U6_CACHE) && defined(U3LIB_ENABLE_U3Z6_CACHE)
-      auto U6_1 = u3u6db.get_U3U6(u3AC, u3B, u3ABCD, u3D,
-                                  u3AB_C[i], rhomaxAC_B, rhoABC_Dmax, 
-                                  u3BD, rhoBDmax, rhoAC_BDmax);
+      const auto U6_1 = u3u6db.get_U3U6(u3AC, u3B, u3ABCD, u3D,
+                                        u3AB_C[i], rhomaxAC_B, rhoABC_Dmax, 
+                                        u3BD, rhoBDmax, rhoAC_BDmax);
       if (U6_1.empty()) continue;
 
-      auto U6_2 = u3u6db.get_U3U6(u3AB, u3C, u3ABCD, u3D,
-                                  u3AB_C[i], rhomaxsAB_C[i], rhoABC_Dmax, 
-                                  u3CD, rhoCDmax, rhoAB_CDmax);
+      const auto U6_2 = u3u6db.get_U3U6(u3AB, u3C, u3ABCD, u3D,
+                                        u3AB_C[i], rhomaxsAB_C[i], rhoABC_Dmax, 
+                                        u3CD, rhoCDmax, rhoAB_CDmax);
       if (U6_2.empty()) continue;
     
-      auto Z6 = u3z6db.get_U3Z6(u3B, u3A, u3AB_C[i], u3C, 
-                                u3AB, rhoABmax, rhomaxsAB_C[i], 
-                                u3AC, rhoACmax, rhomaxAC_B);
+      const auto Z6 = u3z6db.get_U3Z6(u3B, u3A, u3AB_C[i], u3C, 
+                                      u3AB, rhoABmax, rhomaxsAB_C[i], 
+                                      u3AC, rhoACmax, rhomaxAC_B);
       if (Z6.empty()) continue;
 #else
-      std::vector<u3::gelfand> gArrABC = u3::gelfandBasis(u3AB_C[i]);
+      u3::gelfands gArrABC = u3::gelfandBasis(u3AB_C[i]);
 
-      std::vector<double> U6_1 =
+      const auto U6_1 =
           u3::U6(u3AC, gArrAC, u3B, gArrB, u3ABCD, gArrABCD, u3D, gArrD,
                  u3AB_C[i], gArrABC, rhomaxAC_B, rhoABC_Dmax, u3BD, gArrBD,
                  rhoBDmax, rhoAC_BDmax);
 
-      std::vector<double> U6_2 =
+      const auto U6_2 =
           u3::U6(u3AB, gArrAB, u3C, gArrC, u3ABCD, gArrABCD, u3D, gArrD,
                  u3AB_C[i], gArrABC, rhomaxsAB_C[i], rhoABC_Dmax, u3CD, gArrCD,
                  rhoCDmax, rhoAB_CDmax);
-      std::vector<double> Z6 =
+      const auto Z6 =
           u3::Z6(u3B, gArrB, u3A, gArrA, u3AB_C[i], gArrABC, u3C, gArrC, u3AB,
                  gArrAB, rhoABmax, rhomaxsAB_C[i], u3AC, gArrAC, rhoACmax,
                  rhomaxAC_B);
@@ -112,14 +114,12 @@ namespace u3
                       for (int rABC_D = 0; rABC_D < rhoABC_Dmax; rABC_D++)
                       {
 #if defined(U3LIB_ENABLE_U3U6_CACHE) && defined(U3LIB_ENABLE_U3Z6_CACHE)
-                        U[((((rAC * rhoBDmax + rBD) * rhoAB_CDmax + rAB_CD) *
-                        rhoABmax + rAB) * rhoCDmax + rCD) * rhoAC_BDmax + rAC_BD] 
-                        += U6_1.get(rAC_B, rABC_D, rBD, rAC_BD) 
-                         * Z6.get(rAB, rAB_C, rAC, rAC_B) 
-                         * U6_2.get(rAB_C, rABC_D, rCD, rAB_CD);
+                        U(rAC, rBD, rAB_CD, rAB, rCD, rAC_BD)
+                        += U6_1(rAC_B, rABC_D, rBD, rAC_BD) 
+                         * Z6(rAB, rAB_C, rAC, rAC_B) 
+                         * U6_2(rAB_C, rABC_D, rCD, rAB_CD);
 #else
-                        U[((((rAC * rhoBDmax + rBD) * rhoAB_CDmax + rAB_CD) *
-                        rhoABmax + rAB) * rhoCDmax + rCD) * rhoAC_BDmax + rAC_BD] 
+                        U(rAC, rBD, rAB_CD, rAB, rCD, rAC_BD) 
                         += U6_1[((rAC_B * rhoABC_Dmax + rABC_D) * rhoBDmax +
                                   rBD) * rhoAC_BDmax + rAC_BD] 
                          * Z6[((rAB * rhomaxsAB_C[i] + rAB_C) * rhoACmax +
@@ -148,61 +148,12 @@ namespace u3
     return U;
   }
 
-  // Custom class for holding U9 coefficients
-  template <typename T>
-  class U3U9
-  {
-    T coeffs_;
-    qcx_utils::NDIndex6 ndi_;
-
-  public:
-    U3U9()
-    {
-      ndi_.add_dimensions(0, 0, 0, 0, 0, 0);
-      assert(coeffs_.size() == ndi_.cardinality());
-    }
-
-    U3U9(T&& coeffs, size_t rhoACmax, size_t rhoBDmax, size_t rhoABCDmax,
-         size_t rhoABmax, size_t rhoCDmax, size_t rhoACBDmax)
-        : coeffs_(std::move(coeffs))
-    {
-      ndi_.add_dimensions(rhoACmax, rhoBDmax, rhoABCDmax, rhoABmax, rhoCDmax,
-                          rhoACBDmax);
-      assert(coeffs_.size() == ndi_.cardinality());
-    }
-
-    size_t size() const { return coeffs_.size(); }
-
-    bool empty() const { return size() == 0; }
-
-    size_t rhoACmax() const { return ndi_.dimension(0); }
-    size_t rhoBDmax() const { return ndi_.dimension(1); }
-    size_t rhoABCDmax() const { return ndi_.dimension(2); }
-    size_t rhoABmax() const { return ndi_.dimension(3); }
-    size_t rhoCDmax() const { return ndi_.dimension(4); }
-    size_t rhoACBDmax() const { return ndi_.dimension(5); }
-
-    double operator[](size_t i) const
-    {
-      assert(i < coeffs_.size());
-      return coeffs_[i];
-    }
-
-    double get(size_t rhoAC, size_t rhoBD, size_t rhoABCD, size_t rhoAB,
-               size_t rhoCD, size_t rhoACBD)
-    {
-      std::array multi_index = {rhoAC, rhoBD, rhoABCD, rhoAB, rhoCD, rhoACBD};
-      size_t i = ndi_.to_linear(multi_index);
-      return operator[](i);
-    }
-  };
-
   // Database of U9 coefficients
   class U3U9_db
   {
     // using key_type = std::array<uint8_t, 18>;
     using key_type = std::tuple<uint64_t, uint64_t, uint16_t>;
-    using value_type = std::vector<double>;
+    using value_type = coeffs_t;
 
 #ifdef U3LIB_ENABLE_U3U9_CACHE
     qcx_utils::Cache<key_type, value_type> cache_;
@@ -283,7 +234,7 @@ namespace u3
       return U9(u3A, gArrA, u3B, gArrB, u3C, gArrC, u3D, gArrD, u3AB, gArrAB,
                 u3CD, gArrCD, u3AC, gArrAC, u3BD, gArrBD, u3ABCD, gArrABCD,
                 rhoABmax, rhoCDmax, rhoAB_CDmax, rhoACmax, rhoBDmax,
-                rhoAC_BDmax);
+                rhoAC_BDmax).data();
     }
 
   public:

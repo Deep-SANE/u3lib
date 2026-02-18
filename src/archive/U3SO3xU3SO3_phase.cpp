@@ -78,14 +78,14 @@ int main(int argc, char* argv[])
   	{
   	  for (const auto& pC : pArrC)
   	  {
-  	  	auto [flag, cgcU3] = wigU3SO3db.get(lam1, mu1, pA.L(),
+  	  	auto cgcU3 = wigU3SO3db.get(lam1, mu1, pA.L(),
   	  										   lam2, mu2, pB.L(), lam3, mu3, pC.L());
 
-  	  	if (flag)
+  	  	if (!cgcU3.empty())
   	  	{
-  	  	  auto [flag_conj, cgcU3_conj] = wigU3SO3db.get(lam3, mu3, pC.L(),
+  	  	  auto cgcU3_conj = wigU3SO3db.get(lam3, mu3, pC.L(),
   	  										               mu2, lam2, pB.L(), lam1, mu1, pA.L());
-          assert(flag_conj);
+          assert(!cgcU3_conj.empty());
 
           int phi = lam1 + mu1 - pA.L() - (lam3 + mu3 - pC.L()) - pB.L();
 

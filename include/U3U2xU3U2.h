@@ -17,7 +17,6 @@
 #include <Eigen/Sparse>
 #endif
 
-#include "GlobalDefinitions.h"
 #include "U3basis.h"
 #include "U3decomposition.h"
 
@@ -153,7 +152,7 @@ namespace u3
                 row += kmax - kmin + 1;
             }
         }
-
+      
       coeffs_.resize(row, rhomax);
       coeffs_.setZero();
 
@@ -1045,7 +1044,7 @@ namespace u3
     }
 
   public:
-    std::pair<bool, db_value_type> get(
+    db_value_type get(
       int n13a, int n23a, int n33a, int n12a, int n22a, 
       int n13b, int n23b, int n33b, int n12b, int n22b, 
       int n13c, int n23c, int n33c, int n12c, int n22c)
@@ -1073,9 +1072,7 @@ namespace u3
       auto n22c_ = n22c - n33c;
 
       if (rhomax == 0 || u2::mult(n12a_ - n22a_, n12b_ - n22b_, n12c_ - n22c_) == 0)
-        return {false, db_value_type()};
-
-      bool flag = false;
+        return db_value_type();
 
       std::array<qcx_utils::UInt8, 6> ht_key_safe = {
           u3a.n13(), u3a.n23(), u3b.n13(), u3b.n23(), u3c.n13(), u3c.n23()};
@@ -1087,6 +1084,8 @@ namespace u3
         (uint64_t(ht_key_safe[0]) << 56) | (uint64_t(ht_key_safe[1]) << 48) |
         (uint64_t(ht_key_safe[2]) << 40) | (uint64_t(ht_key_safe[3]) << 32) |
         (uint64_t(ht_key_safe[4]) << 24) | (uint64_t(ht_key_safe[5]) << 16);
+
+      bool flag = false;
 
 #ifdef U3LIB_ENABLE_WIGU3U2_CACHE
       auto producer = [&u3a, &u3b, &u3c, rhomax](ht_key_type ht_key) 
@@ -1126,8 +1125,10 @@ namespace u3
 
       if (flag)
         assert((p_result_->cols() == rhomax));
+      else
+        return db_value_type();
 
-      return {flag, *p_result_};
+      return *p_result_;
     }
 
     friend WigU3U2_db& wigU3U2db();
