@@ -423,6 +423,10 @@ namespace u3
     }
     
     friend U3U9_db& u3u9db();
+
+#ifdef U3LIB_ENABLE_U3U9_CACHE
+    void clear() { cache_.clear(); }
+#endif
   };
 
   inline U3U9_db& u3u9db()

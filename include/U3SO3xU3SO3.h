@@ -493,6 +493,10 @@ namespace u3
     }
 
     friend WigU3SO3_db& wigU3SO3db();
+
+#ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
+    void clear() { cache_.clear(); }
+#endif
   };
 
   inline WigU3SO3_db& wigU3SO3db()

@@ -1132,6 +1132,10 @@ namespace u3
     }
 
     friend WigU3U2_db& wigU3U2db();
+
+#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
+    void clear() { cache_.clear(); }
+#endif
   };
 
   inline WigU3U2_db& wigU3U2db()

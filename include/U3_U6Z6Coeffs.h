@@ -378,6 +378,10 @@ namespace u3
     }
   
     friend U3U6_db& u3u6db();
+
+#ifdef U3LIB_ENABLE_U3U6_CACHE
+    void clear() { cache_.clear(); }
+#endif
   };
 
   inline U3U6_db& u3u6db()
@@ -741,6 +745,10 @@ namespace u3
     }
 
     friend U3Z6_db& u3z6db();
+
+#ifdef U3LIB_ENABLE_U3Z6_CACHE
+    void clear() { cache_.clear(); }
+#endif
   };
 
   inline U3Z6_db& u3z6db()

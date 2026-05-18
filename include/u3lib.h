@@ -43,6 +43,15 @@ namespace u3
     U3Z6_db::finalize_thread();
     U3U9_db::finalize_thread();
   }
+
+  inline void clear()
+  {
+    wigU3U2db().clear();
+    wigU3SO3db().clear();
+    u3u6db().clear();
+    u3z6db().clear();
+    u3u9db().clear();
+  }
 }
 
 #endif
