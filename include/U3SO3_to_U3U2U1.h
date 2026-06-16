@@ -9,15 +9,17 @@
 #include <vector>
 
 #include <Eigen/Dense>
-#ifdef USE_SLEPC
+#ifdef NULLSPACE_SPARSE
 #include <Eigen/Sparse>
 #endif
 
 #include "U3basis.h"
 
 #include <nullspace_solver_qr.h>
-#ifdef USE_SLEPC
+#if defined(NULLSPACE_SOLVER_SLEPC)
 #include <nullspace_solver_slepc.h>
+#elif defined(NULLSPACE_SOLVER_SNS)
+#include <nullspace_solver_sns.h>
 #endif
 
 namespace u3
@@ -79,7 +81,7 @@ namespace u3
 
     int row_num = new_indices.size(), col_num = indices.size();
 
-#ifdef USE_SLEPC
+#ifdef NULLSPACE_SPARSE
     std::vector<Eigen::Triplet<double>> ija;
 #else
     Eigen::MatrixXd projector(row_num, col_num);
@@ -95,13 +97,13 @@ namespace u3
 
         // action of E13
         if (u3::E13_12(g, g_new))
-#ifdef USE_SLEPC
+#ifdef NULLSPACE_SPARSE
           ija.emplace_back(i, j, g.e13_12());
 #else
           projector(i, j) = g.e13_12();
 #endif
         else if (u3::E13_22(g, g_new))
-#ifdef USE_SLEPC
+#ifdef NULLSPACE_SPARSE
           ija.emplace_back(i, j, g.e13_22());
 #else
           projector(i, j) = g.e13_22();
@@ -110,20 +112,20 @@ namespace u3
         // action of E32
         else if (u3::E23_12(g_new, g))
 
-#ifdef USE_SLEPC
+#ifdef NULLSPACE_SPARSE
           ija.emplace_back(i, j, g.e32_12());
 #else
           projector(i, j) = g.e32_12();
 #endif          
         else if (u3::E23_22(g_new, g))
-#ifdef USE_SLEPC
+#ifdef NULLSPACE_SPARSE
           ija.emplace_back(i, j, g.e32_22());
 #else
           projector(i, j) = g.e32_22();
 #endif 
 
         else
-#ifdef USE_SLEPC
+#ifdef NULLSPACE_SPARSE
           ;
 #else
           projector(i, j) = 0.0;
@@ -131,7 +133,7 @@ namespace u3
       }
     }
 
-#ifdef USE_SLEPC
+#ifdef NULLSPACE_SPARSE
     Eigen::SparseMatrix<double> projector(row_num, col_num);
     projector.setFromTriplets(ija.begin(), ija.end());
 #endif
@@ -274,7 +276,9 @@ namespace u3
       // Building the projection matrix
       auto Lproj = u3::Lprojection(gArr, canoBasis);
       // and solving its null space
-#ifdef USE_SLEPC
+#if defined(NULLSPACE_SOLVER_SNS)
+      transformation = qcx_utils::null_space_sns(Lproj, p.kappa());
+#elif defined(NULLSPACE_SOLVER_SLEPC)
       transformation = qcx_utils::null_space_slepc(Lproj, p.kappa());
 #else
       transformation = qcx_utils::null_space(Lproj);
@@ -285,7 +289,9 @@ namespace u3
     // Building the projection matrix
     auto Lproj = u3::Lprojection(gArr, canoBasis);
     // and solving its null space
-#ifdef USE_SLEPC
+#if defined(NULLSPACE_SOLVER_SNS)
+    transformation = qcx_utils::null_space_sns(Lproj, p.kappa());
+#elif defined(NULLSPACE_SOLVER_SLEPC)
     transformation = qcx_utils::null_space_slepc(Lproj, p.kappa());
 #else
     transformation = qcx_utils::null_space(Lproj);
@@ -385,7 +391,9 @@ namespace u3
       // Building the projection matrix
       auto Lproj = u3::Lprojection(gArr, canoBasis[0]);
       // and solving its null space
-#ifdef USE_SLEPC
+#if defined(NULLSPACE_SOLVER_SNS)
+      transformation[0] = qcx_utils::null_space_sns(Lproj, p.kappa());
+#elif defined(NULLSPACE_SOLVER_SLEPC)
       transformation[0] = qcx_utils::null_space_slepc(Lproj, p.kappa());
 #else
       transformation[0] = qcx_utils::null_space(Lproj);
@@ -396,7 +404,9 @@ namespace u3
     // Building the projection matrix
     auto Lproj = u3::Lprojection(gArr, canoBasis[0]);
     // and solving its null space
-#ifdef USE_SLEPC
+#if defined(NULLSPACE_SOLVER_SNS)
+    transformation[0] = qcx_utils::null_space_sns(Lproj, p.kappa());
+#elif defined(NULLSPACE_SOLVER_SLEPC)
     transformation[0] = qcx_utils::null_space_slepc(Lproj, p.kappa());
 #else
     transformation[0] = qcx_utils::null_space(Lproj);
@@ -495,7 +505,7 @@ namespace u3
 
     int row_num = new_indices.size(), col_num = indices.size();
 
-#ifdef USE_SLEPC
+#ifdef NULLSPACE_SPARSE
     std::vector<Eigen::Triplet<double>> ija;
 #else
     Eigen::MatrixXd projector(row_num, col_num);
@@ -507,13 +517,13 @@ namespace u3
       {
         // action of E13
         if (u3::E13_12(gArr[indices[j]], gArr[new_indices[i]]))
-#ifdef USE_SLEPC
+#ifdef NULLSPACE_SPARSE
           ija.emplace_back(i, j, gArr[indices[j]].e13_12());
 #else
           projector(i, j) = gArr[indices[j]].e13_12();
 #endif
         else if (u3::E13_22(gArr[indices[j]], gArr[new_indices[i]]))
-#ifdef USE_SLEPC
+#ifdef NULLSPACE_SPARSE
           ija.emplace_back(i, j, gArr[indices[j]].e13_22());
 #else
           projector(i, j) = gArr[indices[j]].e13_22();
@@ -522,20 +532,20 @@ namespace u3
         // action of E32
         else if (u3::E23_12(gArr[new_indices[i]], gArr[indices[j]]))
 
-#ifdef USE_SLEPC
+#ifdef NULLSPACE_SPARSE
           ija.emplace_back(i, j, gArr[indices[j]].e32_12());
 #else
           projector(i, j) = gArr[indices[j]].e32_12();
 #endif          
         else if (u3::E23_22(gArr[new_indices[i]], gArr[indices[j]]))
-#ifdef USE_SLEPC
+#ifdef NULLSPACE_SPARSE
           ija.emplace_back(i, j, gArr[indices[j]].e32_22());
 #else
           projector(i, j) = gArr[indices[j]].e32_22();
 #endif
 
         else
-#ifdef USE_SLEPC
+#ifdef NULLSPACE_SPARSE
           ;
 #else
           projector(i, j) = 0.0;
@@ -543,7 +553,7 @@ namespace u3
       }
     }
 
-#ifdef USE_SLEPC
+#ifdef NULLSPACE_SPARSE
     Eigen::SparseMatrix<double> projector(row_num, col_num);
     projector.setFromTriplets(ija.begin(), ija.end());
 #endif
@@ -591,7 +601,7 @@ namespace u3
 
       transformation_new.row(i) *= n;
 
-#ifdef USE_SLEPC
+#ifdef NULLSPACE_SPARSE
         double tol = 1e-12;
 #else
         double tol = 1e-12;

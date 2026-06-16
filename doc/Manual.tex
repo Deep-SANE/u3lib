@@ -350,7 +350,7 @@ In directory \verb|src/utils|, there are a number of utility functions that are 
 
 1. Sparsity of a matrix, which is the ratio between the number of zero elements and the total number of element: 
 \begin{lstlisting}
-    float sparisity(Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> &mat)
+    float sparsity(Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> &mat)
 \end{lstlisting}
 Returns a value between 0 and 1. Throughout the code, a matrix is considered to be sparse if its sparsity is greater than 0.7.
 
