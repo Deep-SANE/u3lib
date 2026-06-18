@@ -13,8 +13,11 @@
 #include <vector>
 
 #include <Eigen/Dense>
-#ifdef NULLSPACE_SPARSE
 #include <Eigen/Sparse>
+
+#include "Definitions.h"
+#ifdef TIME_WIGU3U2
+#include <chrono>
 #endif
 
 #include "U3basis.h"
@@ -280,6 +283,57 @@ namespace u3
               const std::vector<u3::gelfand>& gArr2,
               std::vector<std::pair<int, int>>& indices)
   {
+    // ---- single-pass build (two-pass original kept commented below) ----
+    // Each valid raise of a child state gives its parent (the matrix row) AND
+    // the value directly: E12/E23_12/E23_22 ARE exactly the n11/n12/n22 raises
+    // (see U3basis.h), so the old pass 2 only re-derived what pass 1 found.
+    const int col_num = indices.size();
+
+    std::map<std::pair<int, int>, int> parent_row; // parent (g1,g2) -> row
+    std::vector<Eigen::Triplet<double>> ija;
+    int row_num = 0;
+
+    auto add = [&](int pi, int pj, int col, double val)
+    {
+      auto [it, inserted] = parent_row.try_emplace({pi, pj}, row_num);
+      if (inserted) row_num++;
+      ija.emplace_back(it->second, col, val);
+    };
+
+    for (int k = 0; k < col_num; k++)
+    {
+      const int g1 = indices[k].first, g2 = indices[k].second;
+      const u3::gelfand& G1 = gArr1[g1];
+      const u3::gelfand& G2 = gArr2[g2];
+
+      // parents of the first state (operator acts on g1, g2 unchanged)
+      u3::gelfand t = G1; t.n11(t.n11() + 1);
+      if (t.check()) add(u3::findGelfand(t, gArr1), g2, k, G1.e12());
+      t = G1; t.n12(t.n12() + 1);
+      if (t.check()) add(u3::findGelfand(t, gArr1), g2, k, G1.e23_12());
+      t = G1; t.n22(t.n22() + 1);
+      if (t.check()) add(u3::findGelfand(t, gArr1), g2, k, G1.e23_22());
+
+      // parents of the second state (operator acts on g2, g1 unchanged)
+      t = G2; t.n11(t.n11() + 1);
+      if (t.check()) add(g1, u3::findGelfand(t, gArr2), k, G2.e12());
+      t = G2; t.n12(t.n12() + 1);
+      if (t.check()) add(g1, u3::findGelfand(t, gArr2), k, G2.e23_12());
+      t = G2; t.n22(t.n22() + 1);
+      if (t.check()) add(g1, u3::findGelfand(t, gArr2), k, G2.e23_22());
+    }
+
+#ifdef NULLSPACE_SPARSE
+    Eigen::SparseMatrix<double> mat(row_num, col_num);
+    mat.setFromTriplets(ija.begin(), ija.end());
+#else
+    Eigen::MatrixXd mat = Eigen::MatrixXd::Zero(row_num, col_num);
+    for (const auto& t : ija) mat(t.row(), t.col()) = t.value();
+#endif
+
+    return mat;
+
+/* ---- original two-pass version (kept for reference) ----
     int col_num = indices.size();
 
     std::vector<std::pair<int, int>> new_indices; // store the parent states
@@ -430,6 +484,7 @@ namespace u3
 #endif
 
     return mat;
+*/
   }
 
   // we only want to store reduced U(3)->U(2) coupling coefficients,
@@ -1041,11 +1096,32 @@ namespace u3
       // irrep u3b(ht_key[2], ht_key[3], 0);
       // irrep u3c(ht_key[4], ht_key[5], 0);
 
+#ifdef TIME_WIGU3U2
+      static std::chrono::duration<double> wigu3u2_time(0);
+      static double wigu3u2_last_print = 0.0;
+      auto start = std::chrono::high_resolution_clock::now();
+#endif
+
       auto gArrA = u3::gelfandBasis(u3a);
       auto gArrB = u3::gelfandBasis(u3b);
       auto gArrC = u3::gelfandBasis(u3c);
 
-      return WigU3U2(u3a, u3b, u3c, rhomax, -1, gArrA, gArrB, gArrC);
+      auto result = WigU3U2(u3a, u3b, u3c, rhomax, -1, gArrA, gArrB, gArrC);
+
+#ifdef TIME_WIGU3U2
+      auto end = std::chrono::high_resolution_clock::now();
+      wigu3u2_time += end - start; // duration in seconds
+
+      // Print occasionally
+      if (wigu3u2_time.count() - wigu3u2_last_print >= 10.0)
+      {
+        std::cout << "Accumulated WigU3U2 time: " << wigu3u2_time.count()
+                  << " s\n";
+        wigu3u2_last_print = wigu3u2_time.count();
+      }
+#endif
+
+      return result;
     }
 
   public:

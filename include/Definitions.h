@@ -9,8 +9,10 @@ namespace u3
 //////////// COMPILER DEFINITIONS //////////////
 
 #define U3LIB_ENABLE_WIGU3U2_CACHE
+// #define TIME_WIGU3U2
 
 #define U3LIB_ENABLE_WIGU3SO3_CACHE
+// #define TIME_WIGU3SO3
 
 #define U3LIB_ENABLE_U3U6_CACHE
 #define U3LIB_ENABLE_U3Z6_CACHE

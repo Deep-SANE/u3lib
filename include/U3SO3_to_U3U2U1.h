@@ -9,9 +9,7 @@
 #include <vector>
 
 #include <Eigen/Dense>
-#ifdef NULLSPACE_SPARSE
 #include <Eigen/Sparse>
-#endif
 
 #include "U3basis.h"
 
@@ -43,6 +41,48 @@ namespace u3
   inline auto Lprojection(const std::vector<u3::gelfand>& gArr, 
                           const std::vector<int>& indices)
   {
+    // ---- single-pass build (two-pass original kept commented below) ----
+    // Evaluate each E13/E23 action once: collect nonzero entries and give each
+    // connected target row the next contiguous index lazily.
+    const int col_num = indices.size();
+
+    std::vector<Eigen::Triplet<double>> ija;
+    int row_num = 0;
+
+    for (int i = 0; i < gArr.size(); i++)
+    {
+      const auto& g_new = gArr[i];
+      bool connected = false;
+
+      for (int j = 0; j < col_num; j++)
+      {
+        const auto& g = gArr[indices[j]];
+
+        double val = 0.0;
+        if      (u3::E13_12(g, g_new)) val = g.e13_12();
+        else if (u3::E13_22(g, g_new)) val = g.e13_22();
+        else if (u3::E23_12(g_new, g)) val = g.e32_12();
+        else if (u3::E23_22(g_new, g)) val = g.e32_22();
+        else continue;
+
+        connected = true;
+        ija.emplace_back(row_num, j, val);
+      }
+
+      if (connected) row_num++;
+    }
+
+#ifdef NULLSPACE_SPARSE
+    Eigen::SparseMatrix<double> projector(row_num, col_num);
+    projector.setFromTriplets(ija.begin(), ija.end());
+#else
+    Eigen::MatrixXd projector = Eigen::MatrixXd::Zero(row_num, col_num);
+    for (const auto& t : ija) projector(t.row(), t.col()) = t.value();
+#endif
+
+    return projector;
+
+/* ---- original two-pass version (kept for reference) ----
     std::vector<int> new_indices;
 
     for (int i = 0; i < gArr.size(); i++)
@@ -139,12 +179,13 @@ namespace u3
 #endif
 
     return projector;
+*/
   }
 
   // action of the lowering operator L- = sqrt(2)*(E31 + E23)
   inline auto lowerM(
     const u3::physicalvector& p, const int& M, // M is for the new state
-    const std::vector<u3::gelfand>& gArr, 
+    const std::vector<u3::gelfand>& gArr,
     const std::vector<int>& canoBasis,
     const Eigen::MatrixXd& transformation)
   {

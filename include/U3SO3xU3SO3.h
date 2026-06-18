@@ -11,6 +11,11 @@
 
 #include <Eigen/Dense>
 
+#include "Definitions.h"
+#ifdef TIME_WIGU3SO3
+#include <chrono>
+#endif
+
 #include "U3basis.h"
 #include "U3SO3_to_U3U2U1.h"
 #include "U3U2xU3U2.h"
@@ -322,6 +327,12 @@ namespace u3
                               const u3::physicalvector& pB,
                               const u3::physicalvector& pC)
     {
+#ifdef TIME_WIGU3SO3
+      static std::chrono::duration<double> wigu3so3_time(0);
+      static double wigu3so3_last_print = 0.0;
+      auto start = std::chrono::high_resolution_clock::now();
+#endif
+
       auto& cgcs = qcx_utils::cgcs();
       auto& wigU3U2db = u3::wigU3U2db();
 
@@ -370,28 +381,36 @@ namespace u3
           {
             const auto& gC = gArrC[canoC[iC]];
 
-            auto canoCoeffs = wigU3U2db.get(
-              gA.n13(), gA.n23(), gA.n33(), gA.n12(), gA.n22(),
-              gB.n13(), gB.n23(), gB.n33(), gB.n12(), gB.n22(),
-              gC.n13(), gC.n23(), gC.n33(), gC.n12(), gC.n22());
-
             int jj1 = gA.Lambdax2(), mm1 = gA.MLambdax2(),
                 jj2 = gB.Lambdax2(), mm2 = gB.MLambdax2(),
                 jj3 = gC.Lambdax2(), mm3 = gC.MLambdax2();
 
-            if ((canoCoeffs.size() == 0) || ((mm1 + mm2) != mm3)) continue;
+            auto cgc = cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
+            if (std::fabs(cgc) == 0.0) continue;
 
-            auto wigU3U2U1 =
-                canoCoeffs * cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
+            auto canoCoeffs = wigU3U2db.get(
+              gA.n13(), gA.n23(), gA.n33(), gA.n12(), gA.n22(),
+              gB.n13(), gB.n23(), gB.n33(), gB.n12(), gB.n22(),
+              gC.n13(), gC.n23(), gC.n33(), gC.n12(), gC.n22());
+            if (canoCoeffs.size() == 0) continue;
 
-            for (int r = 0; r < rhomax; r++)
-              for (int k1 = 0; k1 < KA; k1++)
-                for (int k2 = 0; k2 < KB; k2++)
-                  for (int k3 = 0; k3 < KC; k3++)
-                  {
-                    coeffs(k1, k2, k3, r) += transA(iA, k1) 
-                      * transB(iB, k2) * transC(iC, k3) * wigU3U2U1(r);
-                  }
+            auto wigU3U2U1 = canoCoeffs * cgc;
+
+            for (int k1 = 0; k1 < KA; k1++)
+            {
+              double a = transA(iA, k1);
+              for (int k2 = 0; k2 < KB; k2++)
+              {
+                double ab = a * transB(iB, k2);
+                for (int k3 = 0; k3 < KC; k3++)
+                {
+                  double abc = ab * transC(iC, k3);
+
+                  for (int r = 0; r < rhomax; r++)
+                    coeffs(k1, k2, k3, r) += abc * wigU3U2U1(r);
+                }
+              }
+            }
           }
         }
       }
@@ -401,6 +420,19 @@ namespace u3
         if (std::fabs(coeffs[i]) < 1e-12) coeffs[i] = 0.0;
         else coeffs[i] /= cgc1;
       }
+
+#ifdef TIME_WIGU3SO3
+      auto end = std::chrono::high_resolution_clock::now();
+      wigu3so3_time += end - start; // duration in seconds
+
+      // Print occasionally
+      if (wigu3so3_time.count() - wigu3so3_last_print >= 10.0)
+      {
+        std::cout << "Accumulated WigU3SO3 time: " << wigu3so3_time.count()
+                  << " s\n";
+        wigu3so3_last_print = wigu3so3_time.count();
+      }
+#endif
 
       return coeffs.data();
     }

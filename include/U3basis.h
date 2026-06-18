@@ -101,13 +101,40 @@ namespace u3
 
   // find the location (index) of a Gelfand state within the Gelfand basis above
   inline std::size_t findGelfand(const u3::gelfand& g,
-                                 const std::vector<u3::gelfand>& gArr)
+                                 [[maybe_unused]] const std::vector<u3::gelfand>& gArr)
   {
+/*
+    // O(lambda*mu) index into gelfandBasis(x)'s fixed enumeration order
+    // (n12 desc n13..n23, n22 desc n23..n33, n11 desc n12..n22), replacing the
+    // previous O(basis-dimension) linear scan. The index of g = (n12,n22,n11)
+    // is the number of states emitted before it.
+    const int n13 = g.n13(), n23 = g.n23(), n33 = g.n33();
+    const int n12 = g.n12(), n22 = g.n22(), n11 = g.n11();
+
+    std::size_t index = 0;
+
+    // complete n12' blocks above this one (n12' = n13 .. n12+1)
+    for (int n12p = n13; n12p > n12; n12p--)
+      for (int n22p = n23; n22p >= n33; n22p--)
+        index += (n12p - n22p + 1); // # of n11 values in that (n12',n22') row
+
+    // n22' rows above this one within the n12 block (n22' = n23 .. n22+1)
+    for (int n22p = n23; n22p > n22; n22p--)
+      index += (n12 - n22p + 1);
+
+    // position of n11 within its row (n11 descending from n12)
+    index += (n12 - n11);
+
+    assert(index < gArr.size() && u3::E11(g, gArr[index]));
+    return index;
+*/
+
     std::size_t i;
     for (i = 0; i < gArr.size(); i++)
       if (u3::E11(g, gArr[i])) break;
-        
+
     return i;
+
   }
 
   /*------------------------------------------------------
