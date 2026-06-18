@@ -145,7 +145,7 @@ namespace u3
     u3u6_time += end - start;  // duration in seconds
 
     // Print occasionally 
-    if (u3u6_time.count() - u3u6_last_print >= 1.0) 
+    if (u3u6_time.count() - u3u6_last_print >= 10.0) 
     {
         std::cout << "Accumulated U3U6 time: " << u3u6_time.count() << " s\n";
         u3u6_last_print = u3u6_time.count();
@@ -514,7 +514,7 @@ namespace u3
     u3z6_time += end - start;  // duration in seconds
 
     // Print occasionally 
-    if (u3z6_time.count() - u3z6_last_print >= 1.0) 
+    if (u3z6_time.count() - u3z6_last_print >= 10.0) 
     {
         std::cout << "Accumulated U3Z6 time: " << u3z6_time.count() << " s\n";
         u3z6_last_print = u3z6_time.count();

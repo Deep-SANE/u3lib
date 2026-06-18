@@ -138,7 +138,7 @@ namespace u3
     u3u9_time += end - start;  // duration in seconds
 
     // Print occasionally 
-    if (u3u9_time.count() - u3u9_last_print >= 1.0) 
+    if (u3u9_time.count() - u3u9_last_print >= 10.0) 
     {
         std::cout << "Accumulated U3U9 time: " << u3u9_time.count() << " s\n";
         u3u9_last_print = u3u9_time.count();
