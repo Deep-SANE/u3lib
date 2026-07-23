@@ -109,25 +109,37 @@ namespace u3
             for (int rAB = 0; rAB < rhoABmax; rAB++)
               for (int rCD = 0; rCD < rhoCDmax; rCD++)
                 for (int rAC_BD = 0; rAC_BD < rhoAC_BDmax; rAC_BD++)
+                {
+                  // destination is fixed across the three summation loops:
+                  // resolve the 6-dim flatten once (accumulation order and
+                  // multiplication association unchanged -> bit-identical)
+                  double& dest = U(rAC, rBD, rAB_CD, rAB, rCD, rAC_BD);
+
                   for (int rAC_B = 0; rAC_B < rhomaxAC_B; rAC_B++)
                     for (int rAB_C = 0; rAB_C < rhomaxsAB_C[i]; rAB_C++)
-                      for (int rABC_D = 0; rABC_D < rhoABC_Dmax; rABC_D++)
-                      {
+                    {
 #if defined(U3LIB_ENABLE_U3U6_CACHE) && defined(U3LIB_ENABLE_U3Z6_CACHE)
-                        U(rAC, rBD, rAB_CD, rAB, rCD, rAC_BD)
-                        += U6_1(rAC_B, rABC_D, rBD, rAC_BD) 
-                         * Z6(rAB, rAB_C, rAC, rAC_B) 
-                         * U6_2(rAB_C, rABC_D, rCD, rAB_CD);
+                      // Z6 does not depend on rABC_D
+                      const double z6 = Z6(rAB, rAB_C, rAC, rAC_B);
+
+                      for (int rABC_D = 0; rABC_D < rhoABC_Dmax; rABC_D++)
+                        dest += U6_1(rAC_B, rABC_D, rBD, rAC_BD)
+                              * z6
+                              * U6_2(rAB_C, rABC_D, rCD, rAB_CD);
 #else
-                        U(rAC, rBD, rAB_CD, rAB, rCD, rAC_BD) 
-                        += U6_1[((rAC_B * rhoABC_Dmax + rABC_D) * rhoBDmax +
-                                  rBD) * rhoAC_BDmax + rAC_BD] 
-                         * Z6[((rAB * rhomaxsAB_C[i] + rAB_C) * rhoACmax +
-                                rAC) * rhomaxAC_B + rAC_B] 
-                         * U6_2[((rAB_C * rhoABC_Dmax + rABC_D) * rhoCDmax +
-                                  rCD) * rhoAB_CDmax + rAB_CD];
+                      const double z6 =
+                          Z6[((rAB * rhomaxsAB_C[i] + rAB_C) * rhoACmax +
+                              rAC) * rhomaxAC_B + rAC_B];
+
+                      for (int rABC_D = 0; rABC_D < rhoABC_Dmax; rABC_D++)
+                        dest += U6_1[((rAC_B * rhoABC_Dmax + rABC_D) * rhoBDmax +
+                                      rBD) * rhoAC_BDmax + rAC_BD]
+                              * z6
+                              * U6_2[((rAB_C * rhoABC_Dmax + rABC_D) * rhoCDmax +
+                                      rCD) * rhoAB_CDmax + rAB_CD];
 #endif
-                      }
+                    }
+                }
     }
 
     for (int i = 0; i < U.size(); i++)

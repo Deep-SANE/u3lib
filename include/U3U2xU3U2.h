@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <limits>
 #include <map>
+#include <memory>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -225,6 +226,24 @@ namespace u3
       assert(acc.computed == true);
 
       return coeffs_.row(acc.row);
+    }
+
+    // Row lookup with the same filters as WigU3U2_db::get: not-allowed when
+    // the U(2) triangle rule fails for the row labels or the row is outside
+    // the selection rules. Lets consumers holding the coeffs object (via
+    // WigU3U2_db::get_coeffs) resolve rows locally, without going back to the
+    // shared cache. Labels must be normalized (n33 subtracted), as in the
+    // stored irreps.
+    Accessor find_row(int n12a, int n22a, int n12b, int n22b, int n12c,
+                      int n22c) const
+    {
+      if (u2::mult(n12a - n22a, n12b - n22b, n12c - n22c) == 0)
+        return {false, false, 0};
+
+      auto acc = access(n12a, n22a, n12b, n22b, n12c, n22c);
+      assert(!acc.allowed || acc.computed);
+
+      return acc;
     }
 
     template <typename T>
@@ -1033,7 +1052,12 @@ namespace u3
 
     // using ht_key_type = std::array<uint8_t, 6>;
     using ht_key_type = uint64_t;
-    using ht_value_type = WigU3U2_coeffs;
+    // The cache stores each computed WigU3U2_coeffs behind a shared_ptr:
+    // get_coeffs hands the pointer out with a refcount bump only (no copy,
+    // no lifetime hazard -- the object is immutable once computed), so hot
+    // consumers (WigU3SO3/U6/Z6) visit the concurrent map once per irrep
+    // triple instead of once per Gelfand-label row.
+    using ht_value_type = std::shared_ptr<const WigU3U2_coeffs>;
 
 #ifdef U3LIB_ENABLE_WIGU3U2_CACHE
     qcx_utils::Cache<ht_key_type, ht_value_type> cache_;
@@ -1106,7 +1130,8 @@ namespace u3
       auto gArrB = u3::gelfandBasis(u3b);
       auto gArrC = u3::gelfandBasis(u3c);
 
-      auto result = WigU3U2(u3a, u3b, u3c, rhomax, -1, gArrA, gArrB, gArrC);
+      auto result = std::make_shared<const WigU3U2_coeffs>(
+          WigU3U2(u3a, u3b, u3c, rhomax, -1, gArrA, gArrB, gArrC));
 
 #ifdef TIME_WIGU3U2
       auto end = std::chrono::high_resolution_clock::now();
@@ -1125,9 +1150,51 @@ namespace u3
     }
 
   public:
+    // Fetch the whole coefficient table for an irrep triple: one concurrent-
+    // map visit, shared-pointer handout (no copy). Returns nullptr when the
+    // coupling is forbidden (rhomax == 0). Hot consumers hold the pointer and
+    // resolve rows locally with find_row()/get_row().
+    std::shared_ptr<const WigU3U2_coeffs> get_coeffs(
+      u3::irrep u3a, u3::irrep u3b, u3::irrep u3c)
+    {
+      u3a.normalize();
+      u3b.normalize();
+      u3c.normalize();
+
+      auto rhomax = Rho(u3a, u3b, u3c);
+      if (rhomax == 0)
+        return nullptr;
+
+      std::array<qcx_utils::UInt8, 6> ht_key_safe = {
+          u3a.n13(), u3a.n23(), u3b.n13(), u3b.n23(), u3c.n13(), u3c.n23()};
+
+      ht_key_type ht_key =
+        (uint64_t(ht_key_safe[0]) << 56) | (uint64_t(ht_key_safe[1]) << 48) |
+        (uint64_t(ht_key_safe[2]) << 40) | (uint64_t(ht_key_safe[3]) << 32) |
+        (uint64_t(ht_key_safe[4]) << 24) | (uint64_t(ht_key_safe[5]) << 16) | 0;
+
+      std::shared_ptr<const WigU3U2_coeffs> result;
+
+#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
+      auto producer = [&u3a, &u3b, &u3c, rhomax](ht_key_type)
+      {
+        return compute(u3a, u3b, u3c, rhomax);
+      };
+
+      auto accessor = [&result](const auto& element)
+      { result = element.second; };
+
+      cache_.visit(ht_key, producer, accessor);
+#else
+      result = compute(u3a, u3b, u3c, rhomax);
+#endif
+
+      return result;
+    }
+
     db_value_type get(
-      int n13a, int n23a, int n33a, int n12a, int n22a, 
-      int n13b, int n23b, int n33b, int n12b, int n22b, 
+      int n13a, int n23a, int n33a, int n12a, int n22a,
+      int n13b, int n23b, int n33b, int n12b, int n22b,
       int n13c, int n23c, int n33c, int n12c, int n22c)
     {
       assert(n13a >= n23a);
@@ -1142,8 +1209,6 @@ namespace u3
       irrep u3b(n13b - n33b, n23b - n33b, 0);
       irrep u3c(n13c - n33c, n23c - n33c, 0);
 
-      auto rhomax = Rho(u3a, u3b, u3c);
-
       // normalized labels:
       auto n12a_ = n12a - n33a;
       auto n22a_ = n22a - n33a;
@@ -1152,64 +1217,25 @@ namespace u3
       auto n12c_ = n12c - n33c;
       auto n22c_ = n22c - n33c;
 
-      if (rhomax == 0 || u2::mult(n12a_ - n22a_, n12b_ - n22b_, n12c_ - n22c_) == 0)
+      // fast pre-filter (as before, avoids triggering a compute for rows the
+      // U(2) triangle rule forbids):
+      if (u2::mult(n12a_ - n22a_, n12b_ - n22b_, n12c_ - n22c_) == 0)
         return db_value_type();
 
-      std::array<qcx_utils::UInt8, 6> ht_key_safe = {
-          u3a.n13(), u3a.n23(), u3b.n13(), u3b.n23(), u3c.n13(), u3c.n23()};
-
-      // ht_key_type ht_key = {ht_key_safe[0], ht_key_safe[1], ht_key_safe[2],
-      //                       ht_key_safe[3], ht_key_safe[4], ht_key_safe[5]};
-
-      ht_key_type ht_key = 
-        (uint64_t(ht_key_safe[0]) << 56) | (uint64_t(ht_key_safe[1]) << 48) |
-        (uint64_t(ht_key_safe[2]) << 40) | (uint64_t(ht_key_safe[3]) << 32) |
-        (uint64_t(ht_key_safe[4]) << 24) | (uint64_t(ht_key_safe[5]) << 16) | 0;
-
-      bool flag = false;
-
-#ifdef U3LIB_ENABLE_WIGU3U2_CACHE
-      auto producer = [&u3a, &u3b, &u3c, rhomax](ht_key_type ht_key) 
-      { 
-        // return compute(ht_key, rhomax); 
-        return compute(u3a, u3b, u3c, rhomax); 
-      };
-
-      auto accessor = [&flag, n12a_, n22a_, n12b_, n22b_, n12c_,
-                       n22c_](const auto& element)
-      {
-        const auto& coeffs = element.second;
-
-        auto acc = coeffs.access(n12a_, n22a_, n12b_, n22b_, n12c_, n22c_);
-
-        flag = acc.allowed;
-        if (flag)
-        {
-          assert(acc.computed);
-          *p_result_ = coeffs.get_row(acc);
-        }
-      };
-
-      cache_.visit(ht_key, producer, accessor);
-#else
-      auto coeffs = compute(u3a, u3b, u3c, rhomax);
-
-      auto acc = coeffs.access(n12a_, n22a_, n12b_, n22b_, n12c_, n22c_);
-
-      flag = acc.allowed;
-      if (flag)
-      {
-        assert(acc.computed);
-        *p_result_ = coeffs.get_row(acc);
-      }
-#endif
-
-      if (flag)
-        assert((p_result_->cols() == rhomax));
-      else
+      auto coeffs = get_coeffs(u3a, u3b, u3c);
+      if (!coeffs)   // rhomax == 0
         return db_value_type();
 
-      return *p_result_;
+      auto acc = coeffs->access(n12a_, n22a_, n12b_, n22b_, n12c_, n22c_);
+      if (!acc.allowed)
+        return db_value_type();
+
+      assert(acc.computed);
+
+      db_value_type result = coeffs->get_row(acc);
+      assert(result.cols() == coeffs->rhomax());
+
+      return result;
     }
 
     friend WigU3U2_db& wigU3U2db();

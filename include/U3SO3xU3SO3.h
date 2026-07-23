@@ -41,6 +41,15 @@ namespace u3
                              gArrB = u3::gelfandBasis(pArrB[0].irr()),
                              gArrC = u3::gelfandBasis(pArrC[0].irr());
 
+    // the U3xU2 table is keyed by the irrep triple only -- fetch it once for
+    // the whole function and resolve rows locally
+    auto canoCoeffsTable =
+        wigU3U2db.get_coeffs(pArrA[0].irr(), pArrB[0].irr(), pArrC[0].irr());
+    assert(canoCoeffsTable);
+
+    // scratch row scaled by the U(1) CGC (rhomax is constant here)
+    Eigen::RowVectorXd wigU3U2U1(rhomax);
+
     // find transformation for physical states belong to the 3rd irrep
     std::vector<std::vector<int>> canoBasisC(pArrC.size());
     std::vector<Eigen::MatrixXd> transformationC(pArrC.size());
@@ -106,20 +115,19 @@ namespace u3
                 {
                   const auto& gC = gArrC[canoC[iC]];
 
-                  auto canoCoeffs = wigU3U2db.get(
-                    gA.n13(), gA.n23(), gA.n33(), gA.n12(), gA.n22(),
-                    gB.n13(), gB.n23(), gB.n33(), gB.n12(), gB.n22(),
-                    gC.n13(), gC.n23(), gC.n33(), gC.n12(), gC.n22());
+                  auto acc = canoCoeffsTable->find_row(gA.n12(), gA.n22(),
+                                                       gB.n12(), gB.n22(),
+                                                       gC.n12(), gC.n22());
 
                   int jj1 = gA.Lambdax2(), mm1 = gA.MLambdax2(),
                       jj2 = gB.Lambdax2(), mm2 = gB.MLambdax2(),
                       jj3 = gC.Lambdax2(), mm3 = gC.MLambdax2();
 
-                  if ((canoCoeffs.size() == 0) || ((mm1 + mm2) != mm3))
+                  if (!acc.allowed || ((mm1 + mm2) != mm3))
                     continue;
 
-                  auto wigU3U2U1 =
-                      canoCoeffs * cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
+                  wigU3U2U1 = canoCoeffsTable->get_row(acc) *
+                              cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
 
                   for (int r = 0; r < rhomax; r++)
                     for (int k1 = 0; k1 < KA; k1++)
@@ -206,13 +214,11 @@ namespace u3
                       n12C = gArrC[canoBasisC[k][iC]].n12(),
                       n22C = gArrC[canoBasisC[k][iC]].n22();
 
-                  //auto acc =
-                  //    canoCoeffs.access(n12A, n22A, n12B, n22B, n12C, n22C);
-
-                  auto canoCoeffs = wigU3U2db.get(
-                    pArrA[0].n13(), pArrA[0].n23(), pArrA[0].n33(), n12A, n22A,
-                    pArrB[0].n13(), pArrB[0].n23(), pArrB[0].n33(), n12B, n22B,
-                    pArrC[0].n13(), pArrC[0].n23(), pArrC[0].n33(), n12C, n22C);
+                  // find_row expects normalized labels (n33 subtracted)
+                  auto acc = canoCoeffsTable->find_row(
+                      n12A - pArrA[0].n33(), n22A - pArrA[0].n33(),
+                      n12B - pArrB[0].n33(), n22B - pArrB[0].n33(),
+                      n12C - pArrC[0].n33(), n22C - pArrC[0].n33());
 
                   int jj1 = gArrA[canoBasisA[LA - mA_abs][iA]].Lambdax2(),
                       mm1 = gArrA[canoBasisA[LA - mA_abs][iA]].MLambdax2(),
@@ -222,10 +228,10 @@ namespace u3
                       mm3 = gArrC[canoBasisC[k][iC]].MLambdax2();
                   if (mA < 0) mm1 *= -1;
 
-                  if ((canoCoeffs.size() == 0) || ((mm1 + mm2) != mm3)) continue;
+                  if (!acc.allowed || ((mm1 + mm2) != mm3)) continue;
 
-                  auto wigU3U2U1 =
-                      canoCoeffs * cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
+                  wigU3U2U1 = canoCoeffsTable->get_row(acc) *
+                              cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
 
                   int phase =
                       ((pArrA[i].lam() + LA +
@@ -344,10 +350,22 @@ namespace u3
       int LA = pA.L(), LB = pB.L(), LC = pC.L(), KA = pA.kappa(),
           KB = pB.kappa(), KC = pC.kappa();
 
+      // The U3xU2 cache key is the irrep triple, constant for the whole
+      // Gelfand loop nest below: fetch the coefficient table once and resolve
+      // rows locally (no per-iteration concurrent-map visits).
+      auto canoCoeffs =
+          wigU3U2db.get_coeffs(pA.irr(), pB.irr(), pC.irr());
+      assert(canoCoeffs);   // rhomax > 0 guaranteed by the caller
+
       // find transformation for the 3rd state
       auto [canoC, transC] = u3::phys_to_cano(pC, LC, gArrC);
 
       U3SO3<coeffs_t> coeffs(KA, KB, KC, rhomax);
+
+      // scratch row scaled by the U(1) CGC; preallocated once (same rhomax
+      // for every row), preserving the exact multiplication order of the
+      // previous per-iteration `canoCoeffs * cgc` temporary
+      Eigen::RowVectorXd wigU3U2U1(rhomax);
 
 #ifdef ADD_SU3LIB_PHASE_U3SO3
       // find transformation for the 1st state
@@ -388,13 +406,12 @@ namespace u3
             auto cgc = cgcs.get({jj1, jj2, jj3, mm1, mm2, mm3});
             if (std::fabs(cgc) == 0.0) continue;
 
-            auto canoCoeffs = wigU3U2db.get(
-              gA.n13(), gA.n23(), gA.n33(), gA.n12(), gA.n22(),
-              gB.n13(), gB.n23(), gB.n33(), gB.n12(), gB.n22(),
-              gC.n13(), gC.n23(), gC.n33(), gC.n12(), gC.n22());
-            if (canoCoeffs.size() == 0) continue;
+            auto acc = canoCoeffs->find_row(gA.n12(), gA.n22(),
+                                            gB.n12(), gB.n22(),
+                                            gC.n12(), gC.n22());
+            if (!acc.allowed) continue;
 
-            auto wigU3U2U1 = canoCoeffs * cgc;
+            wigU3U2U1 = canoCoeffs->get_row(acc) * cgc;
 
             for (int k1 = 0; k1 < KA; k1++)
             {

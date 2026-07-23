@@ -346,11 +346,11 @@ namespace u3
     // Step 2: Lowering to abs(M)
     for (int m = p.L() - 1; m >= std::fabs(M); m--)
     {
-      auto [canoBasis_new, transformation_new] = 
+      auto [canoBasis_new, transformation_new] =
         lowerM(p, m, gArr, canoBasis, transformation);
 
-      transformation = transformation_new;
-      canoBasis = canoBasis_new;
+      transformation = std::move(transformation_new);
+      canoBasis = std::move(canoBasis_new);
     }
 
     // Step 3: if M < 0, generate by conjugation
@@ -378,8 +378,8 @@ namespace u3
         }
       }
 
-      transformation = transformation_new;
-      canoBasis = canoBasis_new;
+      transformation = std::move(transformation_new);
+      canoBasis = std::move(canoBasis_new);
     }
 
     return std::make_pair(canoBasis,transformation);
@@ -458,13 +458,10 @@ namespace u3
     // ensure the nullspace is solved correctly
     assert(p.kappa() == transformation[0].cols());
 
-    // Step 2: Lowering to M = 0
+    // Step 2: Lowering to M = 0 (lowerM computes the new expansion itself)
     for (int m = p.L() - 1; m >= 0; m--)
     {
       auto x = p.L() - m;
-      // store new expansion
-      canoBasis[x] = u3::expand_to_gelfand(m, gArr);
-
       std::tie(canoBasis[x], transformation[x]) = lowerM(
         p, m, gArr, canoBasis[x - 1], transformation[x - 1]);
     }

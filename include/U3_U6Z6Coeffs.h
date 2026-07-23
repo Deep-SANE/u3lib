@@ -41,6 +41,15 @@ namespace u3
     auto& racahs = qcx_utils::racahs();
     auto& wigU3U2db = u3::wigU3U2db();
 
+    // The four U3xU2 tables used below are keyed by irrep triples only:
+    // fetch each once (one concurrent-map visit apiece) and resolve rows
+    // locally in the loop nest.
+    auto cA_BC = wigU3U2db.get_coeffs(u3A, u3BC, u3ABC);
+    auto cAB   = wigU3U2db.get_coeffs(u3A, u3B, u3AB);
+    auto cAB_C = wigU3U2db.get_coeffs(u3AB, u3C, u3ABC);
+    auto cBC   = wigU3U2db.get_coeffs(u3B, u3C, u3BC);
+    assert(cA_BC && cAB && cAB_C && cBC);   // rhomaxes > 0 per preconditions
+
     Eigen::MatrixXd A(rhoA_BCmax, rhoA_BCmax);
     Eigen::MatrixXd B(rhoA_BCmax, rhoABmax * rhoAB_Cmax * rhoBCmax);
     B.setZero();
@@ -51,13 +60,11 @@ namespace u3
     {
       for (int n22A = u3A.n23(); n22A >= u3A.n33() && !done; n22A--)
       {
-        auto accA_BC = wigU3U2db.get(
-            u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A,
-            u3BC.n13(), u3BC.n23(), u3BC.n33(), u3BC.n13(), u3BC.n23(),
-            u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
-        if (accA_BC.size() == 0) continue;
-        
-        A.row(r) = accA_BC;
+        auto accA_BC_acc = cA_BC->find_row(
+            n12A, n22A, u3BC.n13(), u3BC.n23(), u3ABC.n13(), u3ABC.n23());
+        if (!accA_BC_acc.allowed) continue;
+
+        A.row(r) = cA_BC->get_row(accA_BC_acc);
 
         for (int n12B = u3B.n13(); n12B >= u3B.n23(); n12B--)
         {
@@ -67,27 +74,26 @@ namespace u3
             {
               for (int n22AB = u3AB.n23(); n22AB >= u3AB.n33(); n22AB--)
               {
-                auto accAB = wigU3U2db.get(
-                  u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A,
-                  u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B,
-                  u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB);
-                if (accAB.size() == 0) continue;
+                auto accAB_acc = cAB->find_row(
+                    n12A, n22A, n12B, n22B, n12AB, n22AB);
+                if (!accAB_acc.allowed) continue;
+                const auto accAB = cAB->get_row(accAB_acc);
 
                 for (int n12C = u3C.n13(); n12C >= u3C.n23(); n12C--)
                 {
                   for (int n22C = u3C.n23(); n22C >= u3C.n33(); n22C--)
                   {
-                    auto accAB_C = wigU3U2db.get(
-                      u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB,
-                      u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C,
-                      u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
-                    if (accAB_C.size() == 0) continue;
+                    auto accAB_C_acc = cAB_C->find_row(
+                        n12AB, n22AB, n12C, n22C,
+                        u3ABC.n13(), u3ABC.n23());
+                    if (!accAB_C_acc.allowed) continue;
+                    const auto accAB_C = cAB_C->get_row(accAB_C_acc);
 
-                    auto accBC = wigU3U2db.get(
-                      u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B,
-                      u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C,
-                      u3BC.n13(), u3BC.n23(), u3BC.n33(), u3BC.n13(), u3BC.n23());
-                    if (accBC.size() == 0) continue;
+                    auto accBC_acc = cBC->find_row(
+                        n12B, n22B, n12C, n22C,
+                        u3BC.n13(), u3BC.n23());
+                    if (!accBC_acc.allowed) continue;
+                    const auto accBC = cBC->get_row(accBC_acc);
 
                     int llA = n12A - n22A, ll = u3ABC.n13() - u3ABC.n23(), 
                         llBC = u3BC.n13() - u3BC.n23(), llB = n12B - n22B, 
@@ -410,6 +416,14 @@ namespace u3
     auto& racahs = qcx_utils::racahs();
     auto& wigU3U2db = u3::wigU3U2db();
 
+    // Fetch the four U3xU2 tables once (irrep-triple keys), resolve rows
+    // locally in the loop nest (see U6 above).
+    auto cAC_B = wigU3U2db.get_coeffs(u3AC, u3B, u3ABC);
+    auto cAB   = wigU3U2db.get_coeffs(u3A, u3B, u3AB);
+    auto cAB_C = wigU3U2db.get_coeffs(u3AB, u3C, u3ABC);
+    auto cAC   = wigU3U2db.get_coeffs(u3A, u3C, u3AC);
+    assert(cAC_B && cAB && cAB_C && cAC);   // rhomaxes > 0 per preconditions
+
     Eigen::MatrixXd A(rhoAC_Bmax, rhoAC_Bmax);
     Eigen::MatrixXd B(rhoAC_Bmax, rhoABmax * rhoAB_Cmax * rhoACmax);
     B.setZero();
@@ -420,13 +434,11 @@ namespace u3
     {
       for (int n22B = u3B.n23(); n22B >= u3B.n33() && !done; n22B--)
       {
-        auto accAC_B = wigU3U2db.get(
-          u3AC.n13(), u3AC.n23(), u3AC.n33(), u3AC.n13(), u3AC.n23(), 
-          u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B,
-          u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
-        if (accAC_B.size() == 0) continue;
+        auto accAC_B_acc = cAC_B->find_row(
+            u3AC.n13(), u3AC.n23(), n12B, n22B, u3ABC.n13(), u3ABC.n23());
+        if (!accAC_B_acc.allowed) continue;
 
-        A.row(r) = accAC_B;
+        A.row(r) = cAC_B->get_row(accAC_B_acc);
 
         for (int n12A = u3A.n13(); n12A >= u3A.n23(); n12A--)
         {
@@ -436,27 +448,26 @@ namespace u3
             {
               for (int n22AB = u3AB.n23(); n22AB >= u3AB.n33(); n22AB--)
               {
-                auto accAB = wigU3U2db.get(
-                  u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A, 
-                  u3B.n13(), u3B.n23(), u3B.n33(), n12B, n22B, 
-                  u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB);
-                if (accAB.size() == 0) continue;
-                
+                auto accAB_acc = cAB->find_row(
+                    n12A, n22A, n12B, n22B, n12AB, n22AB);
+                if (!accAB_acc.allowed) continue;
+                const auto accAB = cAB->get_row(accAB_acc);
+
                 for (int n12C = u3C.n13(); n12C >= u3C.n23(); n12C--)
                 {
                   for (int n22C = u3C.n23(); n22C >= u3C.n33(); n22C--)
                   {
-                    auto accAB_C = wigU3U2db.get(
-                      u3AB.n13(), u3AB.n23(), u3AB.n33(), n12AB, n22AB, 
-                      u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C, 
-                      u3ABC.n13(), u3ABC.n23(), u3ABC.n33(), u3ABC.n13(), u3ABC.n23());
-                    if (accAB_C.size() == 0) continue;
+                    auto accAB_C_acc = cAB_C->find_row(
+                        n12AB, n22AB, n12C, n22C,
+                        u3ABC.n13(), u3ABC.n23());
+                    if (!accAB_C_acc.allowed) continue;
+                    const auto accAB_C = cAB_C->get_row(accAB_C_acc);
 
-                    auto accAC = wigU3U2db.get(
-                      u3A.n13(), u3A.n23(), u3A.n33(), n12A, n22A, 
-                      u3C.n13(), u3C.n23(), u3C.n33(), n12C, n22C,
-                      u3AC.n13(), u3AC.n23(), u3AC.n33(), u3AC.n13(), u3AC.n23());
-                    if (accAC.size() == 0) continue;
+                    auto accAC_acc = cAC->find_row(
+                        n12A, n22A, n12C, n22C,
+                        u3AC.n13(), u3AC.n23());
+                    if (!accAC_acc.allowed) continue;
+                    const auto accAC = cAC->get_row(accAC_acc);
 
                     int llA = n12A - n22A, llB = n12B - n22B,
                         ll = u3ABC.n13() - u3ABC.n23(), llC = n12C - n22C,
