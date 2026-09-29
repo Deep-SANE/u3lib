@@ -272,6 +272,35 @@ namespace u3
     return std::make_pair(canoBasis_new, transformation_new);
   }
 
+  /*
+   * Phase conventions for phys_to_cano and phys_to_cano_allM:
+   *
+   * Once a highest state |(lambda,mu) kappa L L> is chosen, L_- fixes
+   * the relative phases of all M states within that same kappa multiplet.
+   * The negative-M construction below implements this angular-momentum
+   * relation; it must not be confused with full SU(3) irrep conjugation.
+   *
+   * Define C on Gelfand states by
+   *   C|g> = g.conjugate_phase() |g.conjugate()>.
+   * With ADD_SU3LIB_PHASE_U3SO3 enabled, distinct conjugate irreps obey
+   *   C|(lambda,mu) kappa L M>
+   *     = (-1)^(lambda+mu-L+M) |(mu,lambda) kappa L,-M>.
+   *
+   * For a self-conjugate irrep (n,n), the null-space solver fixes a valid
+   * multiplicity basis, but does not require it to diagonalize conjugation:
+   *   C|(n,n) kappa L M>
+   *     = (-1)^(L-M) sum_kappa' D[kappa',kappa] |(n,n) kappa' L,-M>.
+   * In this real basis, D is M-independent, symmetric, and D*D = I.
+   * It can mix kappa states (e.g. (4,4), L=2 with the QR solver), so it
+   * must not generally be replaced by a scalar phase or the identity.
+   * If T_M contains the physical-state columns in the Gelfand basis,
+   *   D = (-1)^(L-M) transpose(T_-M) C_GT T_M,
+   * where C_GT is the signed Gelfand conjugation map defined above.
+   * Diagonalizing D gives a different kappa basis with conjugation signs
+   * +/-1; any such basis change must also be applied to coupling coefficients.
+   * For an antilinear C, coefficients of superpositions are conjugated too;
+   * the formulas above use the real basis coefficients computed here.
+   */
   // get the transformation for M <= L
 #define ADD_SU3LIB_PHASE_U3SO3
   inline std::pair<std::vector<int>, Eigen::MatrixXd> 
