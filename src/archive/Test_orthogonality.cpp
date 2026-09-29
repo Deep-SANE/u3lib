@@ -8,8 +8,7 @@
 
 int main(int argc, char* argv[])
 {
-  qcx_utils::initialize(&argc, &argv);
-  u3::initialize();
+  u3::initialize(&argc, &argv);
 
   u3::irrep A(2,0,0), B(2,2,0), C1(4,2,0), C2(0,0,0);
 
@@ -66,5 +65,4 @@ int main(int argc, char* argv[])
   }
 
   u3::finalize();
-  qcx_utils::finalize();
 }

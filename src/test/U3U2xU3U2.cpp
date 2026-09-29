@@ -10,8 +10,7 @@
 
 int main(int argc, char* argv[])
 {
-  qcx_utils::initialize(&argc, &argv);
-  u3::initialize();
+  u3::initialize(&argc, &argv);
 
   u3::irrep u3a(4, 2, 0);
   u3::irrep u3b(4, 2, 0);
@@ -42,18 +41,16 @@ int main(int argc, char* argv[])
 std::cout << "Multiple threads:" << std::endl;
 #pragma omp parallel num_threads(3)
   {
-    qcx_utils::initialize_thread();
     u3::initialize_thread();
 
-    auto [flag, row] =
+    auto row =
         u3::wigU3U2db().get(4, 2, 0, 4, 2, 4, 2, 0, 4, 0, 4, 2, 0, 4, 2);
-    assert(flag);
+    assert(row.size() > 0);
+    assert(row.isApprox(coeffs.get_row(acc), 1e-10));
     std::cout << row << std::endl;
 
     u3::finalize_thread();
-    qcx_utils::finalize_thread();
   }
 
   u3::finalize();
-  qcx_utils::finalize();
 }

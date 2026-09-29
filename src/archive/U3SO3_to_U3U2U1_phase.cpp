@@ -11,8 +11,7 @@
 
 int main(int argc, char* argv[])
 {
-  qcx_utils::initialize(&argc, &argv);
-  u3::initialize();
+  u3::initialize(&argc, &argv);
 
 #ifdef ADD_SU3LIB_PHASE_U3SO3
   int lambda, mu;
@@ -100,5 +99,4 @@ int main(int argc, char* argv[])
 #endif
 
   u3::finalize();
-  qcx_utils::finalize();
 }

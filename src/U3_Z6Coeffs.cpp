@@ -15,8 +15,7 @@
 
 int main(int argc, char* argv[])
 {
-  qcx_utils::initialize(&argc, &argv);
-  u3::initialize();
+  u3::initialize(&argc, &argv);
 
   std::cout
       << "This program compute Z6-recoupling coefficients of three U(3) irreps"
@@ -141,5 +140,4 @@ int main(int argc, char* argv[])
   }
 
   u3::finalize();
-  qcx_utils::finalize();
 }

@@ -29,8 +29,7 @@ auto diff(int k1, int k2, int k3,
 
 int main(int argc, char* argv[])
 {
-  qcx_utils::initialize(&argc, &argv);
-  u3::initialize();
+  u3::initialize(&argc, &argv);
 
   auto& wigU3SO3db = u3::wigU3SO3db();
 
@@ -111,5 +110,4 @@ int main(int argc, char* argv[])
 #endif
 
   u3::finalize();
-  qcx_utils::finalize();
 }
