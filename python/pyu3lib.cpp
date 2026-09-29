@@ -36,17 +36,19 @@
 //
 //  su3.irrep(lambda, mu)          SU(3) irrep       str -> "(lambda,mu)"
 //    lambda_(), lam(), mu(), n13(), n23(), n33(), dim(), zero(),
-//    C2(), C3(), conjugate(), conjugate_phase(), ==, !=, str, repr
+//    C2(), C3(), conjugate(), conjugate_phase(), str, repr,
+//    full ordering (== != < <= > >=) and hashable (usable as a dict key)
 //
 //  irrep(lambda, mu) | irrep(n1, n2, n3)   U(3) irrep; derives from su3.irrep
 //    (inherits every su3.irrep method above, and adds / overrides:)
 //    n13(), n23(), n33(), quanta(), C1(), normalize(), zero(),
-//    conjugate(),  str -> "[n13,n23,n33]",  repr
+//    conjugate(),  str -> "[n13,n23,n33]",  repr,
+//    ordering + hash that compare n33 (not just the su3 base labels)
 //
 //  gelfand(n13, n23, n33, n12, n22, n11)   Gelfand-Tsetlin state
 //    n13(), n23(), n33(), n12(), n22(), n11(), check(), normalize(),
 //    lambda_(), mu(), epsilon(), Lambdax2(), MLambdax2(),
-//    conjugate(), conjugate_phase(), ==, !=, str, repr
+//    conjugate(), conjugate_phase(), ==, !=, str, repr, hashable
 //    generator matrix elements:
 //      e11(), e22(), e33(), e12(), e21(),
 //      e23_12(), e23_22(), e32_12(), e32_22(),
@@ -68,6 +70,7 @@
 //
 //  Database methods
 //    WigU3U2_db.get(n13a,n23a,n33a,n12a,n22a, ...b, ...c)  -> numpy row over rho
+//    WigU3U2_db.get_U3U2(<same 15 labels>)                 -> U3U2 (prints like C++)
 //    WigU3SO3_db.get(lam1,mu1,l1, lam2,mu2,l2, lam3,mu3,l3) -> flat numpy
 //    WigU3SO3_db.get_U3SO3(<same 9 args>)                  -> U3SO3
 //    U3U6_db.get_U3U6(u3A,u3B,u3ABC,u3C, u3AB,rhoABmax,rhoAB_Cmax,
@@ -177,8 +180,16 @@ PYBIND11_MODULE(u3lib, m)
       .def("C3", &su3::irrep::C3, "Third-order Casimir.")
       .def("conjugate", &su3::irrep::conjugate)
       .def("conjugate_phase", &su3::irrep::conjugate_phase)
-      .def(py::self == py::self)
+      .def(py::self == py::self)   // full ordering, from the C++ operator<=>
       .def(py::self != py::self)
+      .def(py::self < py::self)
+      .def(py::self <= py::self)
+      .def(py::self > py::self)
+      .def(py::self >= py::self)
+      .def("__hash__",
+           [](const su3::irrep& i) {
+             return py::hash(py::make_tuple(i.lam(), i.mu()));
+           })
       .def("__str__", &to_str<su3::irrep>)     // "(lambda,mu)"
       .def("__repr__", [](const su3::irrep& i) {
         return "su3.irrep(" + std::to_string(i.lam()) + "," +
@@ -204,6 +215,18 @@ PYBIND11_MODULE(u3lib, m)
       .def("normalize", &u3::irrep::normalize, "Set n33 to 0 in place.")
       .def("zero", &u3::irrep::zero, "True for the scalar irrep [0,0,0].")
       .def("conjugate", &u3::irrep::conjugate)
+      // u3-level comparisons (from u3::irrep::operator<=>): these compare n33,
+      // unlike the inherited su3 == which only sees (lambda, mu).
+      .def(py::self == py::self)
+      .def(py::self != py::self)
+      .def(py::self < py::self)
+      .def(py::self <= py::self)
+      .def(py::self > py::self)
+      .def(py::self >= py::self)
+      .def("__hash__",
+           [](const u3::irrep& i) {
+             return py::hash(py::make_tuple(i.n13(), i.n23(), i.n33()));
+           })
       .def("__str__", &to_str<u3::irrep>)      // "[n13,n23,n33]"
       .def("__repr__", [](const u3::irrep& i) {
         return "irrep(" + std::to_string(i.n13()) + "," +
@@ -254,8 +277,13 @@ PYBIND11_MODULE(u3lib, m)
       .def("e13_22", &u3::gelfand::e13_22)
       .def("e31_12", &u3::gelfand::e31_12)
       .def("e31_22", &u3::gelfand::e31_22)
-      .def(py::self == py::self)
+      .def(py::self == py::self)   // gelfand has == / != only (no C++ <=>)
       .def(py::self != py::self)
+      .def("__hash__",
+           [](const u3::gelfand& g) {
+             return py::hash(py::make_tuple(g.n13(), g.n23(), g.n33(), g.n12(),
+                                            g.n22(), g.n11()));
+           })
       .def("__str__", &to_str<u3::gelfand>)
       .def("__repr__", [](const u3::gelfand& g) {
         return "gelfand(" + to_str(g) + ")";
@@ -422,7 +450,24 @@ PYBIND11_MODULE(u3lib, m)
            "n13a"_a, "n23a"_a, "n33a"_a, "n12a"_a, "n22a"_a,
            "n13b"_a, "n23b"_a, "n33b"_a, "n12b"_a, "n22b"_a,
            "n13c"_a, "n23c"_a, "n33c"_a, "n12c"_a, "n22c"_a,
-           "Coefficient row over rho (numpy array).");
+           "Coefficient row over rho (numpy array).")
+      // Structured U3U2 object: same coefficients over rho, with .data() and a
+      // __str__/print that reproduce the C++ U3U2 layout.
+      .def("get_U3U2",
+           [](u3::WigU3U2_db& db, int n13a, int n23a, int n33a, int n12a,
+              int n22a, int n13b, int n23b, int n33b, int n12b, int n22b,
+              int n13c, int n23c, int n33c, int n12c, int n22c) {
+             require_init();
+             Eigen::RowVectorXd row =
+                 db.get(n13a, n23a, n33a, n12a, n22a, n13b, n23b, n33b, n12b,
+                        n22b, n13c, n23c, n33c, n12c, n22c);
+             u3::coeffs_t v(row.data(), row.data() + row.size());
+             return u3::U3U2<u3::coeffs_t>(std::move(v));
+           },
+           "n13a"_a, "n23a"_a, "n33a"_a, "n12a"_a, "n22a"_a,
+           "n13b"_a, "n23b"_a, "n33b"_a, "n12b"_a, "n22b"_a,
+           "n13c"_a, "n23c"_a, "n33c"_a, "n12c"_a, "n22c"_a,
+           "Structured U3U2 object (over rho; prints like C++).");
   m.def("wigU3U2db", &u3::wigU3U2db, py::return_value_policy::reference,
         "The global U(3)>U(2) coefficient database (singleton).");
 
