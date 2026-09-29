@@ -4,6 +4,7 @@
 *.aux
 *.bbl
 *.blg
+*.d
 *.docx
 *.exe
 *.fdb_latexmk
