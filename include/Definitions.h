@@ -111,7 +111,7 @@ namespace u3
 
   	friend std::ostream& operator<<(std::ostream& s, const U3U2& x)
   	{
-  	  s << "rho = 1..." << x.rhomax() << " -> ";
+  	  s << "rho = 0..." << (static_cast<int>(x.rhomax()) - 1) << " -> ";
   	  for (const auto& c : x.data()) s << c << "\t";
   	  return s;
   	}
@@ -219,8 +219,8 @@ namespace u3
   	  for (size_t i = 0; i < x.size(); i++)
   	  {
   	    x.ndi_.to_multi(i, multi);
-  	    s << multi[0] + 1 << "\t" << multi[1] + 1 << "\t"
-  	      << multi[2] + 1 << "\t" << multi[3] + 1 << "\t -> "
+  	    s << multi[0] << "\t" << multi[1] << "\t"
+  	      << multi[2] << "\t" << multi[3] << "\t -> "
   	      << x[i] << "\n";
   	  }
 	    return s;
@@ -299,8 +299,8 @@ namespace u3
   	  for (size_t i = 0; i < x.size(); i++)
   	  {
   	    x.ndi_.to_multi(i, multi);
-  	    s << multi[0] + 1 << "\t" << multi[1] + 1 << "\t"
-  	      << multi[2] + 1 << "\t" << multi[3] + 1 << "\t -> "
+  	    s << multi[0] << "\t" << multi[1] << "\t"
+  	      << multi[2] << "\t" << multi[3] << "\t -> "
   	      << x[i] << "\n";
   	  }
 	    return s;
@@ -379,8 +379,8 @@ namespace u3
   	  for (size_t i = 0; i < x.size(); i++)
   	  {
   	    x.ndi_.to_multi(i, multi);
-  	    s << multi[0] + 1 << "\t" << multi[1] + 1 << "\t"
-  	      << multi[2] + 1 << "\t" << multi[3] + 1 << "\t -> "
+  	    s << multi[0] << "\t" << multi[1] << "\t"
+  	      << multi[2] << "\t" << multi[3] << "\t -> "
   	      << x[i] << "\n";
   	  }
 	    return s;
@@ -465,9 +465,9 @@ namespace u3
   	  for (size_t i = 0; i < x.size(); i++)
   	  {
   	    x.ndi_.to_multi(i, multi);
-  	    s << multi[0] + 1 << "\t" << multi[1] + 1 << "\t"
-  	      << multi[2] + 1 << "\t" << multi[3] + 1 << "\t"
-  	      << multi[4] + 1 << "\t" << multi[5] + 1 << "\t -> "
+  	    s << multi[0] << "\t" << multi[1] << "\t"
+  	      << multi[2] << "\t" << multi[3] << "\t"
+  	      << multi[4] << "\t" << multi[5] << "\t -> "
   	      << x[i] << "\n";
   	  }
 	    return s;
