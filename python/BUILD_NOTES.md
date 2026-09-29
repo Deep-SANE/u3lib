@@ -84,7 +84,33 @@ buffer that the next DB call overwrites. The binding **copies** it into an
 owning `U3U9` before handing it to Python, so a saved `U3U9` stays valid across
 later DB calls. (`U3SO3`/`U3U6`/`U3Z6` already own their buffers.)
 
+## Using u3lib and u4lib together
+u3lib and u4lib are separate extension modules, but they **share one wigxjpf
+backend** in the process. `initialize()`/`finalize()` are idempotent *per module*
+(guarded flags), but those flags do not coordinate the shared backend across
+modules — so finalizing one library while the other is still in use tears the
+shared backend out from under it and crashes the process.
+
+Safe recipe when using both (e.g. an ENN precompute needing U(3) and U(4)
+coefficients): initialize both up front, do all the work, finalize both at the
+end.
+
+```python
+import u3lib as u3, u4lib as u4
+u3.initialize(); u4.initialize()
+#  ... all u3 and u4 coefficient work ...
+u4.finalize(); u3.finalize()     # at the very end
+```
+
+Do **not** call one library's `finalize()` mid-workflow while the other is still
+in use. (Within u4lib this is automatic: `u4.finalize()` already cascades to u3
+and qcx_utils.) The Python `require_init()` guard is per-module, so it cannot
+detect this cross-module case.
+
 ## Known caveats / TODO
+- Reaching a coefficient database before `initialize()` or after `finalize()`
+  raises a Python `RuntimeError` (the binding guards every DB accessor); it does
+  not crash the kernel. (Exception: the cross-module teardown above.)
 - **Asserts are on** (no `-DNDEBUG`): out-of-range indices or invalid labels
   `abort()` the Python process (e.g. indexing an empty/forbidden coupling).
   Before release, either build with `-DNDEBUG` or add input validation in the
