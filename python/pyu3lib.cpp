@@ -19,6 +19,14 @@
 //    clear()                      clear cached coefficients (keep DBs alive)
 //    Rho(la, ma, lb, mb, lc, mc)  coupling multiplicity, by SU(3) labels
 //    Rho(a, b, c)                 coupling multiplicity, by irrep objects
+//    Kappa(lam, mu, L)            SO(3) branching multiplicity of L in (lam,mu)
+//    Kappa(irrep, L)              SO(3) branching multiplicity, by irrep object
+//    physicalBasis(irrep)         list of physicalvector (kappa, L) states
+//    gelfandBasis(irrep)          list of gelfand states spanning the irrep
+//
+//  physicalvector(irrep, L)       an SO(3)-reduced basis state
+//    irr(), lam(), lambda_(), mu(), n13(), n23(), n33(),
+//    kappa(), kappamax(), L(), repr
 //
 //  Database singletons (the ONLY way to reach coefficients -- no free funcs)
 //    wigU3U2db()  -> WigU3U2_db      u3u6db() -> U3U6_db
@@ -76,9 +84,11 @@
 #include <pybind11/eigen.h>      // Eigen::RowVectorXd  <-> numpy (wigU3U2db.get)
 #include <pybind11/numpy.h>      // py::array_t
 #include <pybind11/operators.h>  // py::self == py::self
+#include <pybind11/stl.h>        // std::vector <-> list (physicalBasis/gelfandBasis)
 
 #include <u3lib.h>            // umbrella: initialize/finalize (cascades to the
                              // qcx-utils foundation) + all coefficient DBs
+#include <U3basis.h>         // Kappa, physicalvector, physical/gelfand bases
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -246,6 +256,44 @@ PYBIND11_MODULE(u3lib, m)
           return u3::Rho(a, b, c);
         },
         "a"_a, "b"_a, "c"_a, "Coupling multiplicity rho (by irrep objects).");
+
+  // ---- Kappa : SO(3) branching multiplicity of L in (lambda, mu) -----------
+  //  (kappa_max: how many times angular momentum L appears in the irrep).
+  m.def("Kappa",
+        [](int lam, int mu, int L) { return u3::Kappa(u3::irrep(lam, mu), L); },
+        "lam"_a, "mu"_a, "L"_a,
+        "SO(3) branching multiplicity kappa_max of L in (lambda,mu).");
+  m.def("Kappa", [](const u3::irrep& a, int L) { return u3::Kappa(a, L); },
+        "irrep"_a, "L"_a, "SO(3) branching multiplicity (by irrep object).");
+
+  // ---- physicalvector : an SO(3)-reduced basis state |(lambda,mu) kappa L> --
+  py::class_<u3::physicalvector>(m, "physicalvector")
+      .def(py::init([](const u3::irrep& irr, int L) {
+             return u3::physicalvector(irr, L);
+           }),
+           "irrep"_a, "L"_a)
+      .def("irr", &u3::physicalvector::irr,
+           py::return_value_policy::reference_internal, "The U(3) irrep.")
+      .def("lam", &u3::physicalvector::lam)
+      .def("lambda_", &u3::physicalvector::lambda)
+      .def("mu", &u3::physicalvector::mu)
+      .def("n13", &u3::physicalvector::n13)
+      .def("n23", &u3::physicalvector::n23)
+      .def("n33", &u3::physicalvector::n33)
+      .def("kappa", &u3::physicalvector::kappa, "SO(3) multiplicity of L.")
+      .def("kappamax", &u3::physicalvector::kappamax)
+      .def("L", &u3::physicalvector::L)
+      .def("__repr__", [](const u3::physicalvector& p) {
+        return "physicalvector((" + std::to_string(p.lam()) + "," +
+               std::to_string(p.mu()) + "), kappa=" + std::to_string(p.kappa()) +
+               ", L=" + std::to_string(p.L()) + ")";
+      });
+
+  // ---- basis enumerators (return Python lists) -----------------------------
+  m.def("physicalBasis", &u3::physicalBasis, "irrep"_a,
+        "List of physicalvector states (kappa, L) spanning the irrep.");
+  m.def("gelfandBasis", &u3::gelfandBasis, "irrep"_a,
+        "List of gelfand states spanning the irrep.");
 
   // ==========================================================================
   //  Coefficient container classes (Definitions.h). These are what the
