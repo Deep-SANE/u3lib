@@ -17,6 +17,7 @@
 //    initialize_thread()          per-thread setup (advanced / multithreaded)
 //    finalize_thread()            per-thread teardown
 //    clear()                      clear cached coefficients (keep DBs alive)
+//    is_initialized()             True only between initialize() and finalize()
 //    Rho(la, ma, lb, mb, lc, mc)  coupling multiplicity, by SU(3) labels
 //    Rho(a, b, c)                 coupling multiplicity, by irrep objects
 //    Kappa(lam, mu, L)            SO(3) branching multiplicity of L in (lam,mu)
@@ -79,6 +80,7 @@
 // ============================================================================
 
 #include <sstream>
+#include <stdexcept>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>      // Eigen::RowVectorXd  <-> numpy (wigU3U2db.get)
@@ -114,6 +116,19 @@ namespace
     os << x;
     return os.str();
   }
+
+  // Guard for database access. Reaching a coefficient DB before u3::initialize()
+  // (or after u3::finalize()) dereferences a null SO3 cache / scratch buffer and
+  // segfaults the process -- fatal in a Jupyter kernel. Raise a Python exception
+  // instead. u3::initialized_flag() is true only between initialize/finalize.
+  void require_init()
+  {
+    if (!u3::initialized_flag())
+      throw std::runtime_error(
+          "u3lib is not initialized: call u3lib.initialize() before using a "
+          "coefficient database, and do not use the databases after "
+          "u3lib.finalize().");
+  }
 } // namespace
 
 PYBIND11_MODULE(u3lib, m)
@@ -137,6 +152,9 @@ PYBIND11_MODULE(u3lib, m)
   m.def("finalize_thread", []() { u3::finalize_thread(); });
 
   m.def("clear", &u3::clear, "Clear all cached coefficients (keep DBs alive).");
+  m.def("is_initialized", []() { return u3::initialized_flag(); },
+        "True between initialize() and finalize(). The coefficient databases "
+        "may only be used while this is True.");
 
   // ==========================================================================
   //  su3::irrep  --  an SU(3) irrep (lambda, mu).  Exposed as u3lib.su3.irrep
@@ -393,7 +411,14 @@ PYBIND11_MODULE(u3lib, m)
   //  Returns the coefficient row over rho as a numpy array (1-D).
   py::class_<u3::WigU3U2_db, std::unique_ptr<u3::WigU3U2_db, py::nodelete>>(
       m, "WigU3U2_db")
-      .def("get", &u3::WigU3U2_db::get,
+      .def("get",
+           [](u3::WigU3U2_db& db, int n13a, int n23a, int n33a, int n12a,
+              int n22a, int n13b, int n23b, int n33b, int n12b, int n22b,
+              int n13c, int n23c, int n33c, int n12c, int n22c) {
+             require_init();
+             return db.get(n13a, n23a, n33a, n12a, n22a, n13b, n23b, n33b, n12b,
+                           n22b, n13c, n23c, n33c, n12c, n22c);
+           },
            "n13a"_a, "n23a"_a, "n33a"_a, "n12a"_a, "n22a"_a,
            "n13b"_a, "n23b"_a, "n33b"_a, "n12b"_a, "n22b"_a,
            "n13c"_a, "n23c"_a, "n33c"_a, "n12c"_a, "n22c"_a,
@@ -410,11 +435,17 @@ PYBIND11_MODULE(u3lib, m)
           "get",
           [](u3::WigU3SO3_db& db, int lam1, int mu1, int l1, int lam2, int mu2,
              int l2, int lam3, int mu3, int l3) {
+            require_init();
             return to_numpy(db.get(lam1, mu1, l1, lam2, mu2, l2, lam3, mu3, l3));
           },
           "lam1"_a, "mu1"_a, "l1"_a, "lam2"_a, "mu2"_a, "l2"_a, "lam3"_a,
           "mu3"_a, "l3"_a, "Coefficients as a flat numpy array.")
-      .def("get_U3SO3", &u3::WigU3SO3_db::get_U3SO3,
+      .def("get_U3SO3",
+           [](u3::WigU3SO3_db& db, int lam1, int mu1, int l1, int lam2, int mu2,
+              int l2, int lam3, int mu3, int l3) {
+             require_init();
+             return db.get_U3SO3(lam1, mu1, l1, lam2, mu2, l2, lam3, mu3, l3);
+           },
            "lam1"_a, "mu1"_a, "l1"_a, "lam2"_a, "mu2"_a, "l2"_a, "lam3"_a,
            "mu3"_a, "l3"_a, "Structured U3SO3 object (kappaA,kappaB,kappaC,rho).");
   m.def("wigU3SO3db", &u3::wigU3SO3db, py::return_value_policy::reference,
@@ -425,7 +456,15 @@ PYBIND11_MODULE(u3lib, m)
   //  the C++ signature. Returns a U3U6 object.
   py::class_<u3::U3U6_db, std::unique_ptr<u3::U3U6_db, py::nodelete>>(
       m, "U3U6_db")
-      .def("get_U3U6", &u3::U3U6_db::get_U3U6,
+      .def("get_U3U6",
+           [](u3::U3U6_db& db, const u3::irrep& u3A, const u3::irrep& u3B,
+              const u3::irrep& u3ABC, const u3::irrep& u3C, const u3::irrep& u3AB,
+              int rhoABmax, int rhoAB_Cmax, const u3::irrep& u3BC, int rhoBCmax,
+              int rhoA_BCmax) {
+             require_init();
+             return db.get_U3U6(u3A, u3B, u3ABC, u3C, u3AB, rhoABmax, rhoAB_Cmax,
+                                u3BC, rhoBCmax, rhoA_BCmax);
+           },
            "u3A"_a, "u3B"_a, "u3ABC"_a, "u3C"_a,
            "u3AB"_a, "rhoABmax"_a, "rhoAB_Cmax"_a,
            "u3BC"_a, "rhoBCmax"_a, "rhoA_BCmax"_a,
@@ -436,7 +475,15 @@ PYBIND11_MODULE(u3lib, m)
   // ---- U(3) 6-(lambda,mu) recoupling: Z-coefficients (U3Z6) ----------------
   py::class_<u3::U3Z6_db, std::unique_ptr<u3::U3Z6_db, py::nodelete>>(
       m, "U3Z6_db")
-      .def("get_U3Z6", &u3::U3Z6_db::get_U3Z6,
+      .def("get_U3Z6",
+           [](u3::U3Z6_db& db, const u3::irrep& u3B, const u3::irrep& u3A,
+              const u3::irrep& u3ABC, const u3::irrep& u3C, const u3::irrep& u3AB,
+              int rhoABmax, int rhoAB_Cmax, const u3::irrep& u3AC, int rhoACmax,
+              int rhoAC_Bmax) {
+             require_init();
+             return db.get_U3Z6(u3B, u3A, u3ABC, u3C, u3AB, rhoABmax, rhoAB_Cmax,
+                                u3AC, rhoACmax, rhoAC_Bmax);
+           },
            "u3B"_a, "u3A"_a, "u3ABC"_a, "u3C"_a,
            "u3AB"_a, "rhoABmax"_a, "rhoAB_Cmax"_a,
            "u3AC"_a, "rhoACmax"_a, "rhoAC_Bmax"_a,
@@ -456,6 +503,7 @@ PYBIND11_MODULE(u3lib, m)
              const u3::irrep& u3CD, const u3::irrep& u3AC, const u3::irrep& u3BD,
              const u3::irrep& u3ABCD, int rhoACmax, int rhoBDmax, int rhoABCDmax,
              int rhoABmax, int rhoCDmax, int rhoACBDmax) {
+            require_init();
             auto src =
                 db.get_U3U9(u3A, u3B, u3C, u3D, u3AB, u3CD, u3AC, u3BD, u3ABCD,
                             rhoACmax, rhoBDmax, rhoABCDmax, rhoABmax, rhoCDmax,
