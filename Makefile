@@ -8,7 +8,7 @@ all:
 
 .PHONY: test
 test:
-	$(MAKE) -C src/test
+	$(MAKE) -C test
 
 .PHONY: python
 python:
@@ -18,5 +18,11 @@ python:
 clean:
 	$(MAKE) -C src clean
 	$(MAKE) -C src/test clean
+	$(MAKE) -C test clean
 	$(MAKE) -C python clean
 	
+
+# Build the manual reference-generation tool without running it.
+.PHONY: reference-tool
+reference-tool:
+	$(MAKE) -C test reference-tool
