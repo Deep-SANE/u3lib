@@ -1,11 +1,12 @@
 #include <chrono>
 #include <iostream>
+#include <omp.h>
 
 #include <u3lib.h>
 #include <U3basis.h>
 #include <U3generatorsRME.h>
 
-#include <qcx_utils.h>
+#include <utils.h>
 
 int main(int argc, char* argv[])
 {
@@ -73,6 +74,33 @@ int main(int argc, char* argv[])
   // Output the time in seconds
   std::cout << "Elapsed time: " << duration.count() << " seconds or "
             << duration.count() / 60.0 << " minutes" << std::endl;
+
+  // -------------------------------------------------------------------------
+  // Multi-threading demonstration:
+  // Each thread calls u3::initialize_thread() before computing generator RMEs,
+  // prints results along with its thread index, and calls u3::finalize_thread().
+  // -------------------------------------------------------------------------
+  std::cout << "\n[Multi-threading demonstration]" << std::endl;
+#pragma omp parallel num_threads(4)
+  {
+    u3::initialize_thread();
+    int tid = omp_get_thread_num();
+
+    std::vector<int> b_kap, k_kap;
+    Eigen::MatrixXd rme_t;
+    if (option == 0)
+      rme_t = u3::RME_L(physbasis[i_bra], physbasis[i_ket], b_kap, k_kap);
+    else
+      rme_t = u3::RME_Q(physbasis[i_bra], physbasis[i_ket], b_kap, k_kap);
+
+#pragma omp critical
+    {
+      std::cout << "[Thread " << tid << "] Generator RME shape: (" << rme_t.rows()
+                << "," << rme_t.cols() << "); norm = " << rme_t.norm() << std::endl;
+    }
+
+    u3::finalize_thread();
+  }
 
   u3::finalize();
 }

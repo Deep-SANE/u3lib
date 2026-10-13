@@ -182,9 +182,9 @@ namespace u3
     physicalvector() : kappa_(0), L_(0) { }
 
     // initialization
-    physicalvector(const u3::irrep& irr, qcx_utils::UInt8 L) 
+    physicalvector(const u3::irrep& irr, utils::UInt8 L) 
       : irr_(irr), 
-        kappa_(qcx_utils::UInt8(Kappa(irr, L))), 
+        kappa_(utils::UInt8(Kappa(irr, L))), 
         L_(L)
     { }
 

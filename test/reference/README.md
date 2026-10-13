@@ -41,7 +41,7 @@ A trailing colon is part of each label.
   channel bases for four adjoint irreps. These labels list left then right
   channels, while the structured C++ U9 accessor orders its axes as
   `(rhoAC,rhoBD,rhoAB_CD,rhoAB,rhoCD,rhoAC_BD)`.
-- `U9tutorial:A:B:C:D:total:` records the tutorial's one-dimensional example;
+- `U9tutorial:A:B:C:D:total:` records the Python tutorial's one-dimensional example;
   AB=CD=AC=BD=(2,0), and all six multiplicity indices are zero.
 
 ## Multiplicity recoupling cases
@@ -105,20 +105,19 @@ basis. The tests do not assume that it is diagonal.
 
 ## Provenance
 
-Generated separately with `tools/generate_references.cpp`, then checked by
+Generated separately with `generate_references.cpp`, then checked by
 running the test executables against the saved values. Generation uses the
 library itself; analytic identities and independent contractions supplement
 these regression values rather than making them an external reference.
 
 - Date: 2026-09-29.
-- u3lib starting revision: `6a116debe65afd78435114c0b8283114adca2510`.
-- qcx-utils revision: `f852e40c58892414aabb62850611a34b06037385` (clean).
 - Platform: macOS arm64; GNU C++ (Homebrew GCC) 16.2.0.
-- Environment: `qcx-config/env.d/phong.env.sh`; configured SLEPc solver,
-  WIGXJPF 1.13, PETSc 3.25.5 and SLEPc 3.25.2.
+- Values are backend-independent to the test tolerances: numerical agreement is
+  tolerance-based, not bitwise, across Wigner/solver backends. The current
+  libwignernj + sns (dense-QR fallback) stack reproduces every saved value.
 - Basis fixing: the library's RREF, Gram-Schmidt and leading-nonzero sign rule;
   `ADD_SU3LIB_PHASE_U3SO3` enabled as in the source.
-- Reproduction: source that environment, run `make reference-tool` from the
+- Reproduction: run `make config` then `make reference-tool` from the
   u3lib root, then run `./bin/test/generate_references OUTPUT_DIRECTORY`.
 
 No production numerical routines were changed to produce these references.

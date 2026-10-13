@@ -24,7 +24,7 @@ namespace test
               double angular = 0;
               for (int m = -std::min(LA, LB); m <= std::min(LA, LB); ++m)
               {
-                double candidate = qcx_utils::cgcs().get(
+                double candidate = utils::cgcs().get(
                     {2 * LA, 2 * LB, 2 * LC, 2 * m, -2 * m, 0});
                 if (std::abs(candidate) > std::abs(angular))
                 {
@@ -61,7 +61,7 @@ namespace test
                                                 bg.n22(), g.n12(), g.n22());
                   if (!acc.allowed)
                     continue;
-                  double cg = qcx_utils::cgcs().get(
+                  double cg = utils::cgcs().get(
                       {ag.Lambdax2(), bg.Lambdax2(), g.Lambdax2(),
                        ag.MLambdax2(), bg.MLambdax2(), g.MLambdax2()});
                   for (int ka = 0; ka < ta.cols(); ++ka)

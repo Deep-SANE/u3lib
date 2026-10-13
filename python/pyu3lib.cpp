@@ -20,10 +20,15 @@
 //    is_initialized()             True only between initialize() and finalize()
 //    Rho(la, ma, lb, mb, lc, mc)  coupling multiplicity, by SU(3) labels
 //    Rho(a, b, c)                 coupling multiplicity, by irrep objects
+//    decomposition(a, b)          output irreps and their Rho multiplicities
 //    Kappa(lam, mu, L)            SO(3) branching multiplicity of L in (lam,mu)
 //    Kappa(irrep, L)              SO(3) branching multiplicity, by irrep object
 //    physicalBasis(irrep)         list of physicalvector (kappa, L) states
 //    gelfandBasis(irrep)          list of gelfand states spanning the irrep
+//    RME_L(bra, ket)              (matrix, bra_kappa, ket_kappa) RME of L
+//    RME_Q(bra, ket)              (matrix, bra_kappa, ket_kappa) RME of Q
+//    phys_to_cano(p, M, gArr)     (canoBasis indices, T) Gelfand expansion at M
+//    phys_to_cano_allM(p, gArr)   same for all M = L..-L (index x = L - M)
 //
 //  physicalvector(irrep, L)       an SO(3)-reduced basis state
 //    irr(), lam(), lambda_(), mu(), n13(), n23(), n33(),
@@ -38,6 +43,7 @@
 //    lambda_(), lam(), mu(), n13(), n23(), n33(), dim(), zero(),
 //    C2(), C3(), conjugate(), conjugate_phase(), str, repr,
 //    full ordering (== != < <= > >=) and hashable (usable as a dict key)
+//  su3.decomposition(a, b)        SU(3) output irreps and their Rho maxima
 //
 //  irrep(lambda, mu) | irrep(n1, n2, n3)   U(3) irrep; derives from su3.irrep
 //    (inherits every su3.irrep method above, and adds / overrides:)
@@ -92,8 +98,11 @@
 #include <pybind11/stl.h>        // std::vector <-> list (physicalBasis/gelfandBasis)
 
 #include <u3lib.h>            // umbrella: initialize/finalize (cascades to the
-                             // qcx-utils foundation) + all coefficient DBs
+                             // utils foundation) + all coefficient DBs
 #include <U3basis.h>         // Kappa, physicalvector, physical/gelfand bases
+#include <U3decomposition.h> // SU(3)/U(3) tensor-product decompositions
+#include <U3generatorsRME.h> // RME_L, RME_Q (physical generator RMEs)
+#include <U3SO3_to_U3U2U1.h> // phys_to_cano, phys_to_cano_allM
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -142,7 +151,7 @@ PYBIND11_MODULE(u3lib, m)
 
   // ---- lifecycle -----------------------------------------------------------
   //  u3lib must ALWAYS be initialized before use and finalized after.
-  //  initialize() sets up the qcx-utils foundation (Wigner backend tables +
+  //  initialize() sets up the utils foundation (Wigner backend tables +
   //  the SO3 CGC/Racah/Fano caches) AND the U(3)-level coefficient databases,
   //  on the calling (main) thread. finalize() tears both down in reverse.
   m.def("initialize", []() { u3::initialize(); },
@@ -195,6 +204,13 @@ PYBIND11_MODULE(u3lib, m)
         return "su3.irrep(" + std::to_string(i.lam()) + "," +
                std::to_string(i.mu()) + ")";
       });
+
+  su3.def("decomposition",
+          [](const su3::irrep& a, const su3::irrep& b) {
+            return su3::decomposition(a, b);
+          },
+          "a"_a, "b"_a,
+          "Return (output irreps, Rho maxima) for the SU(3) product a x b.");
 
   // ==========================================================================
   //  u3::irrep  --  a U(3) irrep. Labelled either by SU(3) content (lambda,mu)
@@ -303,6 +319,14 @@ PYBIND11_MODULE(u3lib, m)
         },
         "a"_a, "b"_a, "c"_a, "Coupling multiplicity rho (by irrep objects).");
 
+  m.def("decomposition",
+        [](const u3::irrep& a, const u3::irrep& b) {
+          return u3::decomposition(a, b);
+        },
+        "a"_a, "b"_a,
+        "Return (output irreps, Rho multiplicities) for the SU(3) product of "
+        "the SU(3) labels carried by a and b.");
+
   // ---- Kappa : SO(3) branching multiplicity of L in (lambda, mu) -----------
   //  (kappa_max: how many times angular momentum L appears in the irrep).
   m.def("Kappa",
@@ -340,6 +364,55 @@ PYBIND11_MODULE(u3lib, m)
         "List of physicalvector states (kappa, L) spanning the irrep.");
   m.def("gelfandBasis", &u3::gelfandBasis, "irrep"_a,
         "List of gelfand states spanning the irrep.");
+
+  // ---- physical generator reduced matrix elements (L and Q) ----------------
+  //  <(lambda,mu) kappa' L' || T || (lambda,mu) kappa L> for T = L and T = Q,
+  //  with bra and ket in the SAME irrep. Returns a tuple
+  //  (RME, bra_kappa, ket_kappa): RME is a (bra.kappa() x ket.kappa()) matrix
+  //  indexed by zero-based multiplicity; bra_kappa/ket_kappa are the 1-based
+  //  kappa labels for the rows/columns. The C++ RME convention carries an extra
+  //  sqrt(2L'+1) (see U3generatorsRME.h). Requires an initialized session.
+  m.def("RME_L",
+        [](u3::physicalvector bra, u3::physicalvector ket) {
+          require_init();
+          std::vector<int> bra_kappa, ket_kappa;
+          Eigen::MatrixXd rme = u3::RME_L(bra, ket, bra_kappa, ket_kappa);
+          return py::make_tuple(rme, bra_kappa, ket_kappa);
+        },
+        "bra"_a, "ket"_a,
+        "Reduced matrix element of L: (matrix, bra_kappa, ket_kappa).");
+  m.def("RME_Q",
+        [](u3::physicalvector bra, u3::physicalvector ket) {
+          require_init();
+          std::vector<int> bra_kappa, ket_kappa;
+          Eigen::MatrixXd rme = u3::RME_Q(bra, ket, bra_kappa, ket_kappa);
+          return py::make_tuple(rme, bra_kappa, ket_kappa);
+        },
+        "bra"_a, "ket"_a,
+        "Reduced matrix element of Q: (matrix, bra_kappa, ket_kappa).");
+
+  // ---- physical -> canonical (Gelfand) expansion ---------------------------
+  //  Express |(lambda,mu) kappa L M> in the Gelfand basis. phys_to_cano(p,M,gArr)
+  //  returns (canoBasis, T): canoBasis are indices into gArr of the Gelfand
+  //  states at this M, and column k of the T matrix is the k-th SO(3)
+  //  multiplicity copy (kappa = k+1). phys_to_cano_allM returns the same for
+  //  every M = L..-L as parallel lists indexed x = L - M. Requires an
+  //  initialized session (the highest-weight step solves a null space).
+  m.def("phys_to_cano",
+        [](const u3::physicalvector& p, int M,
+           const std::vector<u3::gelfand>& gArr) {
+          require_init();
+          return u3::phys_to_cano(p, M, gArr);
+        },
+        "p"_a, "M"_a, "gArr"_a,
+        "Expand |... L M> in the Gelfand basis: (canoBasis indices, T matrix).");
+  m.def("phys_to_cano_allM",
+        [](const u3::physicalvector& p, const std::vector<u3::gelfand>& gArr) {
+          require_init();
+          return u3::phys_to_cano_allM(p, gArr);
+        },
+        "p"_a, "gArr"_a,
+        "phys_to_cano for every M = L..-L (parallel lists, index x = L - M).");
 
   // ==========================================================================
   //  Coefficient container classes (Definitions.h). These are what the

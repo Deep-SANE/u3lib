@@ -15,8 +15,8 @@
 #include "U3basis.h"
 #include "U3U2xU3U2.h"
 
-#include <qcx_Cache.h>
-#include <qcx_Int.h>
+#include <Cache.h>
+#include <Int.h>
 #include <so3Coeffs/SO3_CGC.h>
 #include <so3Coeffs/SO3_Racah.h>
 
@@ -38,7 +38,7 @@ namespace u3
     auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-    auto& racahs = qcx_utils::racahs();
+    auto& racahs = utils::racahs();
     auto& wigU3U2db = u3::wigU3U2db();
 
     // The four U3xU2 tables used below are keyed by irrep triples only:
@@ -169,7 +169,7 @@ namespace u3
     using value_type = coeffs_t;
 
 #ifdef U3LIB_ENABLE_U3U6_CACHE
-    qcx_utils::Cache<key_type, value_type> cache_;
+    utils::Cache<key_type, value_type> cache_;
 #endif
 
     inline static value_type* p_result_ = nullptr;
@@ -279,7 +279,7 @@ namespace u3
       assert(rhoA_BCmax == Rho(u3A,u3BC,u3ABC));
       
 #ifdef U3LIB_ENABLE_U3U6_CACHE
-      std::array<qcx_utils::UInt8, 12> safe_key = {
+      std::array<utils::UInt8, 12> safe_key = {
         u3A.n13(), u3A.n23(), u3B.n13(), u3B.n23(),
         u3ABC.n13(), u3ABC.n23(), u3C.n13(), u3C.n23(),
         u3AB.n13(), u3AB.n23(), u3BC.n13(), u3BC.n23()};
@@ -341,7 +341,7 @@ namespace u3
         return {}; 
       
 #ifdef U3LIB_ENABLE_U3U6_CACHE
-      std::array<qcx_utils::UInt8, 12> safe_key = {
+      std::array<utils::UInt8, 12> safe_key = {
         u3A.n13(), u3A.n23(), u3B.n13(), u3B.n23(),
         u3ABC.n13(), u3ABC.n23(), u3C.n13(), u3C.n23(),
         u3AB.n13(), u3AB.n23(), u3BC.n13(), u3BC.n23()};
@@ -413,7 +413,7 @@ namespace u3
     auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-    auto& racahs = qcx_utils::racahs();
+    auto& racahs = utils::racahs();
     auto& wigU3U2db = u3::wigU3U2db();
 
     // Fetch the four U3xU2 tables once (irrep-triple keys), resolve rows
@@ -543,7 +543,7 @@ namespace u3
     using value_type = coeffs_t;
 
 #ifdef U3LIB_ENABLE_U3Z6_CACHE
-    qcx_utils::Cache<key_type, value_type> cache_;
+    utils::Cache<key_type, value_type> cache_;
 #endif
 
     inline static value_type* p_result_ = nullptr;
@@ -653,7 +653,7 @@ namespace u3
       assert(rhoAC_Bmax == Rho(u3AC,u3B,u3ABC));
 
 #ifdef U3LIB_ENABLE_U3Z6_CACHE
-      std::array<qcx_utils::UInt8, 12> safe_key = {
+      std::array<utils::UInt8, 12> safe_key = {
         u3B.n13(), u3B.n23(), u3A.n13(), u3A.n23(),
         u3ABC.n13(), u3ABC.n23(), u3C.n13(), u3C.n23(),
         u3AB.n13(), u3AB.n23(), u3AC.n13(), u3AC.n23()};
@@ -714,7 +714,7 @@ namespace u3
         return {}; 
       
 #ifdef U3LIB_ENABLE_U3Z6_CACHE
-      std::array<qcx_utils::UInt8, 12> safe_key = {
+      std::array<utils::UInt8, 12> safe_key = {
         u3B.n13(), u3B.n23(), u3A.n13(), u3A.n23(),
         u3ABC.n13(), u3ABC.n23(), u3C.n13(), u3C.n23(),
         u3AB.n13(), u3AB.n23(), u3AC.n13(), u3AC.n23()};

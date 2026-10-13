@@ -22,7 +22,7 @@ $(BIN)/test_%: test_%.cpp FORCE | $(BIN)
 	@$(CXX) $(TEST_FLAGS) -o $@ $< $(LDFLAGS)
 
 reference-tool: $(BIN)/generate_references
-$(BIN)/generate_references: tools/generate_references.cpp $(wildcard *.h) FORCE | $(BIN)
+$(BIN)/generate_references: generate_references.cpp $(wildcard *.h) FORCE | $(BIN)
 	@echo "CXX $< (reference generator; not run by make test)"
 	@$(CXX) $(TEST_FLAGS) -o $@ $< $(LDFLAGS)
 $(BIN):

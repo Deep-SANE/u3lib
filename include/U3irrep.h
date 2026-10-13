@@ -6,8 +6,8 @@
 #include <istream>
 #include <ostream>
 
-#include <qcx_convert.h>
-#include <qcx_readwrite.h>
+#include <convert.h>
+#include <readwrite.h>
 
 #ifdef HAVE_FMT
 #include <fmt/format.h>
@@ -31,7 +31,7 @@ namespace su3
     // default constructor; creates (0,0):
     irrep() : lambda_(0), mu_(0) { }
 
-    irrep(qcx_utils::UInt8 l, qcx_utils::UInt8 m)
+    irrep(utils::UInt8 l, utils::UInt8 m)
         : lambda_(l), mu_(m) // conversion check is implicit
     { }
 
@@ -50,8 +50,8 @@ namespace su3
 
     /*
     // setters:
-    void lambda(int l) { lambda_ = qcx_utils::itou16(l); }
-    void mu(int m) { mu_ = qcx_utils::itou16(m); }
+    void lambda(int l) { lambda_ = utils::itou16(l); }
+    void mu(int m) { mu_ = utils::itou16(m); }
     */
 
     // irrps's dimesion:
@@ -87,15 +87,15 @@ namespace su3
     // write to binary file:
     void writeBinary(std::ostream& s) const
     {
-      qcx_utils::writeBinary(s, lambda_);
-      qcx_utils::writeBinary(s, mu_);
+      utils::writeBinary(s, lambda_);
+      utils::writeBinary(s, mu_);
     }
 
     // read from binary file:
     void readBinary(std::istream& s)
     {
-      qcx_utils::readBinary(s, lambda_);
-      qcx_utils::readBinary(s, mu_);
+      utils::readBinary(s, lambda_);
+      utils::readBinary(s, mu_);
     }
   };
   using irreps = std::vector<su3::irrep>;
@@ -118,14 +118,14 @@ namespace u3
     // default constructor; creates [0,0,0]:
     irrep() : n33_(0) { }
 
-    irrep(qcx_utils::UInt8 n1, qcx_utils::UInt8 n2, qcx_utils::UInt8 n3)
+    irrep(utils::UInt8 n1, utils::UInt8 n2, utils::UInt8 n3)
         : su3::irrep(n1 - n2, n2 - n3), n33_(n3)
     { 
       assert(n1 >= n2);
       assert(n2 >= n3);
     }
 
-    irrep(qcx_utils::UInt8 l, qcx_utils::UInt8 m) : su3::irrep(l, m), n33_(0) { }
+    irrep(utils::UInt8 l, utils::UInt8 m) : su3::irrep(l, m), n33_(0) { }
 
     irrep(const su3::irrep& su3) : su3::irrep(su3), n33_(0) { }
 
@@ -170,14 +170,14 @@ namespace u3
     void writeBinary(std::ostream& s) const
     {
       su3::irrep::writeBinary(s);
-      qcx_utils::writeBinary(s, n33_);
+      utils::writeBinary(s, n33_);
     }
 
     // read from binary file:
     void readBinary(std::istream& s)
     {
       su3::irrep::readBinary(s);
-      qcx_utils::readBinary(s, n33_);
+      utils::readBinary(s, n33_);
     }
   };
   using irreps = std::vector<u3::irrep>;

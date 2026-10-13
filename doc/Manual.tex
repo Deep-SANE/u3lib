@@ -1,4 +1,4 @@
-\documentclass[aps,superscriptaddress,floatfix,nobibnote,showkeys]{revtex4}
+\documentclass[aps,onecolumn,10pt,superscriptaddress,floatfix,nobibnote]{revtex4}
 \usepackage{subfigure}
 \usepackage{epsfig}
 \usepackage{epstopdf}
@@ -21,7 +21,7 @@
 %End Add colors
 
 \usepackage{hyperref}
-\hypersetup{colorlinks=true,linkcolor=red, citecolor=blue,  urlcolor=black}
+\hypersetup{colorlinks=true,linkcolor=red, citecolor=blue,  urlcolor=blue}
 
 \usepackage{listings}
 \usepackage{xcolor}
@@ -32,21 +32,21 @@
 \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 
 \lstdefinestyle{mystyle}{
-    backgroundcolor=\color{backcolour},   
+    backgroundcolor=\color{backcolour},
     commentstyle=\color{codegreen},
     keywordstyle=\color{magenta},
     numberstyle=\tiny\color{codegray},
     stringstyle=\color{codepurple},
     basicstyle=\ttfamily\footnotesize,
-    breakatwhitespace=false,         
-    breaklines=true,                 
-    captionpos=b,                    
-    keepspaces=true,                 
-    numbers=left,                    
-    numbersep=5pt,                  
-    showspaces=false,                
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
     showstringspaces=false,
-    showtabs=false,                  
+    showtabs=false,
     tabsize=2
 }
 
@@ -54,344 +54,540 @@
 
 \begin{document}
 
-\title{U3lib Manual (For Internal Use Only)}
+\title{\texttt{u3lib}: An AI-Assisted Computational Framework for U(3) Symmetry Algebra,\\ Wigner Coupling, and Racah Recoupling Coefficients}
 
 \author{Phong Dang}
-\affiliation{Department of Physics and Astronomy, Louisiana State University, Baton Rouge, LA, USA}
-\affiliation{Quantum CodeX, Baton Rouge, LA, USA}
+\affiliation{Department of Physics and Astronomy, Louisiana State University, Baton Rouge, LA 70803, USA}
+
+\author{Daniel Langr}
+\affiliation{Department of Computer Systems, Faculty of Information Technology, Czech Technical University in Prague, Prague, Czech Republic}
+
+\author{Tomas Dytrych}
+\affiliation{Nuclear Physics Institute, Czech Academy of Sciences, 250 68 \v{R}e\v{z}, Czech Republic}
+\affiliation{Department of Physics and Astronomy, Louisiana State University, Baton Rouge, LA 70803, USA}
+
+\author{Feng Pan}
+\affiliation{Department of Physics, Liaoning Normal University, Dalian 116029, China}
+\affiliation{Department of Physics and Astronomy, Louisiana State University, Baton Rouge, LA 70803, USA}
+
+\author{Michela Negro}
+\affiliation{Department of Physics and Astronomy, Louisiana State University, Baton Rouge, LA 70803, USA}
 
 \begin{abstract}
-\textbf{Abstract:}   A manual of the C++ library U3lib for fast and accurate evaluation of U(3) Wigner coupling and Racah recoupling coefficients is presented. It is implemented based on a new mathematical procedure introduced by Dang et al. \cite{1}, which avoids the utilization of binomial coefficients and alternating sums that have been used in the 1973 formulation of Draayer and Akiyama. The library also features a program that evaluates reduced matrix elements of SU(3) physical generators $\mathbf{L}_\mu$ and $\mathbf{Q}_\mu$, which can be used to calculate matrix elements of operators that are powers and products of those generators.
+\texttt{u3lib} is an AI-assisted C++ framework for U(3)/SU(3) representation-theory
+computations in nuclear structure and related applications. Besides the fast and
+accurate evaluation of U(3) Wigner coupling and Racah recoupling coefficients --
+implemented with the procedure of Dang \textit{et al.} \cite{Dang2024EPJP1},
+which avoids the binomial coefficients and alternating sums of earlier
+formulations -- the library exposes the full algebraic toolkit around those
+coefficients: irreducible representations (irreps) and their dimensions, Casimir
+invariants and conjugation; the canonical Gelfand--Tsetlin basis and the physical
+$\mathrm{SU(3)}\supset\mathrm{SO(3)}$ basis, with their inner and outer
+multiplicities; the matrix elements of the U(3) generators on canonical states;
+the reduced matrix elements of the physical generators $\mathbf{L}$ and
+$\mathbf{Q}$; the tensor-product decomposition; and the transformation between
+the physical and canonical bases. The C++ API is mirrored one-to-one by Python
+bindings, and a repository-local catalog of agent skills lets a code-executing
+AI assistant drive any of these capabilities from a natural-language request.
+This document is the reference manual for the public release.
 \end{abstract}
 
-
-\keywords{U(3); SU(3); SO(3); Wigner coefficients; Racah coefficients; Clebsch-Gordan coefficients; Nuclear structure}
+\keywords{U(3); SU(3); SO(3); Wigner coefficients; Racah coefficients; Clebsch--Gordan coefficients; Gelfand--Tsetlin basis; nuclear structure}
 
 \maketitle
 
 \section*{PROGRAM SUMMARY}
 \noindent
-\textit{Program Title}: U3lib
+\textit{Program title}: \texttt{u3lib}
 
 \noindent
-\textit{Programming Language}: C++
+\textit{Licensing provisions}: open-source (to be finalized; MIT/Apache-class).
 
 \noindent
-\textit{External library}: Eigen3 \cite{2}, WIGXJPF \cite{3}
+\textit{Code repository}: \url{https://github.com/ORG-TBD/u3lib} (placeholder ---
+the public repository URL will be finalized on release).
 
 \noindent
-\textit{Nature of problem}: Fast and accurate evaluation of Wigner coupling coefficients for two group-subgroup chains, namely $\rm SU(3) \supset SO(3)$ and $\rm U(3) \supset U(2) \supset U(1)$, and Racah recoupling coefficients for U(3).
+\textit{Programming language}: C++ (C++20), with Python bindings via pybind11.
 
-\begin{thebibliography}{0}
-\bibitem{1}P. Dang, J.P. Draayer, F. Pan and K.S. Becker;``New Procedure for Evaluation of U(3) Coupling and Recoupling Coefficients", Eur. Phys. J. Plus \textbf{139}, 704 (2024)                     
-\bibitem{2}Ga\"{e}l Guennebaud, Beno\^{i}t Jacob, et al.; \url{http://eigen.tuxfamily.org} (2010)          
-\bibitem{3}H.T. Johansson and C. Forss\'en; SIAM J. Sci. Comput. \textbf{38}(1), A376 (2016)         
-\end{thebibliography}
+\noindent
+\textit{External libraries}: Eigen3; Boost (headers); OpenMP; fmt (header-only,
+for formatted output); the libwignernj SU(2) Wigner $3j/6j/9j$ backend; and a
+null-space solver backend --- the sparse solver \texttt{sns} (default), which
+falls back to a dense Eigen3 QR. The Python extension additionally uses pybind11.
 
-\newpage
+\noindent
+\textit{Nature of problem}: Fast, accurate, and reproducible evaluation of the
+Wigner coupling coefficients for the two group--subgroup chains
+$\mathrm{SU(3)}\supset\mathrm{SO(3)}$ and
+$\mathrm{U(3)}\supset\mathrm{U(2)}\supset\mathrm{U(1)}$, the U(3) Racah
+recoupling coefficients ($U$-, $Z$-, and $9$-$(\lambda\mu)$ coefficients), and
+the associated representation-theoretic quantities (dimensions, Casimirs,
+multiplicities, basis enumeration, generator matrix elements, and basis
+transformations) needed by symmetry-adapted nuclear-structure calculations.
+
+\noindent
+\textit{Solution method}: The coupling and recoupling coefficients are built from
+the highest-weight canonical reduced coefficients, obtained as the orthonormal
+null space of the linear system enforced by the U(3) raising generators, and
+propagated by the recursion relations of Ref.~\cite{Dang2024EPJP1}; the physical
+$\mathrm{SO(3)}$-coupled coefficients follow from the physical$\,\to\,$canonical
+basis transformation.
 
 \section{Introduction}
-\subsection{Data structures for irreps and basis states}
-All data structures given in this subsection are defined in \verb|src/U3basis.h|.
+\label{sec:intro}
 
-\vskip.2cm 
+\texttt{u3lib} evaluates the coupling and recoupling coefficients of the unitary group
+U(3) and its special unitary subgroup SU(3), together with the representation
+theory on which they rest. SU(3) symmetry underlies the Elliott model and the
+symmetry-adapted no-core shell model, where such coefficients are consumed in
+large numbers; speed, accuracy, and a stable, documented set of phase and
+normalization conventions are therefore essential.
 
-1. U(3) irreps are stored using a structure called \verb|u3::irrep|, whose members are \verb|n13|, \verb|n23|, \verb|n33|, corresponding to the three quantum numbers of a U(3) irrep. The default constructor sets all three quantum numbers to zero. When the quantum numbers are known, there are two ways to initialize an irrep
+The coefficients are computed with the procedure introduced in
+Ref.~\cite{Dang2024EPJP1}, which replaces the binomial coefficients and
+alternating sums of classical approaches by the solution of a sparse linear
+(null-space) problem followed by recursion, improving both numerical stability
+and range. The mathematical formulation, definitions, and governing equations
+are given in that paper and are not reproduced here; this manual is a reference
+for the software. \texttt{u3lib} packages the engine as a reusable framework: in addition
+to the coefficients it provides irreps and their invariants, the canonical
+(Gelfand--Tsetlin) and physical ($\mathrm{SO(3)}$-coupled) bases, the generator
+matrix elements, the tensor-product decomposition, and the physical$\,\to\,$
+canonical transformation. The C++ API is header-only; Python bindings mirror it
+one-to-one; and an agent-skill catalog exposes every capability to an AI
+assistant. The remainder documents the repository structure
+(Sec.~\ref{sec:structure}), the classes and interface (Sec.~\ref{sec:classes}),
+the Python bindings (Sec.~\ref{sec:python}), the agent-assisted interface
+(Sec.~\ref{sec:agents}), and the build (Sec.~\ref{sec:build}).
+
+\section{Library structure}
+\label{sec:structure}
+
+\texttt{u3lib} is a header-only C++ library with a thin build layer. The top-level
+directories are:
 \begin{itemize}
-    \item \verb|irrep(n1,n2,n3)|: the three quantum numbers are set to the given values \verb|n1|, \verb|n2|, and \verb|n3|, respectively;
-    \item  \verb|irrep(lambda,mu)|: initialize a U(3) irrep from Elliott's SU(3) labels.
-\end{itemize}
-There are three important methods
-\begin{itemize}
-    \item \verb|dim()|: return the dimension of a U(3) irrep $[n_{13},n_{23},n_{33}]$ as an integer;
-    \item \verb|check()|: a boolean-type method to check whether the quantum numbers are valid for an irrep, i.e., $n_{13}\ge n_{23}\ge n_{33}$. This method is particularly helpful in finding the decomposition of the tensor product of two U(3) irreps;
-    \item \verb|normalize()|: change a U(3) irrep $[n_{13},n_{23},n_{33}]$ to $[n_{13}-n_{33},n_{23}-n_{33},0]$. This is important because U(3) irreps $[n_{13},n_{23},n_{33}]$ and $[n_{13}+m,n_{23}+m,n_{33}+m]$ (where $m$ is an integer) are equivalent, thus we need to avoid store coupling coefficients associated with equivalent irreps. 
-\end{itemize}
-
-\vskip.2cm
-
-2. Gelfand-Tsetlin patterns -- also called Gelfand states for short:
-\begin{equation*}
-\ket{G} = \ket{\begin{array}{c}
-n_{13},n_{23},n_{33}\cr
-n_{12},n_{22}\cr
-n_{11}
-\end{array}}, \text{ where the \textit{betweenness} condition must be satisfied: } n_{ij} \ge n_{i,j-1} \ge n_{i+1,j},
-\end{equation*}
-are stored using a structure called \verb|u3::gelfand|, which is composed of six elements \verb|n13|, \verb|n23|, \verb|n33|, \verb|n12|, \verb|n22|, \verb|n11|. The default constructor sets all elements to zero, whereas if all six quantum numbers are known, a Gelfand state can be initialized by passing the values of the quantum numbers in their order. A boolean-type method called \verb|check()| serves to ensure that the betweenness condition is satisfied. There are 13 other methods, namely \verb|e11()|, \verb|e22()|, \verb|e33()|, \verb|e12()|, \verb|e21()|, \verb|e23_12()|, \verb|e23_22()|, \verb|e32_12()|, \verb|e32_22()|, \verb|e13_12()|, \verb|e13_22()|, \verb|e31_12()|, \verb|e31_22()|, which compute the coefficients that result from the action of the 9 generators of U(3), see Eqs. (5)-(7) in \cite{Dang2024EPJP1}. 
-\vskip.2cm
-An important method is \verb|normalize()|, which normalizes a Gelfand state
-\begin{equation*}
-\ket{\begin{array}{c}
-n_{13},n_{23},n_{33}\cr
-n_{12},n_{22}\cr
-n_{11}
-\end{array}} \longrightarrow \ket{\begin{array}{c}
-n_{13}-n_{33},n_{23}-n_{33},0\cr
-n_{12}-n_{33},n_{22}-n_{33}\cr
-n_{11}-n_{33}
-\end{array}}.
-\end{equation*}
-The purpose of this method is the same as that of \verb|normalize()| in \verb|u3::irrep|. 
-
-\vskip.2cm
-
-3. Another data structure called \verb|u3::physicalvector| is used to store physical basis states
-\begin{align*}
-    \ket{\begin{array}{c}
-n_{13},n_{23},0\cr
-\kappa L M=L
-\end{array}},
-\end{align*}
-which are the highest weight state of the physical reduction $\rm SU(3)\supset SO(3)$ with $\kappa$ or \verb|kappa| (in the program) is a counter for multiple occurrences of $L$ in a U(3) irrep.
-
-
-\subsection{Multiplicity convention}
-The inner multiplicity \verb|kappa| that occurs in the reduction to SO(3) and the outer multiplicity \verb|rho| occurring in the decomposition of a tensor product of two U(3) irreps into a direct sum of U(3) irreps are displayed starting at 1; i.e.,
-\begin{itemize}
-    \item \verb|kappa = 1, 2, ..., Kappa(u3::irrep,l)| where \verb|l| is the angular momentum quantum number;
-    \item \verb|rho = 1, 2, ..., rhomax|.
+    \item \verb|include/| --- the library itself (all algorithms live here; user
+    programs include these headers directly):
+    \begin{itemize}
+        \item \verb|U3irrep.h| --- the irrep classes \verb|su3::irrep|, \verb|u3::irrep|;
+        \item \verb|U3gelfand.h|, \verb|internal/gelfand/| --- the Gelfand state class \verb|u3::gelfand|;
+        \item \verb|U3basis.h| --- basis enumeration (\verb|gelfandBasis|, \verb|physicalBasis|), the inner multiplicity \verb|Kappa|, the \verb|u3::physicalvector| class, and the generator-action predicates;
+        \item \verb|U3decomposition.h| --- the outer multiplicity \verb|Rho| and the tensor-product \verb|decomposition|;
+        \item \verb|U3U2xU3U2.h|, \verb|U3SO3xU3SO3.h| --- the canonical and physical coupling coefficients and their databases;
+        \item \verb|U3_U6Z6Coeffs.h|, \verb|U3_U9Coeffs.h| --- the $U$-, $Z$-, and $9$-$(\lambda\mu)$ recoupling coefficients and their databases;
+        \item \verb|U3SO3_to_U3U2U1.h| --- the physical$\,\to\,$canonical transformation;
+        \item \verb|U3generatorsRME.h| --- the physical-generator reduced matrix elements \verb|RME_L|, \verb|RME_Q|;
+        \item \verb|Definitions.h| --- the structured coefficient containers;
+        \item \verb|u3lib.h| --- the umbrella header and the \verb|initialize|/\verb|finalize| lifecycle.
+    \end{itemize}
+    \item \verb|src/| --- small example driver programs (one \verb|.cpp| per task) that call the headers and print results; compiled to \verb|bin/|.
+    \item \verb|python/| --- the pybind11 extension (\verb|pyu3lib.cpp| $\to$ \verb|u3lib.so|, built with \verb|make python|) and a tutorial notebook (\verb|tutorial.ipynb|).
+    \item \verb|agents/| --- the AI-agent skill catalog: an index (\verb|AGENTS.md|), shared runtime instructions, and one skill per capability.
+    \item \verb|test/| --- the regression suite (\verb|test_*.cpp|, the \verb|*_cases.h| case sets, and \verb|reference/| documented values), run by \verb|make test|.
+    \item \verb|doc/| --- this manual (LaTeX source).
+    \item \verb|bin/| --- build output (not source).
 \end{itemize}
 
+\section{Classes and library interface}
+\label{sec:classes}
 
+This section documents every public class and its methods, and the
+database/container interface through which coefficients are reached. All types
+are in the namespace \verb|u3| (SU(3)-only base members in \verb|su3|). The
+algebraic types and their methods do not require initialization; the coefficient
+\emph{databases} do. Table~\ref{tab:main-funcs} is an at-a-glance map of the main
+entry points.
 
-\section{Library Interface}
-%Make a table for main functions of U3lib
-The U3lib library provides simple programs for the evaluation of U(3) Wigner coupling and recoupling coefficients and a program for computing reduced matrix elements of SU(3) physical generators. The main directory contains \verb|.cpp| programs that serve as example for calling functions and printing outputs, whereas the implementation can be found in the header files of the same names in the \verb|src| directory.
-
-\vskip.2cm
-
-\red{It is worth noting that all normalizations are done in the .cpp programs when finalizing and printing out the outputs. Outputs from functions in header files are not normalized and I highly suggest not messing with the header files (except the utility files) because it may affect the computation.}
-
-\vskip.2cm
-
-Table \ref{tab:main-funcs} lists all the header files and the main functions (contained in namespace \verb|u3|) therein together with their tasks and a reference to the mathematical detail. In what follows, details of these functions -- regarding inputs and outputs -- will be given. 
-\begin{table}
+\begin{table*}[tp]
     \centering
-    \begin{tabular}{p{3.8cm}p{3.4cm}p{8cm}p{2.3cm}}
+    \begin{tabular}{p{3.2cm}p{4.8cm}p{6.2cm}p{2.0cm}}
     \hline\hline
-         Location&  Function name& Task/Computation& References\\
+         Header & Entry point & Task & Reference\\
         \hline
-         \verb|src/decomposition.h|&  \verb|decomposition|&  decomposition of the tensor product & Sec. IV.A \\
-         &  & $[n_{13},n_{23},n_{33}] \otimes [n_{13}',n_{23}',n_{33}'] = \oplus \rho_{\max} [n_{13}'',n_{23}'',n_{33}'']$&in \cite{Dang2024EPJP1}\\
-         \hline
-         \verb|src/U3U2U1xU3U2U1.h|&  \verb|HighestWeightCoeffs|& $\rm U(3)\supset U(2) \supset U(1)$ coupling coefficients for the highest weight state of the coupled irrep& Sec. IV.C in \cite{Dang2024EPJP1}\\
-         &  \verb|LowerWeightCoeffs|& $\rm U(3)\supset U(2) \supset U(1)$ coupling coefficients for the lower weight states of the coupled irrep& Sec. IV.D in \cite{Dang2024EPJP1}\\
-         \hline
-         \verb|src/U3_U6Z6Coeffs.h|&  \verb|U6|& 6-U(3) Racah recoupling U-coefficients& Eq. (21) in \cite{Dang2024EPJP1}\\
-         &  \verb|Z6|& 6-U(3) Racah recoupling Z-coefficients& Eq. (22) in \cite{Dang2024EPJP1}\\
-         \hline
-         \verb|src/U3_U9Coeffs.h|& \verb|U9|& 9-U(3) Racah recoupling coefficients& Eq. (23) in \cite{Dang2024EPJP1}\\
-         \hline
-         \verb|src/U3SO3_to_U3U2U1.h|&  \verb|phys_to_cano|&  expansion of the highest weight $\rm SU(3) \supset SO(3) \supset SO(2)$ basis state ($M=L$) in terms of Gelfand states& Eqs. (35),(36) in \cite{Dang2024EPJP1}\\
-         \hline
-         \verb|src/U3SO3xU3SO3.h|&  \verb|WigU3SO3|& $\rm SU(3)\supset SO(3)$ Wigner coefficients& Eq. (40) in \cite{Dang2024EPJP1}\\
-         \hline
-         \verb|src/U3generators.h|&  \verb|RME_L|& reduced matrix elements $\langle (\lambda\mu)\kappa' L||\mathbf{L}||(\lambda\mu)\kappa L \rangle$ for all multiplicities & Eq. (7) in \cite{Draayer1985NPA}\\
-          &  \verb|RME_Q|& reduced matrix elements $\langle (\lambda\mu)\kappa' L'||\mathbf{Q}||(\lambda\mu)\kappa L \rangle$ for all multiplicities&Eqs. (51)-(53) in \cite{Pan2016NPA}\\
+         \verb|U3irrep.h| & \verb|dim|, \verb|C1/C2/C3|, \verb|conjugate| & irrep dimension, Casimirs, conjugation & ---\\
+         \verb|U3basis.h| & \verb|Kappa|, \verb|gelfandBasis|, \verb|physicalBasis| & inner multiplicity; basis enumeration & \cite{Dang2024EPJP1}\\
+         \verb|U3decomposition.h| & \verb|Rho|, \verb|decomposition| & outer multiplicity; $A\otimes B$ series & Sec.~IV.A \cite{Dang2024EPJP1}\\
+         \verb|U3U2xU3U2.h| & \verb|wigU3U2db| & $\mathrm{U(3)}{\supset}\mathrm{U(2)}$ canonical reduced CG & Sec.~IV.C--D \cite{Dang2024EPJP1}\\
+         \verb|U3SO3xU3SO3.h| & \verb|wigU3SO3db| & $\mathrm{SU(3)}{\supset}\mathrm{SO(3)}$ physical CG & Eq.~(40) \cite{Dang2024EPJP1}\\
+         \verb|U3_U6Z6Coeffs.h| & \verb|u3u6db|, \verb|u3z6db| & $U$- and $Z$-recoupling (three irreps) & Eqs.~(21),(22) \cite{Dang2024EPJP1}\\
+         \verb|U3_U9Coeffs.h| & \verb|u3u9db| & $9$-$(\lambda\mu)$ recoupling (four irreps) & Eq.~(23) \cite{Dang2024EPJP1}\\
+         \verb|U3SO3_to_U3U2U1.h| & \verb|phys_to_cano| & physical $\to$ canonical transformation & Eqs.~(35),(36) \cite{Dang2024EPJP1}\\
+         \verb|U3generatorsRME.h| & \verb|RME_L|, \verb|RME_Q| & reduced matrix elements of $\mathbf{L}$, $\mathbf{Q}$ & ---\\
     \hline\hline
     \end{tabular}
-    \caption{Main functions  of the U3lib library.}
+    \caption{Main entry points of \texttt{u3lib}.}
     \label{tab:main-funcs}
-\end{table}
+\end{table*}
 
+\subsection{Lifecycle}
+In \verb|u3lib.h|:
+\begin{itemize}
+    \item \verb|initialize()| / \verb|initialize(&argc,&argv)| --- set up the Wigner backend, the SO(3) CGC/Racah caches, and the U(3) coefficient databases;
+    \item \verb|finalize()| --- tear everything down;
+    \item \verb|initialize_thread()| / \verb|finalize_thread()| --- per-thread setup for multithreaded use;
+    \item \verb|clear()| --- drop cached coefficients while keeping the databases alive;
+    \item \verb|is_initialized()| --- query the state.
+\end{itemize}
+\textit{Shared-backend lifecycle:} if \texttt{u3lib} runs in the same process as another library that shares the Wigner backend, initialize all of them at startup and finalize only after all coefficient work is complete. Calling \verb|finalize()| while another user of the backend is still active destroys the shared state and causes runtime errors.
 
-\subsection{Calculation of U(3) coupling coefficients}
+\subsection{Irreps: \texttt{su3::irrep} and \texttt{u3::irrep}}
+(\verb|U3irrep.h|.) \verb|su3::irrep| stores an SU(3) irrep; \verb|u3::irrep|
+derives from it and adds the determinant row.
+\textbf{Constructors.}
+\begin{itemize}
+    \item \verb|su3::irrep()| --- default (empty) SU(3) irrep.
+    \item \verb|su3::irrep(lambda,mu)| --- SU(3) irrep from its labels.
+    \item \verb|u3::irrep()| --- default (empty) U(3) irrep.
+    \item \verb|u3::irrep(n13,n23,n33)| --- U(3) irrep from its three row labels.
+    \item \verb|u3::irrep(lambda,mu)| --- normalized representative $[\lambda{+}\mu,\mu,0]$.
+    \item \verb|u3::irrep(su3::irrep, N)| --- fix the total quanta $N$.
+\end{itemize}
+\textbf{Labels.}
+\begin{itemize}
+    \item \verb|lam()| / \verb|lambda()| --- the SU(3) label $\lambda$.
+    \item \verb|mu()| --- the SU(3) label $\mu$.
+    \item \verb|n13()|, \verb|n23()|, \verb|n33()| --- the three U(3) row labels (\verb|u3::irrep|).
+\end{itemize}
+\textbf{Dimension and invariants.}
+\begin{itemize}
+    \item \verb|dim()| --- the dimension (both classes).
+    \item \verb|C2()| --- the quadratic SU(3) Casimir (both classes, shift-invariant).
+    \item \verb|C3()| --- the cubic SU(3) Casimir (both classes, shift-invariant).
+    \item \verb|C1()| --- the first-order U(1) Casimir $=n_{13}{+}n_{23}{+}n_{33}$ (total quanta), on \verb|u3::irrep| only; \verb|su3::irrep| has no \verb|C1()| (SU(3) drops the U(1) trace generator).
+    \item \verb|quanta()| --- synonym of \verb|C1()|.
+\end{itemize}
+\textbf{Other.}
+\begin{itemize}
+    \item \verb|zero()| --- test for the trivial irrep.
+    \item \verb|conjugate()| --- the conjugate irrep $(\mu,\lambda)$.
+    \item \verb|conjugate_phase()| --- the associated conjugation phase.
+    \item \verb|normalize()| --- set $n_{33}=0$ (\verb|u3::irrep|).
+    \item comparison operators and stream output.
+    \item \verb|writeBinary| / \verb|readBinary| --- binary serialization.
+\end{itemize}
 
-In this subsection, details in terms of inputs and outputs of each main function in the namespace \verb|u3| shown in Table \ref{tab:main-funcs} are given.
+\subsection{Gelfand states: \texttt{u3::gelfand}}
+(\verb|U3gelfand.h|.) The canonical basis state
+$\ket{n_{13},n_{23},n_{33};\,n_{12},n_{22};\,n_{11}}$.
+\textbf{Constructor.}
+\begin{itemize}
+    \item \verb|u3::gelfand(n13,n23,n33,n12,n22,n11)| --- build a Gelfand state from its labels.
+\end{itemize}
+\textbf{Labels and validity.}
+\begin{itemize}
+    \item \verb|n13()| \dots\ \verb|n11()| --- the six Gelfand-pattern labels.
+    \item \verb|check()| --- test the betweenness condition.
+    \item \verb|normalize()| --- shift $n_{33}\to0$.
+\end{itemize}
+\textbf{Subgroup labels.}
+\begin{itemize}
+    \item \verb|lam()| / \verb|lambda()| --- the SU(3) label $\lambda$.
+    \item \verb|mu()| --- the SU(3) label $\mu$.
+    \item \verb|epsilon()| --- the U(1) weight.
+    \item \verb|Lambdax2()| --- $2\times$ the embedded SU(2) angular momentum.
+    \item \verb|MLambdax2()| --- $2\times$ its projection.
+\end{itemize}
+\textbf{Conjugation.}
+\begin{itemize}
+    \item \verb|conjugate()| --- the conjugate Gelfand state.
+    \item \verb|conjugate_phase()| --- the associated conjugation phase.
+\end{itemize}
+\textbf{Generator matrix elements.} Each returns the matrix element of a U(3)
+generator $E_{ij}$ acting on the state; a \verb|_12|/\verb|_22| suffix selects the
+target branch.
+\begin{itemize}
+    \item \verb|e11()|, \verb|e22()|, \verb|e33()| --- the diagonal weight generators.
+    \item \verb|e12()| --- the $E_{12}$ element.
+    \item \verb|e21()| --- the $E_{21}$ element.
+    \item \verb|e23_12()|, \verb|e23_22()| --- the $E_{23}$ element, per target branch.
+    \item \verb|e32_12()|, \verb|e32_22()| --- the $E_{32}$ element, per target branch.
+    \item \verb|e13_12()|, \verb|e13_22()| --- the $E_{13}$ element, per target branch.
+    \item \verb|e31_12()|, \verb|e31_22()| --- the $E_{31}$ element, per target branch.
+\end{itemize}
+The raising-action predicates \verb|E12|, \verb|E23_12|, \verb|E23_22|,
+\verb|E13_12|, \verb|E13_22| (in \verb|U3basis.h|) identify the target state of
+each generator.
 
-\vskip.2cm
+\subsection{Physical states: \texttt{u3::physicalvector}}
+(\verb|U3basis.h|.) The $\mathrm{SU(3)}\supset\mathrm{SO(3)}$ reduced state
+$\ket{(\lambda\mu)\,\kappa\,L}$.
+\textbf{Constructor.}
+\begin{itemize}
+    \item \verb|u3::physicalvector(irrep, L)| --- a physical state of angular momentum $L$.
+\end{itemize}
+\textbf{Accessors.}
+\begin{itemize}
+    \item \verb|irr()| --- the underlying irrep.
+    \item \verb|lam()| / \verb|lambda()| --- the SU(3) label $\lambda$.
+    \item \verb|mu()| --- the SU(3) label $\mu$.
+    \item \verb|n13()|, \verb|n23()|, \verb|n33()| --- the U(3) row labels.
+    \item \verb|L()| --- the angular momentum.
+    \item \verb|kappa()| --- the inner multiplicity of $L$ (= \verb|kappamax()|).
+\end{itemize}
 
-1. Decomposition:
+\subsection{Free functions}
+\textbf{Multiplicities.}
+\begin{itemize}
+    \item \verb|u3::Kappa(irrep,L)| --- inner multiplicity $\kappa_{\max}$ (also \verb|kmax|, \verb|mult|).
+    \item \verb|u3::Rho(A,B,C)| --- outer multiplicity $\rho_{\max}$ of $C$ in $A\otimes B$ (\verb|U3decomposition.h|).
+\end{itemize}
+\textbf{Bases.}
+\begin{itemize}
+    \item \verb|u3::gelfandBasis(irrep)| --- all Gelfand states of the irrep.
+    \item \verb|u3::physicalBasis(irrep)| --- all physical states with nonzero $\kappa$.
+    \item \verb|u3::findGelfand(g,gArr)| --- the index of a state within \verb|gArr|.
+\end{itemize}
+\textbf{Decomposition.}
+\begin{itemize}
+    \item \verb|u3::decomposition(A,B)| --- the full Kronecker series, returning (list of $C$, list of $\rho_{\max}$) with $\sum_C\rho_{\max}(C)\dim C=\dim A\dim B$.
+\end{itemize}
+\textbf{Generator RMEs} (\verb|U3generatorsRME.h|). Each takes two
+\verb|physicalvector| states (bra, ket) and two \verb|std::vector<int>|
+out-parameters (which receive the $1$-based multiplicity labels), and returns an
+\verb|Eigen::MatrixXd| of shape $\kappa'_{\max}\times\kappa_{\max}$.
+\begin{itemize}
+    \item \verb|RME_L| --- the angular-momentum RME, $\langle(\lambda\mu)\kappa'L'\|\mathbf{L}\|(\lambda\mu)\kappa L\rangle=\delta_{L'L}\sqrt{L(L{+}1)(2L{+}1)}$.
+    \item \verb|RME_Q| --- the quadrupole RME, carrying an extra $\sqrt{2L'+1}$ (Sec.~\ref{sub:conv}).
+\end{itemize}
+\textbf{Transformation} (\verb|U3SO3_to_U3U2U1.h|). Both expand a physical state
+in the Gelfand basis, returning the canonical-state indices into
+\verb|gArr=gelfandBasis(p.irr())| and an amplitude matrix with one orthonormal
+column per $\kappa$.
+\begin{itemize}
+    \item \verb|u3::phys_to_cano(p,M,gArr)| --- the expansion at a single projection $M$.
+    \item \verb|u3::phys_to_cano_allM(p,gArr)| --- the expansion over all $M$.
+\end{itemize}
+
+\subsection{Coefficient containers}
+(\verb|Definitions.h|.) Every database call returns one of these structured
+containers; indices are zero-based and bounded by the \verb|*max()| counts.
+Accessors common to every container:
+\begin{itemize}
+    \item \verb|operator()(...)| --- the coefficient at the given multiplicity indices (signature per container below).
+    \item \verb|data()| --- the underlying flat buffer.
+    \item \verb|size()| --- the number of stored coefficients.
+    \item \verb|empty()| --- true for a forbidden or empty coupling.
+\end{itemize}
+The multiplicity-axis counts, one per line, and the \verb|operator()| index order for each container:
+
+\textbf{\texttt{U3U2}} --- canonical coupling. Also exposes a flat \verb|operator[]|.
+\begin{itemize}
+    \item \verb|rhomax()| --- the outer multiplicity $\rho$.
+    \item \verb|operator()(rho)| --- indexed by $\rho$.
+\end{itemize}
+\textbf{\texttt{U3SO3}} --- physical coupling.
+\begin{itemize}
+    \item \verb|kappaAmax()| --- inner multiplicity $\kappa$ of leg $A$.
+    \item \verb|kappaBmax()| --- inner multiplicity $\kappa$ of leg $B$.
+    \item \verb|kappaCmax()| --- inner multiplicity $\kappa$ of leg $C$.
+    \item \verb|rhomax()| --- the outer multiplicity $\rho$.
+    \item \verb|operator()(kappaA,kappaB,kappaC,rho)|.
+\end{itemize}
+\textbf{\texttt{U3U6}} --- $U$-recoupling, $(AB)C\leftrightarrow A(BC)$.
+\begin{itemize}
+    \item \verb|rhoABmax()| --- multiplicity of the $A\otimes B\to AB$ coupling.
+    \item \verb|rhoAB_Cmax()| --- multiplicity of the $AB\otimes C$ coupling.
+    \item \verb|rhoBCmax()| --- multiplicity of the $B\otimes C\to BC$ coupling.
+    \item \verb|rhoA_BCmax()| --- multiplicity of the $A\otimes BC$ coupling.
+    \item \verb|operator()(rhoAB,rhoAB_C,rhoBC,rhoA_BC)|.
+\end{itemize}
+\textbf{\texttt{U3Z6}} --- $Z$-recoupling, $(AB)C\leftrightarrow(AC)B$. It reuses the
+\verb|U3U6| getter names for its second route:
+\begin{itemize}
+    \item \verb|rhoABmax()| --- multiplicity of the $A\otimes B\to AB$ coupling.
+    \item \verb|rhoAB_Cmax()| --- multiplicity of the $AB\otimes C$ coupling.
+    \item \verb|rhoBCmax()| --- here the $A\otimes C\to AC$ channel.
+    \item \verb|rhoA_BCmax()| --- here the $AC\otimes B$ channel.
+    \item \verb|operator()(rhoAB,rhoAB_C,rhoAC,rhoAC_B)|.
+\end{itemize}
+\textbf{\texttt{U3U9}} --- $9$-$(\lambda\mu)$ recoupling.
+\begin{itemize}
+    \item \verb|rhoACmax()| --- multiplicity of the $A\otimes C\to AC$ coupling.
+    \item \verb|rhoBDmax()| --- multiplicity of the $B\otimes D\to BD$ coupling.
+    \item \verb|rhoABCDmax()| --- multiplicity of the $(AB)(CD)\to ABCD$ route.
+    \item \verb|rhoABmax()| --- multiplicity of the $A\otimes B\to AB$ coupling.
+    \item \verb|rhoCDmax()| --- multiplicity of the $C\otimes D\to CD$ coupling.
+    \item \verb|rhoACBDmax()| --- multiplicity of the $(AC)(BD)\to ABCD$ route.
+    \item \verb|operator()(rhoAC,rhoBD,rhoABCD,rhoAB,rhoCD,rhoACBD)|.
+\end{itemize}
+In C++ the \verb|U3U9| result is a view into a thread-local scratch buffer that
+the next database call overwrites; copy it before the next call. The other four
+own their buffers. (The Python bindings copy \verb|U3U9| automatically.)
+
+\subsection{Coefficient databases}
+Reached through singletons; each returns a container above.
+\begin{itemize}
+    \item \verb|u3::wigU3U2db().get(| $n_{13}^a,n_{23}^a,n_{33}^a,n_{12}^a,n_{22}^a,\ \dots^{b},\ \dots^{c}$ \verb|)| $\to$ \verb|U3U2| --- $\mathrm{U(3)}\supset\mathrm{U(2)}$ reduced coupling for $a\otimes b\to c$ (each state by its U(3) rows and U(2) sublabels $n_{12},n_{22}$), indexed by $\rho$.
+    \item \verb|u3::wigU3SO3db().get_U3SO3(| $\lambda_1,\mu_1,L_1,\ \lambda_2,\mu_2,L_2,\ \lambda_3,\mu_3,L_3$ \verb|)| $\to$ \verb|U3SO3| --- $\mathrm{SU(3)}\supset\mathrm{SO(3)}$ reduced coupling, indexed by $(\kappa_A,\kappa_B,\kappa_C,\rho)$.
+    \item \verb|u3::u3u6db().get_U3U6(| $A,B,ABC,C,AB,\ \rho_{AB},\rho_{AB\_C},\ BC,\rho_{BC},\rho_{A\_BC}$ \verb|)| $\to$ \verb|U3U6| --- recouples $(AB)C\leftrightarrow A(BC)$.
+    \item \verb|u3::u3z6db().get_U3Z6(| $B,A,ABC,C,AB,\ \rho_{AB},\rho_{AB\_C},\ AC,\rho_{AC},\rho_{AC\_B}$ \verb|)| $\to$ \verb|U3Z6| --- recouples $(AB)C\leftrightarrow(AC)B$ (note the leading $B,A$).
+    \item \verb|u3::u3u9db().get_U3U9(| $A,B,C,D,$ $AB,CD,AC,BD,ABCD,$ $\rho_{AC},\rho_{BD},\rho_{ABCD},$ $\rho_{AB},\rho_{CD},\rho_{ACBD}$ \verb|)| $\to$ \verb|U3U9|.
+\end{itemize}
+The multiplicity maxima are the \verb|Rho| values for the corresponding
+channels, supplied in the fixed interleaved positions shown; a mismatch trips an
+internal assertion. In \verb|get_U3U9|, note that the 3rd multiplicity argument $\rho_{ABCD}$ corresponds to the $(AB)(CD)\to ABCD$ coupling route and the 6th ($\rho_{ACBD}$) to $(AC)(BD)\to ABCD$; swapping them trips an internal assertion. A forbidden or empty coupling returns an empty container
+(safe to query for shape, not to index).
+
+A minimal C++ session:
 \begin{lstlisting}[language=C++]
-    std::vector<u3::irrep> decomposition(u3::irrep &u31, u3::irrep &u32, 
-                                                    std::vector<int> &rhomaxs)
+u3::initialize(&argc, &argv);
+auto blk = u3::wigU3SO3db().get_U3SO3(2,0,2, 2,0,2, 4,0,2);
+double x = blk(0, 0, 0, 0);     // = -sqrt(2/9)
+u3::finalize();
 \end{lstlisting}
-Admits two U(3) irreps as input, and returns an array of U(3) coupled irreps with the outer multiplicities being stored in the array \verb|rhomaxs|.
 
-\vskip.2cm
+\subsection{Conventions and normalization}
+\label{sub:conv}
+Phase and normalization conventions follow Ref.~\cite{Dang2024EPJP1}; documented
+values and the generation procedure are in \verb|test/reference/|.
+\begin{itemize}
+    \item \textbf{Multiplicity indexing.} Counts come from \verb|Kappa|/\verb|Rho|; container accessors use zero-based indices $0,\dots,\text{max}{-}1$. The generator-RME routines report $1$-based labels in their out-parameters.
+    \item \textbf{Canonical-coupling phase.} For each $\rho$ block the phase and normalization are fixed by the highest-weight reduced coefficients -- the orthonormal null space of the system imposed by $E_{23}$ and $E_{12}$ annihilating the highest-weight coupled state. For $\rho_{\max}>1$ (and self-conjugate irreps) the solver fixes \emph{a} valid orthonormal $\rho$ basis (RREF + Gram--Schmidt + leading-sign); any alternative must be applied consistently to every $\rho$-carrying coefficient. Conjugation of a Gelfand state satisfies $C\ket{g} = (-1)^{n_{23}-n_{12}-n_{22}-n_{11}}\ket{g.\mathrm{conjugate}()}$ (\verb|gelfand::conjugate_phase()|).
+    \item \textbf{Physical\,$\to$\,canonical transformation.} A physical SO(3) state $\ket{(\lambda\mu)\,\kappa\,L\,M}$ is expanded in canonical Gelfand states $\ket{g}$ with $M = e_{11} - e_{22} = 2n_{11} - (n_{12} + n_{22})$. The highest-weight state $M=L$ is the null space of $L_+=\sqrt2(E_{13}+E_{32})$; $L_-$ fixes the lower-$M$ phases within a $\kappa$ multiplet. When compiled with \verb|ADD_SU3LIB_PHASE_U3SO3|, distinct conjugate irreps obey $C\ket{(\lambda\mu)\,\kappa\,L\,M} = (-1)^{\lambda+\mu-L+M}\ket{(\mu\lambda)\,\kappa\,L,-M}$ (for $\lambda>\mu$ the transformation is built from the conjugate irrep with the phase factor $(-1)^{n_{22}+n_{11}-L}$). For a self-conjugate irrep $(\lambda,\lambda)$ conjugation acts as an $M$-independent symmetric matrix $D$ ($D^2=\mathbb{1}$) that may mix $\kappa$.
+    \item \textbf{Generator RME factor.} \verb|RME_L|/\verb|RME_Q| carry an extra $\sqrt{2L'+1}$, so $\langle\kappa L\|\mathbf{Q}\|\kappa'L'\rangle=(-1)^{L-L'}\langle\kappa'L'\|\mathbf{Q}\|\kappa L\rangle$.
+    \item \textbf{Assertions are on.} Invalid labels or out-of-range indices abort in C++; the Python bindings guard database access and raise instead.
+\end{itemize}
 
-2. $\rm U(3) \supset U(2) \supset U(1)$ coupling coefficients of the highest weight state:
-\begin{lstlisting}
-    void HighestWeightCoeffs(u3::irrep &u3a, u3::irrep &u3b, u3::gelfand &HWc, 
-                            std::vector<u3::gelfand> &gArr1, std::vector<u3::gelfand> &gArr2, 
-                            std::vector<u3::gelfand> &gArr3, Eigen::Matrix<double,Eigen::Dynamic,
-                            Eigen::Dynamic> &coeffs)
+\section{Python bindings}
+\label{sec:python}
+
+The module \verb|u3lib| mirrors the C++ API one-to-one; build it with
+\verb|make python| and the interpreter whose ABI matches the extension. Irreps
+(\verb|su3.irrep|, \verb|irrep|), \verb|gelfand|, \verb|physicalvector|, the free
+functions \verb|Rho|, \verb|Kappa|, \verb|decomposition|, \verb|gelfandBasis|,
+\verb|physicalBasis|, the physical-generator RMEs \verb|RME_L|/\verb|RME_Q|, the
+transformation \verb|phys_to_cano|/\verb|phys_to_cano_allM|, and the five database
+accessors are all exposed with the same names and semantics as
+Sec.~\ref{sec:classes}. The structured containers provide
+\verb|__call__| (multiplicity-indexed), flat \verb|data()| as a NumPy array, and
+a printing method; database access before \verb|initialize()| or after
+\verb|finalize()| raises \verb|RuntimeError| rather than aborting. The extension
+links no MPI and uses \verb|sns| or a dense QR for the null-space solve.
+\begin{lstlisting}[language=Python]
+import u3lib as u3
+u3.initialize()
+try:
+    blk = u3.wigU3SO3db().get_U3SO3(2,0,2, 2,0,2, 4,0,2)
+    x = blk(0, 0, 0, 0)                 # (kappaA,kappaB,kappaC,rho) = -sqrt(2/9)
+finally:
+    u3.finalize()
 \end{lstlisting}
-Takes two U(3) irreps and the highest weight state of the coupled irrep as inputs. Since the coupling coefficients have three entries, $C_{G,G'}^{HW''_\rho}$, each of them is stored separately, i.e., $\ket{G}$ and $\ket{G'}$ are stored in the two arrays \verb|gArr1| and \verb|gArr2|, whereas \verb|gArr3| simply contains multiple copies of $\ket{HW''}$. The coupling coefficients are stored in matrix \verb|coeffs|, which has \verb|rhomax| columns. 
+A worked introduction covering irreps, bases, coupling, and recoupling is
+provided as a Jupyter notebook, \verb|python/tutorial.ipynb|; build and
+toolchain details are in the top-level \verb|README.md|.
 
-\vskip.2cm
+\section{Agent-assisted interface}
+\label{sec:agents}
 
-3. $\rm U(3) \supset U(2) \supset U(1)$ coupling coefficients of lower weight states of the same p-weight:
-\begin{lstlisting}
-    void LowerWeightCoeffs(u3::irrep &u3a, u3::irrep &u3b, u3::irrep &u3c, int w3, int w1, 
-                            std::vector<u3::gelfand> &gArr1, 
-                            std::vector<u3::gelfand> &gArr2, 
-                            std::vector<u3::gelfand> &gArr3, 
-                            Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> &coeffs)
-\end{lstlisting}
-Takes three U(3) irreps and the p-weight that is of interest as inputs. Similarly to \verb|HeighestWeightCoeffs|, it returns three entries of the CGC's, namely, $\ket{G},\ket{G'},\ket{G''}$, into three arrays called \verb|gArr1|, \verb|gArr2|, \verb|gArr3|, and the coefficients themselves are stored in a matrix whose number of columns is equal to \verb|rhomax|.
+\texttt{u3lib} ships a repository-local catalog of \emph{agent skills} under
+\verb|agents/|: an index (\verb|agents/AGENTS.md|), shared runtime instructions,
+and one skill per capability. Each skill states its inputs, the exact library
+call, the convention, and a built-in numerical check. A code-executing AI
+assistant pointed at the catalog carries out the requested computation using the
+configured local library; no network service is involved.
 
-\vskip.2cm
+The catalog also provides an \verb|install| skill (\verb|agents/install/SKILL.md|).
+On a fresh checkout the agent builds the library first --- \verb|make config| to
+resolve or download the dependencies, then \verb|make| and \verb|make test| ---
+before running any calculation skill.
 
-4. Transformation between $\rm SU(3)\supset SO(3)$ and $\rm U(3)\supset U(2) \supset U(1)$ bases:
-\begin{lstlisting}
-    Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic> phys_to_cano(physicalvector &physvec, 
-                                Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> &Lproj)
-\end{lstlisting}    
-Admits a highest weight state ($M=L$) and expands it in the canonical basis. All the expansion coefficients are returned in a matrix whose number of columns is equal to the inner multiplicity $\kappa_{\max}$, that occurs in the reduction to SO(3).
+It is important to be precise about what the agent does and does not do. \textbf{The
+agent performs no physics and no mathematics itself.} It does not derive or
+approximate coupling coefficients, Casimirs, or matrix elements. Its role is
+\emph{orchestration}: from a natural-language request it selects the matching
+skill, constructs valid inputs in the library's conventions, invokes the
+compiled C++/Python routine, and reports the returned numbers with their labels
+and the check that was run. All numerical work is done by the library; the agent
+is an interface that routes a request to the correct tool and formats the result,
+and it declines or asks for clarification when a request is ill-posed (for
+example, a request for the first-order Casimir of an SU(3) irrep, which is not
+defined).
 
-\vskip.2cm
+Table~\ref{tab:prompts} lists each skill with a representative prompt; the
+parenthetical results were checked against the library, so each prompt doubles
+as a self-test.
 
-5. Wigner $\rm SU(3)\supset SO(3)$ coupling coefficients:
-\begin{lstlisting}
-    Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> WigU3SO3(u3::irrep &u3A, u3::irrep &u3B, 
-                                u3::irrep &u3C, std::vector<u3::physicalvector> &physvecA,  
-                                std::vector<u3::physicalvector> &physvecB,
-                                std::vector<u3::physicalvector> &physvecC)
-\end{lstlisting}
-Accepts three irreps as input and generates all coupling coefficients which are stored in a matrix with \verb|rhomax| columns. The three entries of the coefficients 
-\begin{align*}
-    \ket{\begin{array}{c}
-n_{13},n_{23},0\cr
-\kappa L M=L
-\end{array}} \text{,  } 
-\ket{\begin{array}{c}
-n_{13}',n_{23}',0\cr
-\kappa' L' M'=L'
-\end{array}}
-\text{,  and } 
-\ket{\begin{array}{c}
-n_{13}'',n_{23}'',0\cr
-\kappa'' L'' M''=L''
-\end{array}}, 
-\end{align*}
-are stored in three arrays, namely \verb|physvecA|, \verb|physvecB|, and \verb|physvecC|.
-
-\subsection{Calculation of U(3) recoupling coefficients}
-
-1. 6-U(3) Racah recoupling U-coefficients:
-\begin{lstlisting}
-    std::vector<double> U6(u3::irrep &u3a, u3::irrep &u3b, u3::irrep &u3abc, u3::irrep &u3c, 
-                            u3::irrep &u3ab, std::vector<int> &rhoab, std::vector<int> &rhoab_c, 
-                            u3::irrep &u3bc, std::vector<int> &rhobc, std::vector<int> &rhoa_bc)
-\end{lstlisting}   
-Admits six irreps, three of which are the three irreps that are coupled to a final irrep, whereas two irreps are the resultants of coupling the first and the second, and of coupling the second and the third. The function returns all recoupling coefficients for all outer multiplicities, stored in an array \verb|std::vector<double>|.
-
-\vskip.2cm
-
-2. 6-U(3) Racah recoupling Z-coefficients:
-\begin{lstlisting}
-    std::vector<double> Z6(u3::irrep &u3b, u3::irrep &u3a, u3::irrep &u3abc, u3::irrep &u3c, 
-                            u3::irrep &u3ab, std::vector<int> &rhoab, std::vector<int> &rhoab_c, 
-                            u3::irrep &u3ac, std::vector<int> &rhoac, std::vector<int> &rhoac_b)
-\end{lstlisting}
-Admits six irreps, three of which are the three irreps that are coupled to a final irrep, whereas two irreps are the resultants of coupling the first and the second, and of coupling the first and the third. The function returns all recoupling coefficients for all outer multiplicities, stored in \verb|std::vector<double>|.
-
-\vskip.2cm
-
-3. 9-U(3) Racah recoupling coefficients:
-\begin{lstlisting}
-    Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> U9(u3::irrep &u3a, u3::irrep &u3b, 
-                            u3::irrep &u3c, u3::irrep &u3d, u3::irrep &u3ab, u3::irrep &u3cd, 
-                            u3::irrep &u3ac, u3::irrep &u3bd, u3::irrep &u3abcd, std::vector<int> 
-                            &rhoab, int rhoab_max, std::vector<int> &rhocd, int rhocd_max, 
-                            std::vector<int> &rhoab_cd, int rhoab_cd_max, std::vector<int> &rhoac, 
-                            int rhoac_max, std::vector<int> &rhobd, int rhobd_max, std::vector<int> 
-                            &rhoac_bd, int rhoac_bd_max)
-\end{lstlisting}
-Needs nine inputs, which are the four irreps that are coupled to obtain the final one, the other four are the resultants of coupling the 1st and the 2nd, the 3rd and the 4th, the 1st and the 3rd, the 2nd and the 4th. It returns all recoupling coefficients for all outer multiplicities that occur in a matrix as follows,
-
-\begin{table}[h!]
+\begin{table*}[tp]
     \centering
-    \begin{tabular}{cccccc}
-         $\Gamma_1$&  $\Gamma_2$&  $\Gamma_{12}$&  $\rho_{12}$&  1& ...\\
-         $\Gamma_3$&  $\Gamma_4$&  $\Gamma_{34}$&  $\rho_{34}$&  1& ...\\
-         $\Gamma_{13}$&  $\Gamma_{24}$&  $\Gamma$&  $\rho_{13,24}$&  1& ...\\
-         $\rho_{13}$&  $\rho_{24}$&  $\rho_{12,34}$&  &  & \\
-         1&  1&  1&  &  ...& ...\\
-         ...&  ...&  ...&  &  ...& ...\\
+    \small
+    \begin{tabular}{p{3.1cm}p{13.2cm}}
+    \hline\hline
+    Skill & Example prompt (expected result) \\
+    \hline
+    \verb|dim| & ``Dimension of the SU(3) irrep $(2,1)$ -- equivalently the U(3) irrep $[3,1,0]$ or any shift such as $[4,2,1]$?'' ($15$; shift-invariant) \\
+    \verb|casimirs| & ``$C_2,C_3$ for the SU(3) irrep $(3,1)$, and $C_1,C_2,C_3$ for the U(3) irrep $[4,2,1]$.'' (SU(3): $50/3,160/9$; U(3): $C_1{=}7,\,32/3,\,56/9$ -- $C_1$ is U(3)-only) \\
+    \verb|cano-list| & ``Enumerate the canonical Gelfand basis of $(2,0)$ with each state's $\epsilon,2\Lambda,2M$ labels.'' ($6$ states $={}$\,dim) \\
+    \verb|phys-list| & ``List the physical SO(3) basis $(\kappa,L)$ of $(4,2)$ and verify the dimension sum rule.'' ($L{=}6,5,4,3,2,0$ with $\kappa{=}1,1,2,1,2,1$; $\sum\kappa(2L{+}1){=}60$) \\
+    \verb|cano-generators| & ``Act with $E_{12}$ on the Gelfand state $\ket{2,0,0;2,0;1}$ of $(2,0)$; give the resulting state and matrix element.'' ($\sqrt2$) \\
+    \verb|phys-generators| & ``Compute $\langle(2,0)L{=}2\|\mathbf{Q}\|(2,0)L{=}2\rangle$.'' ($\sqrt{35/3}\approx3.416$) \\
+    \verb|phys-to-cano| & ``Express $\ket{(2,0)\,\kappa{=}1\,L{=}2\,M{=}0}$ in the canonical Gelfand basis.'' (amplitudes $\sqrt{1/3},\sqrt{2/3}$) \\
+    \verb|inner-mult| & ``SO(3) multiplicity $\kappa$ of $L{=}2$ in $(4,2)$?'' ($2$) \\
+    \verb|outer-mult| & ``Outer multiplicity $\rho$ of $(1,1)$ in $(1,1)\otimes(1,1)$?'' ($2$) \\
+    \verb|decomposition| & ``Full decomposition of $(2,0)\otimes(0,2)$ with outer multiplicities; check the dimension sum rule.'' ($(2,2){+}(1,1){+}(0,0)$) \\
+    \verb|cano-coupling| & ``$\mathrm{U(3)}{\supset}\mathrm{U(2)}$ reduced coupling for the highest weights of $(2,0)\times(2,0)\to(4,0)$; verify it equals $1$.'' \\
+    \verb|phys-coupling| & ``SO(3)-reduced coupling $(2,0)L{=}2\times(2,0)L{=}2\to(4,0)L{=}2$; check against $-\sqrt{2/9}$.'' \\
+    \verb|u6recoupling| & ``$U$-recoupling for $(1,0){\cdot}(1,0){\cdot}(1,0)$ through $(2,0)$ to $(3,0)$.'' ($1$) \\
+    \verb|z6recoupling| & ``$Z$-recoupling between the $AB$--$C$ and $AC$--$B$ routes for $(1,0){\cdot}(1,0){\cdot}(1,0)\to(3,0)$.'' ($1$) \\
+    \verb|u9recoupling| & ``$9$-$(\lambda\mu)$ recoupling for four fundamentals $(1,0)$ coupling to $(4,0)$.'' ($1$) \\
+    \verb|conjugation| & ``Conjugate the SU(3) irrep $(2,1)$ and its Gelfand states, reporting the phases.'' (irrep $\to(1,2)$, phase $-1$) \\
+    \hline\hline
     \end{tabular}
-\end{table}
+    \caption{The \texttt{u3lib} agent skills with a representative prompt for each.}
+    \label{tab:prompts}
+\end{table*}
 
-\vskip.2cm
+\section{Build and installation}
+\label{sec:build}
 
-\subsection{Calculation of reduced matrix elements of SU(3) generators}
+\texttt{u3lib} is header-only; user programs include the headers in \verb|include/|
+directly. The source will be hosted publicly at
+\url{https://github.com/ORG-TBD/u3lib} (placeholder, to be finalized on release).
+The build resolves dependency paths from a configuration environment
+rather than hardcoded paths; after sourcing it from the repository root the make
+targets are \verb|make| (example programs $\to$ \verb|bin/|), \verb|make test|
+(rebuild and run the regression suite), and \verb|make python| (the pybind11
+extension). The regression tests check dimensions, Gelfand interlacing and
+ordering, SO(3) branching, canonical/physical coupling orthonormality across
+$\kappa$ and $\rho$, conjugation identities, and documented analytic values;
+numerical agreement is tolerance-based rather than bitwise-identical across
+backends.
 
-1. Reduced matrix elements of the angular momentum operator:
-\begin{lstlisting}
-    Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> RME_L(u3::physicalvector &bra,
-                u3::physicalvector &ket, std::vector<int> &bra_kappa, std::vector<int> &ket_kappa)
-\end{lstlisting}
-Accepts two physical basis states as inputs and two empty arrays to store the multiplicity labels. It returns the reduced matrix elements
-\begin{align*}
-    \langle (\lambda\mu)\kappa' L'||\mathbf{L}||(\lambda\mu)\kappa L \rangle = \sqrt{L(L+1)(2L+1)}
-\end{align*}
-in form of a matrix whose number of rows is $\kappa'_{\max}$ and number of columns is $\kappa_{\max}$.
+The external libraries are resolved by \verb|make config| (which writes \verb|config/config.generated.mk|); the two numerical libraries are either downloaded from their pinned upstream sources and built locally under \verb|external-libs/| (not part of the repository), or taken from an existing install:
+\begin{itemize}
+    \item \textbf{SU(2) Wigner backend:} libwignernj (\url{https://github.com/susilehtola/libwignernj}) --- the sole backend, enabled via \verb|USE_WIGNERNJ=1|, links dynamically (\verb|-lwignernj|).
+    \item \textbf{Null-space solver} (selected via \verb|NULLSPACE_SOLVER=qr|$\mid$\verb|sns|, default \verb|sns|):
+    \begin{itemize}
+        \item Dense QR --- the always-available dense solver; requires no external sparse solver.
+        \item \texttt{sns} (\url{https://gitlab.fit.cvut.cz/krastale/dp-sparse-nullspace}) --- sparse solver enabled via \verb|USE_SNS=1|; builds with sparse representation (\verb|-DNULLSPACE_SPARSE|) and falls back to dense QR for small or block-heavy cases.
+    \end{itemize}
+    \item Eigen3 --- \url{https://eigen.tuxfamily.org}
+    \item Boost (headers) --- \url{https://www.boost.org}
+    \item OpenMP (via the compiler runtime, e.g.\ GCC's libgomp) --- \url{https://www.openmp.org}
+    \item fmt --- \url{https://github.com/fmtlib/fmt}
+    \item pybind11 (Python bindings) --- \url{https://github.com/pybind/pybind11}
+\end{itemize}
 
-2. Reduced matrix elements of the quadrupole moment operator:
-\begin{lstlisting}
-    Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> RME_Q(u3::physicalvector &bra,
-                u3::physicalvector &ket, std::vector<int> &bra_kappa, std::vector<int> &ket_kappa)
-\end{lstlisting}
-Accepts two physical basis states as inputs and two empty arrays to store the multiplicity labels. It returns the reduced matrix elements
-\begin{align*}
-    \langle (\lambda\mu)\kappa' L'||\mathbf{Q}||(\lambda\mu)\kappa L \rangle 
-\end{align*}
-as given in Eqs. (51)-(53) of \cite{Pan2016NPA} with an extra factor of $\sqrt{2L'+1}$, in form of a matrix whose number of rows is $\kappa'_{\max}$ and number of columns is $\kappa_{\max}$. Note that with the extra factor in place, the conjugation relation becomes
-\begin{align*}
-    \langle (\lambda\mu)\kappa L||\mathbf{Q}||(\lambda\mu)\kappa' L' \rangle = (-)^{L-L'} \langle (\lambda\mu)\kappa' L'||\mathbf{Q}||(\lambda\mu)\kappa L \rangle.
-\end{align*}
+u3lib ships as an independent, self-contained repository with a uniform
+\verb|make config|/\verb|make|/\verb|make test|/\verb|make install| surface and no
+required environment variables. Its two numerical dependencies --- the
+libwignernj Wigner backend and the \texttt{sns} null-space solver (dense-QR
+fallback) --- are downloaded from their pinned upstream sources and built
+locally by \verb|make config| (into \verb|external-libs/|), or taken from an
+existing install. The heavier SLEPc/PETSc
+stack and the WIGXJPF backend used by earlier development builds have been
+dropped in favour of this lighter, portable footprint.
 
-\subsection{Utility functions}
-In directory \verb|src/utils|, there are a number of utility functions that are used to find the inverse or the nullspace of a matrix. These uitlity functions are built based on the Eigen3 library, with separate handling of dense and sparse matrices.
+\begin{acknowledgments}
+This library implements the U(3) coupling and recoupling procedure of
+Ref.~\cite{Dang2024EPJP1}. The authors thank J. P. Draayer for his contributions
+to the underlying theory.
+\end{acknowledgments}
 
-\vskip.2cm
-
-1. Sparsity of a matrix, which is the ratio between the number of zero elements and the total number of element: 
-\begin{lstlisting}
-    float sparsity(Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> &mat)
-\end{lstlisting}
-Returns a value between 0 and 1. Throughout the code, a matrix is considered to be sparse if its sparsity is greater than 0.7.
-
-\vskip.2cm
-
-2. Solve an upper triangular matrix using backward substitution:
-\begin{lstlisting}
-    Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> backwardSubstitution(Eigen::Matrix<double,
-                                            Eigen::Dynamic,Eigen::Dynamic> &mat, int nullity)
-\end{lstlisting}
-
-\vskip.2cm
-
-3. Perform orthonomalization on columns of a matrix using the modified Gram-Schmidt procedure:
-\begin{lstlisting}
-    Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> gramSchmidt(Eigen::Matrix<double,
-                                            Eigen::Dynamic,Eigen::Dynamic> &mat)
-\end{lstlisting}    
-
-\vskip.2cm
-
-4. Find the inverse of a matrix:
-\begin{lstlisting}
-    Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic> inverse(Eigen::Matrix<double,
-                                            Eigen::Dynamic,Eigen::Dynamic> &mat)
-\end{lstlisting}  
-Wherein if the provided matrix is dense, it directly uses the inverse solver of Eigen3, otherwise -- i.e., the matrix is sparse -- it performs a QR decomposition and solves the equation $\mathbf{AX}=\mathbf{1}$.
-
-\vskip.2cm
-
-5. Find the nullspace of a matrix:
-\begin{lstlisting}
-    Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic> null_space(Eigen::Matrix<double,
-                                            Eigen::Dynamic,Eigen::Dynamic> &mat)
-\end{lstlisting}
-Returns 1 if the given matrix has one (or no) elememt. Otherwise, it performs a QR decomposition on the matrix (either a dense or a sparse solver depending on the sparsity of the matrix). After QR decomposition is performed, function \verb|backwardSubstitution| is carried out for the \verb|R| matrix, to which the solution must be orthonormalized using a \verb|gramSchmidt| procedure. The final step is to adopt a simple and uniquely defined phase convention. \red{This is what needs to be optimized, or perhaps we need to develop a new nullspace solver.}
-
-\section{Installation}
-
-The U3lib library only contains header files, and users can compile .cpp files separately. Nonetheless, due to the utilization of two external libraries, Eigen3 and and WIGXJPF (which also contains only header files); these will need to be downloaded, installed and linked properly during compilation in a terminal command line.
-
-\bibliography{References}
+\begin{thebibliography}{9}
+\bibitem{Dang2024EPJP1} P. Dang, J. P. Draayer, F. Pan, and K. S. Becker,
+``New Procedure for Evaluation of U(3) Coupling and Recoupling Coefficients,''
+Eur. Phys. J. Plus \textbf{139}, 704 (2024).
+\end{thebibliography}
 
 \end{document}

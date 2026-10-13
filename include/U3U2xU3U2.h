@@ -24,8 +24,8 @@
 #include "U3basis.h"
 #include "U3decomposition.h"
 
-#include <qcx_Cache.h>
-#include <qcx_Int.h>
+#include <Cache.h>
+#include <Int.h>
 #include <so3Coeffs/SO3_CGC.h>
 
 #include <nullspace_solver_qr.h>
@@ -518,7 +518,7 @@ namespace u3
                                          const std::vector<u3::gelfand>& gArr3,
                                          WigU3U2_coeffs& coeffs)
   {
-    auto& cgcs = qcx_utils::cgcs();
+    auto& cgcs = utils::cgcs();
 
     std::vector<std::pair<int, int>> indices =
         expand_to_uncoupled(gArr3[0], gArr1, gArr2);
@@ -527,12 +527,12 @@ namespace u3
 
 #if defined(NULLSPACE_SOLVER_SNS)
     Eigen::MatrixXd nullspace =
-        qcx_utils::null_space_sns(mat, coeffs.rhomax());
+        utils::null_space_sns(mat, coeffs.rhomax());
 #elif defined(NULLSPACE_SOLVER_SLEPC)
     Eigen::MatrixXd nullspace =
-        qcx_utils::null_space_slepc(mat, coeffs.rhomax());
+        utils::null_space_slepc(mat, coeffs.rhomax());
 #else
-    Eigen::MatrixXd nullspace = qcx_utils::null_space(mat);
+    Eigen::MatrixXd nullspace = utils::null_space(mat);
 #endif
 
     //std::cout << nullspace << std::endl;
@@ -579,7 +579,7 @@ namespace u3
                   const std::vector<u3::gelfand>& gArr3, Eigen::MatrixXd& b,
                   std::vector<Eigen::MatrixXd>& E32E31, WigU3U2_coeffs& coeffs)
   {
-    auto& cgcs = qcx_utils::cgcs();
+    auto& cgcs = utils::cgcs();
 
     int jj3 = gArr3[parent_g3].Lambdax2(), mm3 = gArr3[parent_g3].MLambdax2();
 
@@ -704,7 +704,7 @@ namespace u3
                   const std::vector<u3::gelfand>& gArr3, Eigen::MatrixXd& b,
                   std::vector<Eigen::MatrixXd>& E32E31, WigU3U2_coeffs& coeffs)
   {
-    auto& cgcs = qcx_utils::cgcs();
+    auto& cgcs = utils::cgcs();
 
     int jj3 = gArr3[parent_g3].Lambdax2(), mm3 = gArr3[parent_g3].MLambdax2();
 
@@ -831,14 +831,99 @@ namespace u3
                                        std::vector<int>& same_weight_gArr3,
                                        WigU3U2_coeffs& coeffs)
   {
-    auto& cgcs = qcx_utils::cgcs();
+    /*
+    Alternative implementation by Codex: projected E32 recurrence.
+    Uses one E32 parent per daughter and sums over SU(2) CG coefficients
+    to project its lowered expansion onto the desired U(2) branch, then
+    divides by the output generator matrix element. Avoids the lower-slice
+    QR solve, but requires a complete magnetic-state projection sum.
+    Retained for comparison; Phong's E32/E31 algorithm below is active.
 
+    if (same_weight_gArr3.empty())
+      return;
+
+    auto& cgcs = utils::cgcs();
+    auto uncoupled =
+        expand_to_uncoupled(gArr3[same_weight_gArr3[0]], gArr1, gArr2);
+
+    // E32 supplies one lowered parent expansion at a time.
+    Eigen::MatrixXd b(1, 1);
+    std::vector<Eigen::MatrixXd> lowered(rhomax);
+    for (auto& matrix : lowered)
+      matrix = Eigen::MatrixXd::Zero(1, uncoupled.size());
+
+    for (int i3 : same_weight_gArr3)
+    {
+      const auto& daughter = gArr3[i3];
+      u3::gelfand parent = daughter;
+      double factor = 0.0;
+
+      // Both parents lie on the preceding slice. Prefer the larger matrix
+      // element when both exist, to avoid division by the smaller one.
+      auto candidate = daughter;
+      candidate.n12(candidate.n12() + 1);
+      if (candidate.check())
+      {
+        factor = candidate.e32_12();
+        parent = candidate;
+      }
+      candidate = daughter;
+      candidate.n22(candidate.n22() + 1);
+      if (candidate.check() && candidate.e32_22() > factor)
+      {
+        factor = candidate.e32_22();
+        parent = candidate;
+      }
+      assert(factor > 0.0);
+
+      std::vector<int> target{i3};
+      for (auto& matrix : lowered)
+        matrix.setZero();
+      int row = 0;
+      E32(u3::findGelfand(parent, gArr3), row, rhomax, target, uncoupled,
+          gArr1, gArr2, gArr3, b, lowered, coeffs);
+
+      // Sum over the complete magnetic expansion of each input U(2) pair.
+      // CG orthogonality removes the other daughter branch from E32.
+      using ProjectedRow =
+          std::pair<WigU3U2_coeffs::Accessor, Eigen::RowVectorXd>;
+      std::map<std::size_t, ProjectedRow> projected;
+      for (int j = 0; j < uncoupled.size(); j++)
+      {
+        const auto& g1 = gArr1[uncoupled[j].first];
+        const auto& g2 = gArr2[uncoupled[j].second];
+        auto acc = coeffs.access(g1.n12(), g1.n22(), g2.n12(), g2.n22(),
+                                 daughter.n12(), daughter.n22());
+        if (!acc.allowed || acc.computed)
+          continue;
+
+        auto it = projected.find(acc.row);
+        if (it == projected.end())
+          it = projected.emplace(acc.row, ProjectedRow{
+              acc, Eigen::RowVectorXd::Zero(rhomax)}).first;
+
+        const double cgc = cgcs.get({g1.Lambdax2(), g2.Lambdax2(),
+            daughter.Lambdax2(), g1.MLambdax2(), g2.MLambdax2(),
+            daughter.MLambdax2()});
+        for (int r = 0; r < rhomax; r++)
+          it->second.second(r) += cgc * lowered[r](0, j);
+      }
+      for (const auto& entry : projected)
+        coeffs.set_row(entry.second.first, entry.second.second / factor);
+    }
+    */
+
+    auto& cgcs = utils::cgcs();
+
+    // Representatives already share n11 = n23 of the output irrep.
+/*
     // trace states with the same [w2,w1] (z-weight)
     for (int i = 0; i < same_weight_gArr3.size(); i++)
     {
       same_weight_gArr3[i] += gArr3[same_weight_gArr3[i]].n11() -
                               gArr3[same_weight_gArr3.back()].n11();
     }
+*/
 
     if (!same_weight_gArr3.empty())
     {
@@ -1003,7 +1088,7 @@ namespace u3
                       const std::vector<u3::gelfand>& gArrB,
                       const std::vector<u3::gelfand>& gArrC)
   {
-    auto& cgcs = qcx_utils::cgcs();
+    auto& cgcs = utils::cgcs();
 
     WigU3U2_coeffs coeffs(u3A, u3B, u3C, rhomax);
 
@@ -1019,7 +1104,13 @@ namespace u3
       for (int i = 0; i < gArrC.size(); i++)
       {
         int index = w2max - gArrC[i].n12() - gArrC[i].n22();
+/*
         if (gArrC[i].n12() == gArrC[i].n11() && index >= 0 &&
+            index < all_same_weight_gArrC.size())
+          all_same_weight_gArrC[index].push_back(i);
+*/
+        // Interlacing guarantees n22 <= u3C.n23() <= n12 in every branch.
+        if (gArrC[i].n11() == u3C.n23() && index >= 0 &&
             index < all_same_weight_gArrC.size())
           all_same_weight_gArrC[index].push_back(i);
       }
@@ -1060,7 +1151,7 @@ namespace u3
     using ht_value_type = std::shared_ptr<const WigU3U2_coeffs>;
 
 #ifdef U3LIB_ENABLE_WIGU3U2_CACHE
-    qcx_utils::Cache<ht_key_type, ht_value_type> cache_;
+    utils::Cache<ht_key_type, ht_value_type> cache_;
 #endif
 
     inline static db_value_type* p_result_ = nullptr;
@@ -1165,7 +1256,7 @@ namespace u3
       if (rhomax == 0)
         return nullptr;
 
-      std::array<qcx_utils::UInt8, 6> ht_key_safe = {
+      std::array<utils::UInt8, 6> ht_key_safe = {
           u3a.n13(), u3a.n23(), u3b.n13(), u3b.n23(), u3c.n13(), u3c.n23()};
 
       ht_key_type ht_key =

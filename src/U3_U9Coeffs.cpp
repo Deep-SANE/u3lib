@@ -5,13 +5,14 @@
 #include <sstream> 
 #include <string>
 #include <vector> 
+#include <omp.h>
 
 #include <u3lib.h>
 #include <U3decomposition.h>
 #include <U3_U9Coeffs.h> 
 #include <U3basis.h>
 
-#include <qcx_utils.h>
+#include <utils.h>
 
 int main(int argc, char* argv[])
 {
@@ -169,6 +170,19 @@ int main(int argc, char* argv[])
     std::cout << "rhoAC\trhoBD\trhoABCD\t" << std::endl;
 
     std::cout << coeffs << std::endl;
+
+    // -----------------------------------------------------------------------
+    // Same coefficients via the coefficient DATABASE (u3u9db). get_U3U9 takes
+    // the nine irreps and the six outer multiplicities (the 3rd is the
+    // (AB)(CD)->ABCD route, the 6th the (AC)(BD)->ABCD route) and returns a
+    // structured U3U9 block; it matches the direct U9 result above.
+    // -----------------------------------------------------------------------
+    auto u9db = u3::u3u9db().get_U3U9(
+        u3a, u3b, u3c, u3d, u3ab[i_ab], u3cd[i_cd], u3ac[i_ac], u3bd[i_bd],
+        u3ab_cd[i_ab_cd], rhomaxsac[i_ac], rhomaxsbd[i_bd],
+        rhomaxsab_cd[i_ab_cd], rhomaxsab[i_ab], rhomaxscd[i_cd], rhomaxac_bd);
+    std::cout << "[Database interface] u3u9db().get_U3U9(...):\n"
+              << u9db << std::endl;
     
     // Calculate the duration
     std::chrono::duration<double> duration = t1 - t0;
@@ -176,6 +190,33 @@ int main(int argc, char* argv[])
     // Output the time in seconds
     std::cout << "Elapsed time: " << duration.count() << " seconds or "
               << duration.count() / 60.0 << " minutes" << std::endl;
+
+    // -----------------------------------------------------------------------
+    // Multi-threading demonstration:
+    // Each thread calls u3::initialize_thread() before database access,
+    // evaluates coefficients inside, prints them out along with thread index,
+    // and calls u3::finalize_thread().
+    // -----------------------------------------------------------------------
+    std::cout << "\n[Multi-threading demonstration]" << std::endl;
+#pragma omp parallel num_threads(4)
+    {
+      u3::initialize_thread();
+      int tid = omp_get_thread_num();
+
+      const auto blk = u3::u3u9db().get_U3U9(
+          u3a, u3b, u3c, u3d, u3ab[i_ab], u3cd[i_cd], u3ac[i_ac], u3bd[i_bd],
+          u3ab_cd[i_ab_cd], rhomaxsac[i_ac], rhomaxsbd[i_bd],
+          rhomaxsab_cd[i_ab_cd], rhomaxsab[i_ab], rhomaxscd[i_cd], rhomaxac_bd);
+
+#pragma omp critical
+      {
+        std::cout << "[Thread " << tid << "] Evaluated U9 block with size " << blk.size()
+                  << ", (0,0,0,0,0,0) = " << (blk.size() > 0 ? blk(0,0,0,0,0,0) : 0.0)
+                  << std::endl;
+      }
+
+      u3::finalize_thread();
+    }
   }
   else
   {

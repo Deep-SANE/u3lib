@@ -347,11 +347,11 @@ namespace u3
       auto Lproj = u3::Lprojection(gArr, canoBasis);
       // and solving its null space
 #if defined(NULLSPACE_SOLVER_SNS)
-      transformation = qcx_utils::null_space_sns(Lproj, p.kappa());
+      transformation = utils::null_space_sns(Lproj, p.kappa());
 #elif defined(NULLSPACE_SOLVER_SLEPC)
-      transformation = qcx_utils::null_space_slepc(Lproj, p.kappa());
+      transformation = utils::null_space_slepc(Lproj, p.kappa());
 #else
-      transformation = qcx_utils::null_space(Lproj);
+      transformation = utils::null_space(Lproj);
 #endif
     }
 
@@ -360,11 +360,11 @@ namespace u3
     auto Lproj = u3::Lprojection(gArr, canoBasis);
     // and solving its null space
 #if defined(NULLSPACE_SOLVER_SNS)
-    transformation = qcx_utils::null_space_sns(Lproj, p.kappa());
+    transformation = utils::null_space_sns(Lproj, p.kappa());
 #elif defined(NULLSPACE_SOLVER_SLEPC)
-    transformation = qcx_utils::null_space_slepc(Lproj, p.kappa());
+    transformation = utils::null_space_slepc(Lproj, p.kappa());
 #else
-    transformation = qcx_utils::null_space(Lproj);
+    transformation = utils::null_space(Lproj);
 #endif
 
 #endif
@@ -462,11 +462,11 @@ namespace u3
       auto Lproj = u3::Lprojection(gArr, canoBasis[0]);
       // and solving its null space
 #if defined(NULLSPACE_SOLVER_SNS)
-      transformation[0] = qcx_utils::null_space_sns(Lproj, p.kappa());
+      transformation[0] = utils::null_space_sns(Lproj, p.kappa());
 #elif defined(NULLSPACE_SOLVER_SLEPC)
-      transformation[0] = qcx_utils::null_space_slepc(Lproj, p.kappa());
+      transformation[0] = utils::null_space_slepc(Lproj, p.kappa());
 #else
-      transformation[0] = qcx_utils::null_space(Lproj);
+      transformation[0] = utils::null_space(Lproj);
 #endif
     }
 
@@ -475,11 +475,11 @@ namespace u3
     auto Lproj = u3::Lprojection(gArr, canoBasis[0]);
     // and solving its null space
 #if defined(NULLSPACE_SOLVER_SNS)
-    transformation[0] = qcx_utils::null_space_sns(Lproj, p.kappa());
+    transformation[0] = utils::null_space_sns(Lproj, p.kappa());
 #elif defined(NULLSPACE_SOLVER_SLEPC)
-    transformation[0] = qcx_utils::null_space_slepc(Lproj, p.kappa());
+    transformation[0] = utils::null_space_slepc(Lproj, p.kappa());
 #else
-    transformation[0] = qcx_utils::null_space(Lproj);
+    transformation[0] = utils::null_space(Lproj);
 #endif
 
 #endif

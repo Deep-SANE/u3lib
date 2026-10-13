@@ -6,8 +6,9 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <omp.h>
 
-#include <qcx_utils.h>
+#include <utils.h>
 #include <so3Coeffs/SO3_CGC.h>
 
 #include <u3lib.h>
@@ -89,12 +90,77 @@ int main(int argc, char* argv[])
 
   std::cout << "Reduced coefficients count: " << coeffs.size() << std::endl;
 
+  // -------------------------------------------------------------------------
+  // Same coefficients via the coefficient DATABASE (wigU3U2db).
+  // Instead of building the WigU3U2 block directly (above), the database
+  // returns the reduced row over rho straight from the Gelfand sublabels,
+  // caching results across calls. The numbers match the direct computation.
+  // -------------------------------------------------------------------------
+  std::cout << "\n[Database interface] wigU3U2db().get(...):" << std::endl;
+  auto& wigU3U2db = u3::wigU3U2db();
+  for (int n12a = u3a.n13(); n12a >= u3a.n23(); n12a--)
+    for (int n22a = u3a.n23(); n22a >= u3a.n33(); n22a--)
+      for (int n12b = u3b.n13(); n12b >= u3b.n23(); n12b--)
+        for (int n22b = u3b.n23(); n22b >= u3b.n33(); n22b--)
+          for (int n12c = u3c.n13(); n12c >= u3c.n23(); n12c--)
+            for (int n22c = u3c.n23(); n22c >= u3c.n33(); n22c--)
+            {
+              // Returns an Eigen::RowVectorXd indexed by rho (empty if the
+              // sublabel combination is not allowed).
+              auto row = wigU3U2db.get(u3a.n13(), u3a.n23(), 0, n12a, n22a,
+                                       u3b.n13(), u3b.n23(), 0, n12b, n22b,
+                                       u3c.n13(), u3c.n23(), 0, n12c, n22c);
+              if (row.size() == 0) continue;
+
+              std::cout << "< " << u3a.n13() << "," << u3a.n23() << ",0;" << n12a
+                        << "," << n22a << " ; " << u3b.n13() << "," << u3b.n23()
+                        << ",0;" << n12b << "," << n22b << " || " << u3c.n13()
+                        << "," << u3c.n23() << ",0;" << n12c << "," << n22c
+                        << " >\t" << row << std::endl;
+            }
+
   // Calculate the duration
   std::chrono::duration<double> duration = t1 - t0;
 
   // Output the time in seconds
   std::cout << "Elapsed time: " << duration.count() << " seconds or "
             << duration.count() / 60.0 << " minutes" << std::endl;
+
+  // -------------------------------------------------------------------------
+  // Multi-threading demonstration:
+  // Each thread calls u3::initialize_thread() before database access,
+  // evaluates coefficients inside, prints them out along with thread index,
+  // and calls u3::finalize_thread().
+  // -------------------------------------------------------------------------
+  std::cout << "\n[Multi-threading demonstration]" << std::endl;
+#pragma omp parallel num_threads(4)
+  {
+    u3::initialize_thread();
+    int tid = omp_get_thread_num();
+
+#pragma omp for
+    for (int n12a = u3a.n13(); n12a >= u3a.n23(); n12a--)
+      for (int n22a = u3a.n23(); n22a >= u3a.n33(); n22a--)
+        for (int n12b = u3b.n13(); n12b >= u3b.n23(); n12b--)
+          for (int n22b = u3b.n23(); n22b >= u3b.n33(); n22b--)
+            for (int n12c = u3c.n13(); n12c >= u3c.n23(); n12c--)
+              for (int n22c = u3c.n23(); n22c >= u3c.n33(); n22c--)
+              {
+                auto row = u3::wigU3U2db().get(u3a.n13(), u3a.n23(), 0, n12a, n22a,
+                                               u3b.n13(), u3b.n23(), 0, n12b, n22b,
+                                               u3c.n13(), u3c.n23(), 0, n12c, n22c);
+                if (row.size() == 0) continue;
+
+#pragma omp critical
+                {
+                  std::cout << "[Thread " << tid << "] wigU3U2db < (" << n12a << "," << n22a << ") x ("
+                            << n12b << "," << n22b << ") || (" << n12c << "," << n22c
+                            << ") > = " << row << std::endl;
+                }
+              }
+
+    u3::finalize_thread();
+  }
 
   u3::finalize();
 }

@@ -1,7 +1,7 @@
 #ifndef U3LIB_GLOBAL_DEFINITIONS_H
 #define U3LIB_GLOBAL_DEFINITIONS_H
 
-#include <qcx_ND.h>
+#include <ND.h>
 
 namespace u3
 {
@@ -121,7 +121,7 @@ namespace u3
   class U3SO3
   {
     T coeffs_;
-    qcx_utils::NDIndex4 ndi_;
+    utils::NDIndex4 ndi_;
 
   public:
     U3SO3()
@@ -231,7 +231,7 @@ namespace u3
   class U3U6
   {
     T coeffs_;
-    qcx_utils::NDIndex4 ndi_;
+    utils::NDIndex4 ndi_;
 
   public:
     U3U6()
@@ -311,7 +311,7 @@ namespace u3
   class U3Z6
   {
     T coeffs_;
-    qcx_utils::NDIndex4 ndi_;
+    utils::NDIndex4 ndi_;
 
   public:
     U3Z6()
@@ -391,7 +391,7 @@ namespace u3
   class U3U9
   {
     T coeffs_;
-    qcx_utils::NDIndex6 ndi_;
+    utils::NDIndex6 ndi_;
 
   public:
     U3U9()

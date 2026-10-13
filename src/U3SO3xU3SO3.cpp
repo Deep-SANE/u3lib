@@ -6,13 +6,14 @@
 #include <string>
 #include <tuple> 
 #include <vector> 
+#include <omp.h>
 
 #include <u3lib.h>
 #include <U3decomposition.h>
 #include <U3basis.h>
 #include <U3SO3xU3SO3.h> 
  
-#include <qcx_utils.h>
+#include <utils.h>
 
 int main(int argc, char* argv[])
 {
@@ -148,12 +149,70 @@ int main(int argc, char* argv[])
               << " >\n" << coeffs[t] << std::endl;
   }
 
+  // -------------------------------------------------------------------------
+  // Same coefficients via the coefficient DATABASE (wigU3SO3db).
+  // get_U3SO3 takes the three (lambda,mu,L) labels and returns a structured
+  // U3SO3 block indexed by (kappaA,kappaB,kappaC,rho); it matches the direct
+  // WigU3SO3 result above and caches across calls.
+  // -------------------------------------------------------------------------
+  std::cout << "\n[Database interface] wigU3SO3db().get_U3SO3(...):" << std::endl;
+  for (int t = 0; t < tArr.size(); t++)
+  {
+    int i = std::get<0>(tArr[t]), j = std::get<1>(tArr[t]),
+        k = std::get<2>(tArr[t]);
+
+    auto blk = u3::wigU3SO3db().get_U3SO3(u3A.lam(), u3A.mu(), pArrA[i].L(),
+                                          u3B.lam(), u3B.mu(), pArrB[j].L(),
+                                          u3C.lam(), u3C.mu(), pArrC[k].L());
+
+    std::cout << "< (" << u3A.lam() << "," << u3A.mu() << ") k1 " << pArrA[i].L()
+              << " ; (" << u3B.lam() << "," << u3B.mu() << ") k2 "
+              << pArrB[j].L() << " || (" << u3C.lam() << "," << u3C.mu()
+              << ") k3 " << pArrC[k].L() << " >\n" << blk << std::endl;
+  }
+
   // Calculate the duration
   std::chrono::duration<double> duration = t1 - t0;
 
   // Output the time in seconds
   std::cout << "Elapsed time: " << duration.count() << " seconds or "
             << duration.count() / 60.0 << " minutes" << std::endl;
+
+  // -------------------------------------------------------------------------
+  // Multi-threading demonstration:
+  // Each thread calls u3::initialize_thread() before database access,
+  // evaluates coefficients inside, prints them out along with thread index,
+  // and calls u3::finalize_thread().
+  // -------------------------------------------------------------------------
+  std::cout << "\n[Multi-threading demonstration]" << std::endl;
+#pragma omp parallel num_threads(4)
+  {
+    u3::initialize_thread();
+    int tid = omp_get_thread_num();
+
+#pragma omp for
+    for (int t = 0; t < static_cast<int>(tArr.size()); ++t)
+    {
+      int i = std::get<0>(tArr[t]), j = std::get<1>(tArr[t]),
+          k = std::get<2>(tArr[t]);
+
+      auto blk = u3::wigU3SO3db().get_U3SO3(u3A.lam(), u3A.mu(), pArrA[i].L(),
+                                            u3B.lam(), u3B.mu(), pArrB[j].L(),
+                                            u3C.lam(), u3C.mu(), pArrC[k].L());
+
+#pragma omp critical
+      {
+        std::cout << "[Thread " << tid << "] wigU3SO3db block (" << i << "," << j << "," << k << ") "
+                  << "< (" << u3A.lam() << "," << u3A.mu() << ") L=" << pArrA[i].L()
+                  << " ; (" << u3B.lam() << "," << u3B.mu() << ") L=" << pArrB[j].L()
+                  << " || (" << u3C.lam() << "," << u3C.mu() << ") L=" << pArrC[k].L()
+                  << " > (0,0,0,0) = " << (blk.size() > 0 ? blk(0, 0, 0, 0) : 0.0)
+                  << std::endl;
+      }
+    }
+
+    u3::finalize_thread();
+  }
 
   u3::finalize();
 }

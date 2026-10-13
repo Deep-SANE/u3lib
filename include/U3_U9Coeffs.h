@@ -20,7 +20,7 @@
 #include "U3_U6Z6Coeffs.h"
 #include "U3basis.h"
 
-#include <qcx_ND.h>
+#include <ND.h>
 #include <so3Coeffs/SO3_CGC.h>
 #include <so3Coeffs/SO3_Racah.h>
 
@@ -47,8 +47,8 @@ namespace u3
     auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-    auto& cgcs = qcx_utils::cgcs();
-    auto& racahs = qcx_utils::racahs();
+    auto& cgcs = utils::cgcs();
+    auto& racahs = utils::racahs();
     auto& wigU3U2db = u3::wigU3U2db();
     auto& u3u6db = u3::u3u6db();
     auto& u3z6db = u3::u3z6db();
@@ -168,7 +168,7 @@ namespace u3
     using value_type = coeffs_t;
 
 #ifdef U3LIB_ENABLE_U3U9_CACHE
-    qcx_utils::Cache<key_type, value_type> cache_;
+    utils::Cache<key_type, value_type> cache_;
     using return_type = std::span<const double>;
 #else
     using return_type = std::vector<double>;
@@ -302,7 +302,7 @@ namespace u3
       assert(rhoACBDmax == Rho(u3AC, u3BD, u3ABCD));
 
 #ifdef U3LIB_ENABLE_U3U9_CACHE
-      std::array<qcx_utils::UInt8, 18> safe_key = {
+      std::array<utils::UInt8, 18> safe_key = {
         u3A.n13(), u3A.n23(), u3B.n13(), u3B.n23(),
         u3C.n13(), u3C.n23(), u3D.n13(), u3D.n23(),
         u3AB.n13(), u3AB.n23(), u3CD.n13(), u3CD.n23(),
@@ -382,7 +382,7 @@ namespace u3
         return {};
 
 #ifdef U3LIB_ENABLE_U3U9_CACHE
-      std::array<qcx_utils::UInt8, 18> safe_key = {
+      std::array<utils::UInt8, 18> safe_key = {
         u3A.n13(), u3A.n23(), u3B.n13(), u3B.n23(),
         u3C.n13(), u3C.n23(), u3D.n13(), u3D.n23(),
         u3AB.n13(), u3AB.n23(), u3CD.n13(), u3CD.n23(),

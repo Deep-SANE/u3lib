@@ -47,7 +47,7 @@ namespace test
                                           c.n12(), c.n22());
                 if (!acc.allowed)
                   continue;
-                double cg = qcx_utils::cgcs().get(
+                double cg = utils::cgcs().get(
                     {a.Lambdax2(), b.Lambdax2(), c.Lambdax2(), a.MLambdax2(),
                      b.MLambdax2(), c.MLambdax2()});
                 v.row(i) = cg * coeff.get_row(acc);

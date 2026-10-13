@@ -20,8 +20,8 @@
 #include "U3SO3_to_U3U2U1.h"
 #include "U3U2xU3U2.h"
 
-#include <qcx_Cache.h>
-#include <qcx_Int.h>
+#include <Cache.h>
+#include <Int.h>
 #include <so3Coeffs/SO3_CGC.h>
 
 namespace u3
@@ -33,7 +33,7 @@ namespace u3
            const std::vector<u3::physicalvector>& pArrB,
            const std::vector<u3::physicalvector>& pArrC)
   {
-    auto& cgcs = qcx_utils::cgcs();
+    auto& cgcs = utils::cgcs();
     auto& wigU3U2db = u3::wigU3U2db();
 
     // build Gelfand basis
@@ -275,7 +275,7 @@ namespace u3
     using value_type = coeffs_t;
 
 #ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
-    qcx_utils::Cache<key_type, value_type> cache_;
+    utils::Cache<key_type, value_type> cache_;
 #endif
 
     inline static value_type* p_result_ = nullptr;
@@ -339,7 +339,7 @@ namespace u3
       auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-      auto& cgcs = qcx_utils::cgcs();
+      auto& cgcs = utils::cgcs();
       auto& wigU3U2db = u3::wigU3U2db();
 
       // build Gelfand basis
@@ -468,7 +468,7 @@ namespace u3
         return {};
 
 #ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
-      std::array<qcx_utils::UInt8, 9> safe_key = {lam1, mu1,  l1,  lam2, mu2,
+      std::array<utils::UInt8, 9> safe_key = {lam1, mu1,  l1,  lam2, mu2,
                                                   l2,   lam3, mu3, l3};
 
       uint64_t key_1 = 
@@ -513,7 +513,7 @@ namespace u3
         return {};
 
 #ifdef U3LIB_ENABLE_WIGU3SO3_CACHE
-      std::array<qcx_utils::UInt8, 9> safe_key = {lam1, mu1,  l1,  lam2, mu2,
+      std::array<utils::UInt8, 9> safe_key = {lam1, mu1,  l1,  lam2, mu2,
                                                   l2,   lam3, mu3, l3};
 
       uint64_t key_1 = 

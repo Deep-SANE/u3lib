@@ -5,13 +5,14 @@
 #include <sstream>
 #include <string> 
 #include <vector>
+#include <omp.h>
 
 #include <u3lib.h>
 #include <U3decomposition.h>
 #include <U3_U6Z6Coeffs.h> 
 #include <U3basis.h>
 
-#include <qcx_utils.h>
+#include <utils.h>
 
 int main(int argc, char* argv[])
 {
@@ -128,12 +129,49 @@ int main(int argc, char* argv[])
 
     std::cout << coeffs << std::endl;
 
+    // -----------------------------------------------------------------------
+    // Same coefficients via the coefficient DATABASE (u3u6db). get_U3U6 takes
+    // the six irreps and the four outer multiplicities and returns a
+    // structured U3U6 block; it matches the direct U6 result above.
+    // -----------------------------------------------------------------------
+    auto u6db = u3::u3u6db().get_U3U6(u3a, u3b, u3ab_c[i_ab_c], u3c, u3ab[i_ab],
+                                      rhomaxsab[i_ab], rhomaxsab_c[i_ab_c],
+                                      u3bc[i_bc], rhomaxsbc[i_bc], rhomaxa_bc);
+    std::cout << "[Database interface] u3u6db().get_U3U6(...):\n"
+              << u6db << std::endl;
+
     // Calculate the duration
     std::chrono::duration<double> duration = t1 - t0;
 
     // Output the time in seconds
     std::cout << "Elapsed time: " << duration.count() << " seconds or "
               << duration.count() / 60.0 << " minutes" << std::endl;
+
+    // -----------------------------------------------------------------------
+    // Multi-threading demonstration:
+    // Each thread calls u3::initialize_thread() before database access,
+    // evaluates coefficients inside, prints them out along with thread index,
+    // and calls u3::finalize_thread().
+    // -----------------------------------------------------------------------
+    std::cout << "\n[Multi-threading demonstration]" << std::endl;
+#pragma omp parallel num_threads(4)
+    {
+      u3::initialize_thread();
+      int tid = omp_get_thread_num();
+
+      auto blk = u3::u3u6db().get_U3U6(u3a, u3b, u3ab_c[i_ab_c], u3c, u3ab[i_ab],
+                                       rhomaxsab[i_ab], rhomaxsab_c[i_ab_c],
+                                       u3bc[i_bc], rhomaxsbc[i_bc], rhomaxa_bc);
+
+#pragma omp critical
+      {
+        std::cout << "[Thread " << tid << "] Evaluated U6 block with size " << blk.size()
+                  << ", (0,0,0,0) = " << (blk.size() > 0 ? blk(0,0,0,0) : 0.0)
+                  << std::endl;
+      }
+
+      u3::finalize_thread();
+    }
   }
   else
   {

@@ -27,8 +27,8 @@ namespace u3
 
       gelfand() = default;
 
-      gelfand(qcx_utils::UInt8 n13, qcx_utils::UInt8 n23, qcx_utils::UInt8 n33, 
-              qcx_utils::UInt8 n12, qcx_utils::UInt8 n22, qcx_utils::UInt8 n11)
+      gelfand(utils::UInt8 n13, utils::UInt8 n23, utils::UInt8 n33, 
+              utils::UInt8 n12, utils::UInt8 n22, utils::UInt8 n11)
           : Rep(n13, n23, n33, n12, n22, n11)
       { }
 
