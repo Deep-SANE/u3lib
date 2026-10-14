@@ -24,40 +24,9 @@ def channels(a,b,c,t,left):
  return out
 
 def generate():
- d={str(i):[] for i in range(1,7)}
- for la,mu in it.product(range(6),repeat=2):
-  a=u.irrep(la,mu)
-  branches=[[L,u.Kappa(a,L)] for L in range(la+mu+1) if u.Kappa(a,L)]
-  assert sum((2*L+1)*k for L,k in branches)==a.dim()
-  d['1'].append(dict(labels=[la,mu],dimension=a.dim(),branches=branches,states=[rowstate(g) for g in u.gelfandBasis(a)]))
+ d={'1':[],'2':[],'3':[]}
  u.initialize()
  try:
-  for aa,bb,cc in [((0,0),(3,1),(3,1)),((1,0),(0,1),(0,0)),((2,2),(2,2),(2,2)),((3,1),(1,1),(3,1)),((3,2),(2,3),(2,2))]:
-   states=[]
-   for labels in (aa,bb,cc):
-    states.append(sorted(set(tuple(rowstate(g)[:5]) for g in u.gelfandBasis(irr(labels)))))
-   count=0
-   for a,b,c in it.product(*states):
-    eps=lambda x:2*sum(x[:3])-3*sum(x[3:])
-    js=[x[3]-x[4] for x in (a,b,c)]
-    if eps(a)+eps(b)!=eps(c) or not abs(js[0]-js[1])<=js[2]<=js[0]+js[1] or sum(js)%2: continue
-    v=np.asarray(u.wigU3U2db().get(*a,*b,*c))
-    assert len(v)==rho(aa,bb,cc) and np.isfinite(v).all()
-    d['2'].append(dict(request=[a,b,c],value=v.tolist()))
-    count+=1
-    if count==12: break
-  for aa,bb,cc in [((0,0),(3,1),(3,1)),((2,0),(2,0),(4,0)),((2,2),(1,1),(2,2)),((3,1),(1,1),(3,1))]:
-   count=0
-   for la,lb,lc in it.product(range(sum(aa)+1),range(sum(bb)+1),range(sum(cc)+1)):
-    ks=[u.Kappa(*x,L) for x,L in zip((aa,bb,cc),(la,lb,lc))]
-    if not all(ks) or not abs(la-lb)<=lc<=la+lb: continue
-    obj=u.wigU3SO3db().get_U3SO3(*aa,la,*bb,lb,*cc,lc)
-    shape=ks+[rho(aa,bb,cc)]; v=np.zeros(shape)
-    for ix in np.ndindex(*shape): v[ix]=obj(*ix)
-    assert np.isfinite(v).all()
-    d['3'].append(dict(request=[[*aa,la],[*bb,lb],[*cc,lc]],value=v.tolist()))
-    count+=1
-    if count==12: break
   for aa,bb,cc,t in [((1,0),(1,0),(1,0),(1,1)),((2,0),(0,2),(2,1),(2,1)),((1,1),(1,1),(1,1),(1,1)),((3,1),(1,1),(1,1),(3,1))]:
    for kind in ('U','Z'):
     left=channels(aa,bb,cc,t,True)
@@ -72,7 +41,7 @@ def generate():
       v[i,j]=o(r,s,p,q)
     assert len(left)==len(right)
     assert np.linalg.norm(v@v.T-np.eye(len(left)))<1e-9
-    d['4'].append(dict(request=[kind,aa,bb,cc,t],left=left,right=right,value=v.tolist()))
+    d['1'].append(dict(request=[kind,aa,bb,cc,t],left=left,right=right,value=v.tolist()))
   requests=[[(2,0),(0,0),(0,0),(2,0),(2,0),(2,0),(2,0),(2,0),(4,0)]]
   pair=[(0,0),(1,1),(3,0),(0,3),(2,2)]
   for ab,cd,ac,bd in it.product(pair,repeat=4):
@@ -88,8 +57,8 @@ def generate():
    o=u.u3u9db().get_U3U9(A,B,C,D,AB,CD,AC,BD,T,rs[3],rs[4],rs[2],rs[0],rs[1],rs[5])
    entries=[]
    for a,b,l,c,e,r in it.product(*(range(x) for x in rs)): entries.append([a,b,l,c,e,r,float(o(c,e,l,a,b,r))])
-   d['5'].append(dict(request=req,shape=rs,entries=entries))
-  raw_t6 = [
+   d['2'].append(dict(request=req,shape=rs,entries=entries))
+  raw_t3 = [
     ('C', [1, 0, 0, 1, 0,  1, 0, 0, 1, 0,  2, 0, 0, 2, 0]),
     ('P', [1, 0, 1,  0, 1, 1,  1, 1, 1]),
     ('C', [2, 1, 0, 2, 1,  2, 1, 0, 2, 0,  3, 2, 1, 3, 2]),
@@ -97,20 +66,20 @@ def generate():
     ('C', [2, 0, 0, 2, 0,  1, 1, 0, 1, 0,  2, 1, 1, 2, 1]),
     ('P', [2, 2, 2,  1, 1, 2,  2, 2, 2]),
   ]
-  for tag, labels in raw_t6:
+  for tag, labels in raw_t3:
    req_str = f"{tag} " + " ".join(map(str, labels))
    if tag == 'C':
     row = u.wigU3U2db().get(*labels)
     rhomax = len(row)
     entries = [[rho, float(row[rho])] for rho in range(rhomax)]
-    d['6'].append(dict(tag='canon', request=req_str, shape=[rhomax], entries=entries))
+    d['3'].append(dict(tag='canon', request=req_str, shape=[rhomax], entries=entries))
    else:
     obj = u.wigU3SO3db().get_U3SO3(*labels)
     shape = [obj.kappaAmax(), obj.kappaBmax(), obj.kappaCmax(), obj.rhomax()]
     entries = []
     for ka, kb, kc, r in it.product(*(range(x) for x in shape)):
      entries.append([ka, kb, kc, r, float(obj(ka, kb, kc, r))])
-    d['6'].append(dict(tag='phys', request=req_str, shape=shape, entries=entries))
+    d['3'].append(dict(tag='phys', request=req_str, shape=shape, entries=entries))
  finally: u.finalize()
  return d
 if __name__=='__main__':

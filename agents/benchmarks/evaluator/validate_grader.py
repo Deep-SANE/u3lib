@@ -49,23 +49,15 @@ def make_cli_mutation(task, name, body):
 if __name__ == "__main__":
     import sys
     fixtures = json.loads(Path(sys.argv[1]).read_text())
-    # Task 1: wrong labels/order or dimensions must not pass.
-    rejected_submission(1, fixtures, make_cli_mutation(1, "basis_inventory", "echo 'dimension 0'\n"))
-    # Task 2: a signed coefficient mutation must fail the numeric reference.
-    rejected_submission(2, fixtures, python_mutation(2, "canonical",
-        "import numpy as np\ndef canonical_rows(requests):\n return [np.zeros(3,dtype=np.float64) for _ in requests]\n"))
-    # Task 3: dropping/transposing kappa or rho axes must fail shape/value checks.
-    rejected_submission(3, fixtures, python_mutation(3, "physical",
-        "import numpy as np\ndef physical_block(*args):\n return np.zeros((1,1,1,1),dtype=np.float64)\n"))
-    # Task 4: channel labels and orthogonal but incorrect values must fail.
-    first = fixtures['4'][0]
+    # Task 1: channel labels and orthogonal but incorrect values must fail.
+    first = fixtures['1'][0]
     src = "import numpy as np\ndef recoupling(kind,*labels):\n return " + repr(first['left']) + ", " + repr(first['right']) + ", np.ones((" + str(len(first['left'])) + "," + str(len(first['right'])) + "),dtype=np.float64)\n"
-    rejected_submission(4, fixtures, python_mutation(4, "recouple", src))
-    # Task 5: syntactically complete output with every coefficient copied from
+    rejected_submission(1, fixtures, python_mutation(1, "recouple", src))
+    # Task 2: syntactically complete output with every coefficient copied from
     # the final scratch block must fail the signed value comparisons.
     def stale_u9(consumer, data):
         (consumer / "Makefile").write_text("all:\n\t@true\n")
-        cases = repr(data['5'])
+        cases = repr(data['2'])
         code = f'''#!/usr/bin/env python3
 import sys
 cases = {cases}
@@ -80,7 +72,9 @@ for q, case in enumerate(cases):
         exe = consumer / "u9_batch"
         exe.write_text(code)
         exe.chmod(0o755)
-    rejected_submission(5, fixtures, stale_u9)
+    rejected_submission(2, fixtures, stale_u9)
+    # Task 3: incorrect output or premature EOF must fail.
+    rejected_submission(3, fixtures, make_cli_mutation(3, "coupling_batch", "echo 'canon 0 0'\n"))
     # Shared numerical/ownership guards: wrong sign, swapped/missing axes,
     # and a non-owning view must be rejected.
     ref = np.array([0.25, -0.5], dtype=np.float64)
