@@ -1,4 +1,4 @@
-# Task 1: Complete three-irrep change of coupling basis
+# Task 1: u6z6recoupling — Complete three-irrep change of coupling basis
 
 Implement `consumer/recouple.py` exposing `recoupling(kind,A,B,C,T)`, where
 kind is "U" or "Z" and each irrep is a (lambda,mu) pair. Return

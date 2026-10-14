@@ -1,4 +1,4 @@
-# Task 2: C++ batch exporter for four-irrep recoupling blocks
+# Task 2: u9recoupling — C++ batch exporter for four-irrep recoupling blocks
 
 Build `consumer/u9_batch`. Read requests from stdin until EOF. Each line has
 18 integers: the (lambda,mu) pairs for A B C D AB CD AC BD T, in that order.
