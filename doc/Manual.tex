@@ -56,21 +56,14 @@
 
 \title{\texttt{u3lib}: An AI-Assisted Computational Framework for U(3) Symmetry Algebra,\\ Wigner Coupling, and Racah Recoupling Coefficients}
 
-\author{Phong Dang}
-\affiliation{Department of Physics and Astronomy, Louisiana State University, Baton Rouge, LA 70803, USA}
-
 \author{Daniel Langr}
 \affiliation{Department of Computer Systems, Faculty of Information Technology, Czech Technical University in Prague, Prague, Czech Republic}
 
+\author{Phong Dang}
+\affiliation{Department of Physics and Astronomy, Louisiana State University, Baton Rouge, LA 70803, USA}
+
 \author{Tomas Dytrych}
 \affiliation{Nuclear Physics Institute, Czech Academy of Sciences, 250 68 \v{R}e\v{z}, Czech Republic}
-\affiliation{Department of Physics and Astronomy, Louisiana State University, Baton Rouge, LA 70803, USA}
-
-\author{Feng Pan}
-\affiliation{Department of Physics, Liaoning Normal University, Dalian 116029, China}
-\affiliation{Department of Physics and Astronomy, Louisiana State University, Baton Rouge, LA 70803, USA}
-
-\author{Michela Negro}
 \affiliation{Department of Physics and Astronomy, Louisiana State University, Baton Rouge, LA 70803, USA}
 
 \begin{abstract}
@@ -101,11 +94,10 @@ This document is the reference manual for the public release.
 \textit{Program title}: \texttt{u3lib}
 
 \noindent
-\textit{Licensing provisions}: open-source (to be finalized; MIT/Apache-class).
+\textit{Licensing provisions}: MIT License.
 
 \noindent
-\textit{Code repository}: \url{https://github.com/ORG-TBD/u3lib} (placeholder ---
-the public repository URL will be finalized on release).
+\textit{Code repository}: \url{https://github.com/Deep-SANE/u3lib}
 
 \noindent
 \textit{Programming language}: C++ (C++20), with Python bindings via pybind11.
@@ -233,13 +225,13 @@ In \verb|u3lib.h|:
 
 \subsection{Irreps: \texttt{su3::irrep} and \texttt{u3::irrep}}
 (\verb|U3irrep.h|.) \verb|su3::irrep| stores an SU(3) irrep; \verb|u3::irrep|
-derives from it and adds the determinant row.
+derives from it and adds the third label $n_{33}$ (fixing the total quanta).
 \textbf{Constructors.}
 \begin{itemize}
     \item \verb|su3::irrep()| --- default (empty) SU(3) irrep.
     \item \verb|su3::irrep(lambda,mu)| --- SU(3) irrep from its labels.
     \item \verb|u3::irrep()| --- default (empty) U(3) irrep.
-    \item \verb|u3::irrep(n13,n23,n33)| --- U(3) irrep from its three row labels.
+    \item \verb|u3::irrep(n13,n23,n33)| --- U(3) irrep from its three labels.
     \item \verb|u3::irrep(lambda,mu)| --- normalized representative $[\lambda{+}\mu,\mu,0]$.
     \item \verb|u3::irrep(su3::irrep, N)| --- fix the total quanta $N$.
 \end{itemize}
@@ -247,7 +239,7 @@ derives from it and adds the determinant row.
 \begin{itemize}
     \item \verb|lam()| / \verb|lambda()| --- the SU(3) label $\lambda$.
     \item \verb|mu()| --- the SU(3) label $\mu$.
-    \item \verb|n13()|, \verb|n23()|, \verb|n33()| --- the three U(3) row labels (\verb|u3::irrep|).
+    \item \verb|n13()|, \verb|n23()|, \verb|n33()| --- the three U(3) labels (\verb|u3::irrep|).
 \end{itemize}
 \textbf{Dimension and invariants.}
 \begin{itemize}
@@ -321,7 +313,7 @@ $\ket{(\lambda\mu)\,\kappa\,L}$.
     \item \verb|irr()| --- the underlying irrep.
     \item \verb|lam()| / \verb|lambda()| --- the SU(3) label $\lambda$.
     \item \verb|mu()| --- the SU(3) label $\mu$.
-    \item \verb|n13()|, \verb|n23()|, \verb|n33()| --- the U(3) row labels.
+    \item \verb|n13()|, \verb|n23()|, \verb|n33()| --- the U(3) labels.
     \item \verb|L()| --- the angular momentum.
     \item \verb|kappa()| --- the inner multiplicity of $L$ (= \verb|kappamax()|).
 \end{itemize}
@@ -418,7 +410,7 @@ own their buffers. (The Python bindings copy \verb|U3U9| automatically.)
 \subsection{Coefficient databases}
 Reached through singletons; each returns a container above.
 \begin{itemize}
-    \item \verb|u3::wigU3U2db().get(| $n_{13}^a,n_{23}^a,n_{33}^a,n_{12}^a,n_{22}^a,\ \dots^{b},\ \dots^{c}$ \verb|)| $\to$ \verb|U3U2| --- $\mathrm{U(3)}\supset\mathrm{U(2)}$ reduced coupling for $a\otimes b\to c$ (each state by its U(3) rows and U(2) sublabels $n_{12},n_{22}$), indexed by $\rho$.
+    \item \verb|u3::wigU3U2db().get(| $n_{13}^a,n_{23}^a,n_{33}^a,n_{12}^a,n_{22}^a,\ \dots^{b},\ \dots^{c}$ \verb|)| $\to$ \verb|U3U2| --- $\mathrm{U(3)}\supset\mathrm{U(2)}$ reduced coupling for $a\otimes b\to c$ (each state by its U(3) labels and U(2) sublabels $n_{12},n_{22}$), indexed by $\rho$.
     \item \verb|u3::wigU3SO3db().get_U3SO3(| $\lambda_1,\mu_1,L_1,\ \lambda_2,\mu_2,L_2,\ \lambda_3,\mu_3,L_3$ \verb|)| $\to$ \verb|U3SO3| --- $\mathrm{SU(3)}\supset\mathrm{SO(3)}$ reduced coupling, indexed by $(\kappa_A,\kappa_B,\kappa_C,\rho)$.
     \item \verb|u3::u3u6db().get_U3U6(| $A,B,ABC,C,AB,\ \rho_{AB},\rho_{AB\_C},\ BC,\rho_{BC},\rho_{A\_BC}$ \verb|)| $\to$ \verb|U3U6| --- recouples $(AB)C\leftrightarrow A(BC)$.
     \item \verb|u3::u3z6db().get_U3Z6(| $B,A,ABC,C,AB,\ \rho_{AB},\rho_{AB\_C},\ AC,\rho_{AC},\rho_{AC\_B}$ \verb|)| $\to$ \verb|U3Z6| --- recouples $(AB)C\leftrightarrow(AC)B$ (note the leading $B,A$).
@@ -541,8 +533,8 @@ as a self-test.
 \label{sec:build}
 
 \texttt{u3lib} is header-only; user programs include the headers in \verb|include/|
-directly. The source will be hosted publicly at
-\url{https://github.com/ORG-TBD/u3lib} (placeholder, to be finalized on release).
+directly. The source is hosted publicly at
+\url{https://github.com/Deep-SANE/u3lib}.
 The build resolves dependency paths from a configuration environment
 rather than hardcoded paths; after sourcing it from the repository root the make
 targets are \verb|make| (example programs $\to$ \verb|bin/|), \verb|make test|
@@ -579,9 +571,9 @@ stack and the WIGXJPF backend used by earlier development builds have been
 dropped in favour of this lighter, portable footprint.
 
 \begin{acknowledgments}
+This work is dedicated to the memory of Jerry P. Draayer (who passed on September 13, 2026), whose pioneering contributions to algebraic nuclear physics and the Elliott SU(3) model inspired this framework.
 This library implements the U(3) coupling and recoupling procedure of
-Ref.~\cite{Dang2024EPJP1}. The authors thank J. P. Draayer for his contributions
-to the underlying theory.
+Ref.~\cite{Dang2024EPJP1}. The authors also gratefully acknowledge Feng Pan and Michela Negro for their valuable discussions and contributions.
 \end{acknowledgments}
 
 \begin{thebibliography}{9}

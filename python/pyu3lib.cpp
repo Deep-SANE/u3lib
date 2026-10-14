@@ -214,14 +214,14 @@ PYBIND11_MODULE(u3lib, m)
 
   // ==========================================================================
   //  u3::irrep  --  a U(3) irrep. Labelled either by SU(3) content (lambda,mu)
-  //  with n33 = 0, or by the three U(3) row labels (n1 >= n2 >= n3).
+  //  with n33 = 0, or by the three U(3) labels (n1 >= n2 >= n3).
   // ==========================================================================
   py::class_<u3::irrep, su3::irrep>(m, "irrep")
       .def(py::init<>())
       .def(py::init([](int lambda, int mu) { return u3::irrep(lambda, mu); }),
            "lambda"_a, "mu"_a, "U(3) irrep from SU(3) labels (n33 = 0).")
       .def(py::init([](int n1, int n2, int n3) { return u3::irrep(n1, n2, n3); }),
-           "n1"_a, "n2"_a, "n3"_a, "U(3) irrep from row labels n1 >= n2 >= n3.")
+           "n1"_a, "n2"_a, "n3"_a, "U(3) irrep from labels n1 >= n2 >= n3.")
       // n13/n23/n33 shadow the su3 base (they include n33 here):
       .def("n13", &u3::irrep::n13)
       .def("n23", &u3::irrep::n23)

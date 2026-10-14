@@ -229,7 +229,7 @@ namespace u3
     }
 
     // Row lookup with the same filters as WigU3U2_db::get: not-allowed when
-    // the U(2) triangle rule fails for the row labels or the row is outside
+    // the U(2) triangle rule fails for the U(2) labels or the row is outside
     // the selection rules. Lets consumers holding the coeffs object (via
     // WigU3U2_db::get_coeffs) resolve rows locally, without going back to the
     // shared cache. Labels must be normalized (n33 subtracted), as in the
