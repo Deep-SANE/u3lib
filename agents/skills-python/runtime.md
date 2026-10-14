@@ -33,8 +33,9 @@ finally:
 ```
 
 In an existing initialized application, respect its lifecycle instead of
-finalizing a session owned by the caller. u3lib/u4lib share foundational state;
-initialize both before joint work and finalize both after all joint work.
+finalizing a session owned by the caller. If another library sharing this
+foundational state runs in the same process, initialize all of them before
+joint work and finalize them only after all joint work is complete.
 Use a separate process for independent calculations when ownership is unclear.
 
 ## Inputs and results
