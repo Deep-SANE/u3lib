@@ -1,4 +1,4 @@
-\documentclass[aps,onecolumn,10pt,superscriptaddress,floatfix,nobibnote]{revtex4}
+\documentclass[aps,onecolumn,10pt,superscriptaddress,floatfix,nofootinbib]{revtex4}
 \usepackage{subfigure}
 \usepackage{epsfig}
 \usepackage{epstopdf}
@@ -9,6 +9,8 @@
 \usepackage{amsmath,bbold}
 \usepackage{float}
 \usepackage{physics}
+\usepackage{comment}
+\usepackage{footnote}
 %\usepackage{url}
 
 %Add colors
@@ -52,37 +54,40 @@
 
 \lstset{style=mystyle}
 
+
 \begin{document}
 
-\title{\texttt{u3lib}: An AI-Enabled Computational Framework for U(3) Symmetry Algebra,\\ Wigner Coupling, and Racah Recoupling Coefficients}
+\title{\texttt{u3lib}: An AI-Ready Computational Framework for U(3) Symmetry Algebra,\\ Wigner Coupling, and Racah Recoupling Coefficients}
 
 \author{Daniel Langr}
 \affiliation{Department of Computer Systems, Faculty of Information Technology, Czech Technical University in Prague, Prague, Czech Republic}
 
 \author{Phong Dang}
-\affiliation{Department of Physics and Astronomy, Louisiana State University, Baton Rouge, LA 70803, USA}
+\affiliation{Department of Physics and Astronomy, Louisiana State University, Baton Rouge, Louisiana, USA}
 
 \author{Tomas Dytrych}
-\affiliation{Nuclear Physics Institute, Czech Academy of Sciences, 250 68 \v{R}e\v{z}, Czech Republic}
-\affiliation{Department of Physics and Astronomy, Louisiana State University, Baton Rouge, LA 70803, USA}
+\affiliation{Nuclear Physics Institute, Czech Academy of Sciences, \v{R}e\v{z}, Czech Republic}
+\affiliation{Department of Physics and Astronomy, Louisiana State University, Baton Rouge, Louisiana, USA}
+
+\author{Michela Negro}
+\affiliation{Department of Physics and Astronomy, Louisiana State University, Baton Rouge, Louisiana, USA}
 
 \begin{abstract}
-\texttt{u3lib} is an AI-enabled C++ framework for U(3)/SU(3) representation-theory
+\texttt{u3lib} is an AI-ready C++ framework for U(3)/SU(3) representation-theory
 computations in nuclear structure and related applications. Besides the fast and
-accurate evaluation of U(3) Wigner coupling and Racah recoupling coefficients --
-implemented with the procedure of Dang \textit{et al.} \cite{Dang2024EPJP1},
+accurate evaluation of Wigner coupling and Racah recoupling coefficients---implemented 
+with the procedure of Dang \textit{et al.},
 which avoids the binomial coefficients and alternating sums of earlier
-formulations -- the library exposes the full algebraic toolkit around those
-coefficients: irreducible representations (irreps) and their dimensions, Casimir
-invariants and conjugation; the canonical Gelfand--Tsetlin basis and the physical
-$\mathrm{SU(3)}\supset\mathrm{SO(3)}$ basis, with their inner and outer
-multiplicities; the matrix elements of the U(3) generators on canonical states;
-the reduced matrix elements of the physical generators $\mathbf{L}$ and
-$\mathbf{Q}$; the tensor-product decomposition; and the transformation between
+formulations---the library offers the full algebraic toolkit for the symmetry group: 
+irreducible representations (irreps), dimensions, Casimir
+invariants, and conjugation; the canonical Gelfand--Tsetlin basis and 
+the physical $\mathrm{SU(3)}\supset\mathrm{SO(3)}$ basis with their inner multiplicities; 
+the matrix elements of the U(3) canonical generators;
+the reduced matrix elements of the physical generators; the tensor-product decomposition with outer multiplicities; and the transformation between
 the physical and canonical bases. The C++ API is mirrored one-to-one by Python
-bindings, and a repository-local catalog of agent skills lets a code-executing
+bindings, and a repository-local catalog of domain skills lets a code-executing
 AI assistant drive any of these capabilities from a natural-language request.
-This document is the reference manual for the public release.
+%This document is the reference manual for the public release.
 \end{abstract}
 
 \keywords{U(3); SU(3); SO(3); Wigner coefficients; Racah coefficients; Clebsch--Gordan coefficients; Gelfand--Tsetlin basis; nuclear structure}
@@ -103,55 +108,93 @@ This document is the reference manual for the public release.
 \textit{Programming language}: C++ (C++20), with Python bindings via pybind11.
 
 \noindent
-\textit{External libraries}: Eigen3; Boost (headers); OpenMP; fmt (header-only,
-for formatted output); the libwignernj SU(2) Wigner $3j/6j/9j$ backend; and a
-null-space solver backend --- the sparse solver \texttt{sns} (default), which
-falls back to a dense Eigen3 QR. The Python extension additionally uses pybind11.
+\textit{External libraries}: \texttt{Eigen3} for QR-based null space solver; \texttt{Boost} for hash tables; 
+\texttt{OpenMP} for multi-threading; \texttt{fmt} for formatting output; \texttt{libwignernj} for $\rm SU(2)$ coupling
+and recoupling coefficients; and \red{\texttt{sns} for null space solver catered to sparse matrices ... TBD by DL}. 
+The Python extension additionally uses \texttt{pybind11}.
 
 \noindent
-\textit{Nature of problem}: Fast, accurate, and reproducible evaluation of the
-Wigner coupling coefficients for the two group--subgroup chains
+\textit{Nature of problem}: Fast, accurate, and reproducible evaluation of 
+Wigner reduced coupling coefficients for the two group-subgroup chains
 $\mathrm{SU(3)}\supset\mathrm{SO(3)}$ and
-$\mathrm{U(3)}\supset\mathrm{U(2)}\supset\mathrm{U(1)}$, the U(3) Racah
-recoupling coefficients ($U$-, $Z$-, and $9$-$(\lambda\mu)$ coefficients), and
-the associated representation-theoretic quantities (dimensions, Casimirs,
-multiplicities, basis enumeration, generator matrix elements, and basis
-transformations) needed by symmetry-adapted nuclear-structure calculations.
+$\mathrm{U(3)}\supset\mathrm{U(2)}$, Racah
+recoupling coefficients (6-$\rm U(3)$ and 9-$\rm U(3)$ coefficients), and
+the associated algebraic quantities (irrep dimensions, Casimirs, multiplicities, 
+basis enumeration, generator matrix elements, and basis transformations) needed by 
+symmetry-adapted calculations for nuclear structure and similar problems.
 
 \noindent
-\textit{Solution method}: The coupling and recoupling coefficients are built from
-the highest-weight canonical reduced coefficients, obtained as the orthonormal
-null space of the linear system enforced by the U(3) raising generators, and
-propagated by the recursion relations of Ref.~\cite{Dang2024EPJP1}; the physical
-$\mathrm{SO(3)}$-coupled coefficients follow from the physical$\,\to\,$canonical
-basis transformation.
+\textit{Solution method}: The $\mathrm{U(3)}\supset\mathrm{U(2)}$ reduced coupling and 
+recoupling coefficients are built from the highest-weight $\mathrm{U(3)}\supset\mathrm{U(2)} \supset\mathrm{U(1)}$ 
+full coupling coefficients, obtained as the orthonormal null space of the canonical raising generators, 
+and propagated by the corresponding lowering generators \cite{Dang2024EPJP1}; 
+the physical $\mathrm{SU(3)}\supset\mathrm{SO(3)}$ coefficients follow from the physical-to-canonical
+basis transformation, also obtained as the orthonormal null space of the physical raising generator $L_+$ \cite{Dang2024EPJP1}.
 
 \section{Introduction}
 \label{sec:intro}
 
-\texttt{u3lib} evaluates the coupling and recoupling coefficients of the unitary group
-U(3) and its special unitary subgroup SU(3), together with the representation
-theory on which they rest. SU(3) symmetry underlies the Elliott model and the
-symmetry-adapted no-core shell model, where such coefficients are consumed in
-large numbers; speed, accuracy, and a stable, documented set of phase and
-normalization conventions are therefore essential.
+Computation of coupling and recoupling coefficients for the unitary group
+$\rm U(3)$ and its special unitary subgroup $\rm SU(3)$ has a long history, 
+dating back to the 1973 seminal pair of papers by Draayer and Akiyama 
+that proffered a generic algorithm \cite{Draayer1973JMP} and an 
+associated Fortran program for their evaluation \cite{Akiyama1973CPC}.
+These coefficients underpin nuclear structure calculations using Elliott's
+$\rm SU(3)$ model \cite{Elliott1958I,Elliott1958II} and other symmetry-adapted
+shell-model approaches \cite{Dytrych2013PRL,Dytrych2020PRL,McCoy2020PRL}, where they are
+consumed in large numbers, thus speed and accuracy are essential. Over the last five decades, the Draayer 
+and Akiyama Fortran library had received various upgrades with improved numerical accuracy 
+\cite{Bahri2004CPC} and modern programming languages \cite{Dytrych2021CPC,Herko2026EPJA}.
+However, the underlying algorithm using hypergeometric functions with large factorials
+and alternating sums had remained unchanged until recently when Dang \textit{et al.}
+brought forward a completely new algorithm that leverages the action of the raising generators
+of the symmetry group along with state-of-the-art numerical null space solvers \cite{Dang2024EPJP1} 
+\red{DL, perhaps you also want to cite your student's thesis here?} 
 
-The coefficients are computed with the procedure introduced in
-Ref.~\cite{Dang2024EPJP1}, which replaces the binomial coefficients and
-alternating sums of classical approaches by the solution of a sparse linear
-(null-space) problem followed by recursion, improving both numerical stability
-and range. The mathematical formulation, definitions, and governing equations
-are given in that paper and are not reproduced here; this manual is a reference
-for the software. \texttt{u3lib} packages the engine as a reusable framework: in addition
-to the coefficients it provides irreps and their invariants, the canonical
-(Gelfand--Tsetlin) and physical ($\mathrm{SO(3)}$-coupled) bases, the generator
-matrix elements, the tensor-product decomposition, and the physical$\,\to\,$
-canonical transformation. The C++ API is header-only; Python bindings mirror it
-one-to-one; and an agent-skill catalog exposes every capability to an AI
-assistant. The remainder documents the repository structure
+The same algebraic tools also arise outside nuclear physics. In quantum
+information, Schur transforms are constructed from successive Clebsch--Gordan
+transformations for $d$-level systems; for $d=3$, this provides a potential
+application of U(3) coupling data to qutrit basis transformations
+\cite{Bacon2006PRL}. In condensed-matter physics, symmetry-adapted numerical
+renormalization-group calculations of the SU(3) Anderson impurity model require
+tensor-product decompositions, coupling coefficients, and
+outer-multiplicity labels \cite{Moca2012PRB}. In quantum optics, SU(3)
+representation theory organizes multiphoton states and interference in
+three-channel passive interferometers \cite{Tan2013PRL}. These examples suggest
+uses for \texttt{u3lib} as a source of representation-theoretic building blocks,
+with application-specific modeling and any basis conversion supplied by the user.
+
+In this paper, we present \texttt{u3lib}, a comprehensive high-performance framework for 
+the $\rm U(3)$ symmetry algebra where computation of the coupling and recoupling coefficients
+are two of the capabilities it provides. This library is part of a broader project called 
+\texttt{DeepSANE}---\textbf{Deep}-learning and \textbf{S}ymmetry-adapted \textbf{A}b-initio 
+\textbf{N}uclear modeling: an AI-ready \textbf{E}cosystem. 
+To be specific, \texttt{u3lib} packages the engine as a reusable framework: in addition
+to the coefficients, it supplies irreps as C++ objects and their Casimir invariants, the canonical
+Gelfand-Tsetlin $\rm U(3) \supset U(2) \supset U(1)$ and the physical $\rm SU(3) \supset SO(3)$ bases, 
+the generator matrix elements, the tensor-product decomposition, and the physical-to-canonical transformation. 
+The C++ API is header-only; Python bindings mirror it one-to-one.
+
+Large language models offer a way to orchestrate scientific workflows through
+natural-language requests. To support their use with \texttt{u3lib}, we provide
+an agent-skill catalog that guides AI assistants through the library's
+capabilities. Effective orchestration, however, requires more than identifying
+the relevant functions: an agent must also follow group-theoretical notation,
+phase conventions, memory-lifetime rules, and thread-safety requirements.
+The repository-local skills make these requirements explicit alongside the
+source code and provide procedures for constructing and checking calculations.
+This effort is closely aligned with initiatives to standardize
+reusable domain-specific skills for computational research, such as the U.S.
+Department of Energy (DOE) Genesis Mission and its scientific agent skill 
+catalog\footnote{See the DOE Genesis Mission skill catalog: \url{https://gitlab.osti.gov/genesis/genesis-skills}.}.
+We also evaluate whether this guidance improves task completion and
+reduces the resources needed to integrate the library, particularly as
+implementation complexity increases.
+
+The remainder of this paper documents the repository structure
 (Sec.~\ref{sec:structure}), the classes and interface (Sec.~\ref{sec:classes}),
-the Python bindings (Sec.~\ref{sec:python}), the AI-enabled interface
-(Sec.~\ref{sec:agents}), and the build (Sec.~\ref{sec:build}).
+the Python bindings (Sec.~\ref{sec:python}), the AI-ready interface and its
+benchmark evaluation (Sec.~\ref{sec:agents}), and the installation (Sec.~\ref{sec:build}).
 
 \section{Library structure}
 \label{sec:structure}
@@ -159,26 +202,26 @@ the Python bindings (Sec.~\ref{sec:python}), the AI-enabled interface
 \texttt{u3lib} is a header-only C++ library with a thin build layer. The top-level
 directories are:
 \begin{itemize}
-    \item \verb|include/| --- the library itself (all algorithms live here; user
+    \item \verb|include/|: the library itself (all algorithms live here; user
     programs include these headers directly):
     \begin{itemize}
-        \item \verb|U3irrep.h| --- the irrep classes \verb|su3::irrep|, \verb|u3::irrep|;
-        \item \verb|U3gelfand.h|, \verb|internal/gelfand/| --- the Gelfand state class \verb|u3::gelfand|;
-        \item \verb|U3basis.h| --- basis enumeration (\verb|gelfandBasis|, \verb|physicalBasis|), the inner multiplicity \verb|Kappa|, the \verb|u3::physicalvector| class, and the generator-action predicates;
-        \item \verb|U3decomposition.h| --- the outer multiplicity \verb|Rho| and the tensor-product \verb|decomposition|;
-        \item \verb|U3U2xU3U2.h|, \verb|U3SO3xU3SO3.h| --- the canonical and physical coupling coefficients and their databases;
-        \item \verb|U3_U6Z6Coeffs.h|, \verb|U3_U9Coeffs.h| --- the $U$-, $Z$-, and $9$-$(\lambda\mu)$ recoupling coefficients and their databases;
-        \item \verb|U3SO3_to_U3U2U1.h| --- the physical$\,\to\,$canonical transformation;
-        \item \verb|U3generatorsRME.h| --- the physical-generator reduced matrix elements \verb|RME_L|, \verb|RME_Q|;
-        \item \verb|Definitions.h| --- the structured coefficient containers;
-        \item \verb|u3lib.h| --- the umbrella header and the \verb|initialize|/\verb|finalize| lifecycle.
+        \item \verb|U3irrep.h|: the irrep classes \verb|su3::irrep|, \verb|u3::irrep|;
+        \item \verb|U3gelfand.h|, \verb|internal/gelfand/|: the Gelfand state class \verb|u3::gelfand|;
+        \item \verb|U3basis.h|: basis enumeration (\verb|gelfandBasis|, \verb|physicalBasis|), the inner multiplicity \verb|Kappa|, the \verb|u3::physicalvector| class, and the generator-action predicates;
+        \item \verb|U3decomposition.h|: the outer multiplicity \verb|Rho| and the tensor-product \verb|decomposition|;
+        \item \verb|U3U2xU3U2.h|, \verb|U3SO3xU3SO3.h|: the canonical and physical coupling coefficients and their look-up tables;
+        \item \verb|U3_U6Z6Coeffs.h|, \verb|U3_U9Coeffs.h|: the 6-$\rm U(3)$ and 9-$\rm U(3)$ recoupling coefficients and their look-up tables;
+        \item \verb|U3SO3_to_U3U2U1.h|: the physical-to-canonical transformation;
+        \item \verb|U3generatorsRME.h|: the physical-generator reduced matrix elements \verb|RME_L|, \verb|RME_Q|;
+        \item \verb|Definitions.h|: the structured coefficient containers;
+        \item \verb|u3lib.h|: the umbrella header and the \verb|initialize|/\verb|finalize| lifecycle.
     \end{itemize}
-    \item \verb|src/| --- small example driver programs (one \verb|.cpp| per task) that call the headers and print results; compiled to \verb|bin/|.
-    \item \verb|python/| --- the pybind11 extension (\verb|pyu3lib.cpp| $\to$ \verb|u3lib.so|, built with \verb|make python|) and a tutorial notebook (\verb|tutorial.ipynb|).
-    \item \verb|agents/| --- the AI-agent skill catalog: an index (\verb|AGENTS.md|), shared runtime instructions, and one skill per capability.
-    \item \verb|test/| --- the regression suite (\verb|test_*.cpp|, the \verb|*_cases.h| case sets, and \verb|reference/| documented values), run by \verb|make test|.
-    \item \verb|doc/| --- this manual (LaTeX source).
-    \item \verb|bin/| --- build output (not source).
+    \item \verb|src/|: example driver programs (one \verb|.cpp| per task) that call the headers and print results; compiled to \verb|bin/|.
+    \item \verb|python/|: the pybind11 extension (\verb|pyu3lib.cpp| $\to$ \verb|u3lib.so|, built with \verb|make python|) and a tutorial Jupyter notebook (\verb|tutorial.ipynb|).
+    \item \verb|agents/|: the AI-agent skill catalog: an index (\verb|AGENTS.md|), shared runtime instructions, and one skill per capability.
+    \item \verb|test/|: the regression suite (\verb|test_*.cpp|, the \verb|*_cases.h| case sets, and \verb|reference/| documented values), run by \verb|make test|.
+    \item \verb|doc/|: this manual (LaTeX source).
+    \item \verb|bin/|: build output (not source).
 \end{itemize}
 
 \section{Classes and library interface}
@@ -188,24 +231,24 @@ This section documents every public class and its methods, and the
 database/container interface through which coefficients are reached. All types
 are in the namespace \verb|u3| (SU(3)-only base members in \verb|su3|). The
 algebraic types and their methods do not require initialization; the coefficient
-\emph{databases} do. Table~\ref{tab:main-funcs} is an at-a-glance map of the main
+databases do. Table~\ref{tab:main-funcs} is an at-a-glance map of the main
 entry points.
 
 \begin{table*}[tp]
     \centering
-    \begin{tabular}{p{3.2cm}p{4.8cm}p{6.2cm}p{2.0cm}}
+    \begin{tabular}{p{3.2cm}p{5.8cm}p{6.2cm}}
     \hline\hline
-         Header & Entry point & Task & Reference\\
+         Header & Entry point & Task \\
         \hline
-         \verb|U3irrep.h| & \verb|dim|, \verb|C1/C2/C3|, \verb|conjugate| & irrep dimension, Casimirs, conjugation & ---\\
-         \verb|U3basis.h| & \verb|Kappa|, \verb|gelfandBasis|, \verb|physicalBasis| & inner multiplicity; basis enumeration & \cite{Dang2024EPJP1}\\
-         \verb|U3decomposition.h| & \verb|Rho|, \verb|decomposition| & outer multiplicity; $A\otimes B$ series & Sec.~IV.A \cite{Dang2024EPJP1}\\
-         \verb|U3U2xU3U2.h| & \verb|wigU3U2db| & $\mathrm{U(3)}{\supset}\mathrm{U(2)}$ canonical reduced CG & Sec.~IV.C--D \cite{Dang2024EPJP1}\\
-         \verb|U3SO3xU3SO3.h| & \verb|wigU3SO3db| & $\mathrm{SU(3)}{\supset}\mathrm{SO(3)}$ physical CG & Eq.~(40) \cite{Dang2024EPJP1}\\
-         \verb|U3_U6Z6Coeffs.h| & \verb|u3u6db|, \verb|u3z6db| & $U$- and $Z$-recoupling (three irreps) & Eqs.~(21),(22) \cite{Dang2024EPJP1}\\
-         \verb|U3_U9Coeffs.h| & \verb|u3u9db| & $9$-$(\lambda\mu)$ recoupling (four irreps) & Eq.~(23) \cite{Dang2024EPJP1}\\
-         \verb|U3SO3_to_U3U2U1.h| & \verb|phys_to_cano| & physical $\to$ canonical transformation & Eqs.~(35),(36) \cite{Dang2024EPJP1}\\
-         \verb|U3generatorsRME.h| & \verb|RME_L|, \verb|RME_Q| & reduced matrix elements of $\mathbf{L}$, $\mathbf{Q}$ & ---\\
+         \verb|U3irrep.h| & \verb|dim|, \verb|C1/C2/C3|, \verb|conjugate| & irrep dimension, Casimirs, conjugation \\
+         \verb|U3basis.h| & \verb|Kappa|, \verb|gelfandBasis|, \verb|physicalBasis| & inner multiplicity; basis enumeration \\
+         \verb|U3decomposition.h| & \verb|Rho|, \verb|decomposition| & outer multiplicity; irrep product  \\
+         \verb|U3U2xU3U2.h| & \verb|wigU3U2db| & $\mathrm{U(3)}{\supset}\mathrm{U(2)}$ reduced coupling coefficients  \\
+         \verb|U3SO3xU3SO3.h| & \verb|wigU3SO3db| & $\mathrm{SU(3)}{\supset}\mathrm{SO(3)}$ reduced coupling coefficients  \\
+         \verb|U3_U6Z6Coeffs.h| & \verb|u3u6db|, \verb|u3z6db| & 6-$\rm U(3)$ recoupling coefficients (three irreps)  \\
+         \verb|U3_U9Coeffs.h| & \verb|u3u9db| & 9-$\rm U(3)$ recoupling coefficients (four irreps)  \\
+         \verb|U3SO3_to_U3U2U1.h| & \verb|phys_to_cano| & physical-tocanonical transformation \\
+         \verb|U3generatorsRME.h| & \verb|RME_L|, \verb|RME_Q| & reduced matrix elements of $\mathbf{L}$, $\mathbf{Q}$ \\
     \hline\hline
     \end{tabular}
     \caption{Main entry points of \texttt{u3lib}.}
@@ -215,87 +258,96 @@ entry points.
 \subsection{Lifecycle}
 In \verb|u3lib.h|:
 \begin{itemize}
-    \item \verb|initialize()| / \verb|initialize(&argc,&argv)| --- set up the Wigner backend, the SO(3) CGC/Racah caches, and the U(3) coefficient databases;
-    \item \verb|finalize()| --- tear everything down;
-    \item \verb|initialize_thread()| / \verb|finalize_thread()| --- per-thread setup for multithreaded use;
-    \item \verb|clear()| --- drop cached coefficients while keeping the databases alive;
-    \item \verb|is_initialized()| --- query the state.
+    \item \verb|initialize()| / \verb|initialize(&argc,&argv)|: set up the caches of the $\rm SU(2)$ coefficients from \texttt{libwignernj}, and the U(3) coefficient databases;
+    \item \verb|finalize()|: destroy the databases;
+    \item \verb|initialize_thread()| / \verb|finalize_thread()|: per-thread setup for multithreaded use;
+    \item \verb|clear()|: drop cached coefficients while keeping the databases alive;
+    \item \verb|is_initialized()|: query the state.
 \end{itemize}
-\textit{Shared-backend lifecycle:} if \texttt{u3lib} runs in the same process as another library that shares the Wigner backend, initialize all of them at startup and finalize only after all coefficient work is complete. Calling \verb|finalize()| while another user of the backend is still active destroys the shared state and causes runtime errors.
+
+Note on shared-backend lifecycle: if \texttt{u3lib} runs in the same process as another library that shares the \texttt{libwignernj} backend, initialize all of them at startup and finalize only after all coefficient work is complete. Calling \verb|finalize()| while another user of the backend is still active destroys the shared state and causes runtime errors.
 
 \subsection{Irreps: \texttt{su3::irrep} and \texttt{u3::irrep}}
 (\verb|U3irrep.h|.) \verb|su3::irrep| stores an SU(3) irrep; \verb|u3::irrep|
 derives from it and adds the third label $n_{33}$ (fixing the total quanta).
-\textbf{Constructors.}
+
+\textbf{Constructors:}
 \begin{itemize}
-    \item \verb|su3::irrep()| --- default (empty) SU(3) irrep.
-    \item \verb|su3::irrep(lambda,mu)| --- SU(3) irrep from its labels.
-    \item \verb|u3::irrep()| --- default (empty) U(3) irrep.
-    \item \verb|u3::irrep(n13,n23,n33)| --- U(3) irrep from its three labels.
-    \item \verb|u3::irrep(lambda,mu)| --- normalized representative $[\lambda{+}\mu,\mu,0]$.
-    \item \verb|u3::irrep(su3::irrep, N)| --- fix the total quanta $N$.
+    \item \verb|su3::irrep()|: default (empty) SU(3) irrep.
+    \item \verb|su3::irrep(lambda,mu)|: SU(3) irrep from its labels.
+    \item \verb|u3::irrep()|: default (empty) U(3) irrep.
+    \item \verb|u3::irrep(n13,n23,n33)|: U(3) irrep from its three labels.
+    \item \verb|u3::irrep(lambda,mu)|: normalized representative $[\lambda{+}\mu,\mu,0]$.
+    \item \verb|u3::irrep(su3::irrep, N)|: fix the total quanta $N$.
 \end{itemize}
-\textbf{Labels.}
+
+\textbf{Label getters:}
 \begin{itemize}
-    \item \verb|lam()| / \verb|lambda()| --- the SU(3) label $\lambda$.
-    \item \verb|mu()| --- the SU(3) label $\mu$.
-    \item \verb|n13()|, \verb|n23()|, \verb|n33()| --- the three U(3) labels (\verb|u3::irrep|).
+    \item \verb|lam()| / \verb|lambda()|: the SU(3) label $\lambda$.
+    \item \verb|mu()|: the SU(3) label $\mu$.
+    \item \verb|n13()|, \verb|n23()|, \verb|n33()|: the three U(3) labels (only for \verb|u3::irrep|).
 \end{itemize}
-\textbf{Dimension and invariants.}
+
+\textbf{Dimension and invariants:}
 \begin{itemize}
-    \item \verb|dim()| --- the dimension (both classes).
-    \item \verb|C2()| --- the quadratic SU(3) Casimir (both classes, shift-invariant).
-    \item \verb|C3()| --- the cubic SU(3) Casimir (both classes, shift-invariant).
-    \item \verb|C1()| --- the first-order U(1) Casimir $=n_{13}{+}n_{23}{+}n_{33}$ (total quanta), on \verb|u3::irrep| only; \verb|su3::irrep| has no \verb|C1()| (SU(3) drops the U(1) trace generator).
-    \item \verb|quanta()| --- synonym of \verb|C1()|.
+    \item \verb|dim()|: the dimension (both classes).
+    \item \verb|C2()|: the quadratic SU(3) Casimir (both classes, shift-invariant).
+    \item \verb|C3()|: the cubic SU(3) Casimir (both classes, shift-invariant).
+    \item \verb|C1()|: the first-order Casimir $=n_{13}{+}n_{23}{+}n_{33}$ (total quanta), on \verb|u3::irrep| only; \verb|su3::irrep| has no \verb|C1()|.
+    \item \verb|quanta()|: synonym of \verb|C1()|.
 \end{itemize}
-\textbf{Other.}
+
+\textbf{Other:}
 \begin{itemize}
-    \item \verb|zero()| --- test for the trivial irrep.
-    \item \verb|conjugate()| --- the conjugate irrep $(\mu,\lambda)$.
-    \item \verb|conjugate_phase()| --- the associated conjugation phase.
-    \item \verb|normalize()| --- set $n_{33}=0$ (\verb|u3::irrep|).
+    \item \verb|zero()|: test for the trivial irrep.
+    \item \verb|conjugate()|: the conjugate irrep $(\mu,\lambda)$.
+    \item \verb|conjugate_phase()|: the associated conjugation phase.
+    \item \verb|normalize()|: set $n_{33}=0$ for \verb|u3::irrep|.
     \item comparison operators and stream output.
-    \item \verb|writeBinary| / \verb|readBinary| --- binary serialization.
+    \item \verb|writeBinary| / \verb|readBinary|: serialization for binary files.
 \end{itemize}
 
 \subsection{Gelfand states: \texttt{u3::gelfand}}
-(\verb|U3gelfand.h|.) The canonical basis state
-$\ket{n_{13},n_{23},n_{33};\,n_{12},n_{22};\,n_{11}}$.
-\textbf{Constructor.}
+(\verb|U3gelfand.h|.) The canonical basis state $\ket{n_{13},n_{23},n_{33};\,n_{12},n_{22};\,n_{11}}$.
+
+\textbf{Constructor:}
 \begin{itemize}
-    \item \verb|u3::gelfand(n13,n23,n33,n12,n22,n11)| --- build a Gelfand state from its labels.
+    \item \verb|u3::gelfand(n13,n23,n33,n12,n22,n11)|: build a Gelfand state from its labels.
 \end{itemize}
-\textbf{Labels and validity.}
+
+\textbf{Label getters and validity check:}
 \begin{itemize}
-    \item \verb|n13()| \dots\ \verb|n11()| --- the six Gelfand-pattern labels.
-    \item \verb|check()| --- test the betweenness condition.
-    \item \verb|normalize()| --- shift $n_{33}\to0$.
+    \item \verb|n13()| \dots\ \verb|n11()|: the six Gelfand-pattern labels.
+    \item \verb|check()|: test the betweenness condition.
+    \item \verb|normalize()|: shift all quantum numbers by $n_{33}$.
 \end{itemize}
-\textbf{Subgroup labels.}
+
+\textbf{Subgroup labels:}
 \begin{itemize}
-    \item \verb|lam()| / \verb|lambda()| --- the SU(3) label $\lambda$.
-    \item \verb|mu()| --- the SU(3) label $\mu$.
-    \item \verb|epsilon()| --- the U(1) weight.
-    \item \verb|Lambdax2()| --- $2\times$ the embedded SU(2) angular momentum.
-    \item \verb|MLambdax2()| --- $2\times$ its projection.
+    \item \verb|lam()| / \verb|lambda()|: the SU(3) label $\lambda$.
+    \item \verb|mu()|: the SU(3) label $\mu$.
+    \item \verb|epsilon()|: the U(1) weight.
+    \item \verb|Lambdax2()|: $2\times$ the embedded SU(2) angular momentum.
+    \item \verb|MLambdax2()|: $2\times$ its projection.
 \end{itemize}
-\textbf{Conjugation.}
+
+\textbf{Conjugation:}
 \begin{itemize}
-    \item \verb|conjugate()| --- the conjugate Gelfand state.
-    \item \verb|conjugate_phase()| --- the associated conjugation phase.
+    \item \verb|conjugate()|: the conjugate Gelfand state.
+    \item \verb|conjugate_phase()|: the associated conjugation phase.
 \end{itemize}
-\textbf{Generator matrix elements.} Each returns the matrix element of a U(3)
-generator $E_{ij}$ acting on the state; a \verb|_12|/\verb|_22| suffix selects the
-target branch.
+
+\textbf{Generator matrix elements:} Each returns the matrix element of a U(3)
+canonical generator $E_{ij}$ acting on a Gelfand state; a \verb|_12|/\verb|_22| suffix selects the
+target branch (either on $n_{12}$ or $n_{22}$, see \cite{Dang2024EPJP1}).
 \begin{itemize}
-    \item \verb|e11()|, \verb|e22()|, \verb|e33()| --- the diagonal weight generators.
-    \item \verb|e12()| --- the $E_{12}$ element.
-    \item \verb|e21()| --- the $E_{21}$ element.
-    \item \verb|e23_12()|, \verb|e23_22()| --- the $E_{23}$ element, per target branch.
-    \item \verb|e32_12()|, \verb|e32_22()| --- the $E_{32}$ element, per target branch.
-    \item \verb|e13_12()|, \verb|e13_22()| --- the $E_{13}$ element, per target branch.
-    \item \verb|e31_12()|, \verb|e31_22()| --- the $E_{31}$ element, per target branch.
+    \item \verb|e11()|, \verb|e22()|, \verb|e33()|: the diagonal weight generators.
+    \item \verb|e12()|: the $E_{12}$ element.
+    \item \verb|e21()|: the $E_{21}$ element.
+    \item \verb|e23_12()|, \verb|e23_22()|: the $E_{23}$ element, per target branch.
+    \item \verb|e32_12()|, \verb|e32_22()|: the $E_{32}$ element, per target branch.
+    \item \verb|e13_12()|, \verb|e13_22()|: the $E_{13}$ element, per target branch.
+    \item \verb|e31_12()|, \verb|e31_22()|: the $E_{31}$ element, per target branch.
 \end{itemize}
 The raising-action predicates \verb|E12|, \verb|E23_12|, \verb|E23_22|,
 \verb|E13_12|, \verb|E13_22| (in \verb|U3basis.h|) identify the target state of
@@ -304,141 +356,287 @@ each generator.
 \subsection{Physical states: \texttt{u3::physicalvector}}
 (\verb|U3basis.h|.) The $\mathrm{SU(3)}\supset\mathrm{SO(3)}$ reduced state
 $\ket{(\lambda\mu)\,\kappa\,L}$.
-\textbf{Constructor.}
+
+\textbf{Constructor:}
 \begin{itemize}
-    \item \verb|u3::physicalvector(irrep, L)| --- a physical state of angular momentum $L$.
+    \item \verb|u3::physicalvector(irrep, L)|: a physical state of angular momentum $L$.
 \end{itemize}
-\textbf{Accessors.}
+
+\textbf{Accessors:}
 \begin{itemize}
-    \item \verb|irr()| --- the underlying irrep.
-    \item \verb|lam()| / \verb|lambda()| --- the SU(3) label $\lambda$.
-    \item \verb|mu()| --- the SU(3) label $\mu$.
-    \item \verb|n13()|, \verb|n23()|, \verb|n33()| --- the U(3) labels.
-    \item \verb|L()| --- the angular momentum.
-    \item \verb|kappa()| --- the inner multiplicity of $L$ (= \verb|kappamax()|).
+    \item \verb|irr()|: the underlying irrep.
+    \item \verb|lam()| / \verb|lambda()|: the SU(3) label $\lambda$.
+    \item \verb|mu()|: the SU(3) label $\mu$.
+    \item \verb|n13()|, \verb|n23()|, \verb|n33()|: the U(3) labels.
+    \item \verb|L()|: the angular momentum.
+    \item \verb|kappa()|, \verb|kappamax()|: the inner multiplicity of $L$.
 \end{itemize}
 
 \subsection{Free functions}
-\textbf{Multiplicities.}
+\textbf{Multiplicities:}
 \begin{itemize}
-    \item \verb|u3::Kappa(irrep,L)| --- inner multiplicity $\kappa_{\max}$ (also \verb|kmax|, \verb|mult|).
-    \item \verb|u3::Rho(A,B,C)| --- outer multiplicity $\rho_{\max}$ of $C$ in $A\otimes B$ (\verb|U3decomposition.h|).
+    \item \verb|u3::Kappa(irrep,L)|: inner multiplicity $\kappa_{\max}$ (also \verb|kmax|, \verb|mult|).
+    \item \verb|u3::Rho(A,B,C)|: outer multiplicity $\rho_{\max}$ of irrep $C$ in $A\otimes B$ product (\verb|U3decomposition.h|).
 \end{itemize}
-\textbf{Bases.}
+
+\textbf{Bases:}
 \begin{itemize}
-    \item \verb|u3::gelfandBasis(irrep)| --- all Gelfand states of the irrep.
-    \item \verb|u3::physicalBasis(irrep)| --- all physical states with nonzero $\kappa$.
-    \item \verb|u3::findGelfand(g,gArr)| --- the index of a state within \verb|gArr|.
+    \item \verb|u3::gelfandBasis(irrep)|: all Gelfand states of the irrep.
+    \item \verb|u3::physicalBasis(irrep)|: all physical states with nonzero $\kappa$.
+    \item \verb|u3::findGelfand(g,gArr)|: the index of a state within the \verb|gArr| Gelfand basis.
 \end{itemize}
-\textbf{Decomposition.}
+
+\textbf{Decomposition:}
 \begin{itemize}
-    \item \verb|u3::decomposition(A,B)| --- the full Kronecker series, returning (list of $C$, list of $\rho_{\max}$) with $\sum_C\rho_{\max}(C)\dim C=\dim A\dim B$.
+    \item \verb|u3::decomposition(A,B)|: the full Kronecker series, returning (list of $C$, list of $\rho_{\max}$) with $\sum_C\rho_{\max}(C)\dim C=\dim A\dim B$.
 \end{itemize}
-\textbf{Generator RMEs} (\verb|U3generatorsRME.h|). Each takes two
+
+\textbf{Physical generator reduced matrix elements:} Each takes two
 \verb|physicalvector| states (bra, ket) and two \verb|std::vector<int>|
-out-parameters (which receive the $1$-based multiplicity labels), and returns an
+out-parameters (which receive the zero-based multiplicity labels), and returns an
 \verb|Eigen::MatrixXd| of shape $\kappa'_{\max}\times\kappa_{\max}$.
 \begin{itemize}
-    \item \verb|RME_L| --- the angular-momentum RME, $\langle(\lambda\mu)\kappa'L'\|\mathbf{L}\|(\lambda\mu)\kappa L\rangle=\delta_{L'L}\sqrt{L(L{+}1)(2L{+}1)}$.
-    \item \verb|RME_Q| --- the quadrupole RME, carrying an extra $\sqrt{2L'+1}$ (Sec.~\ref{sub:conv}).
+    \item \verb|RME_L|: the angular-momentum RME, $\langle(\lambda\mu)\kappa'L'\|\mathbf{L}\|(\lambda\mu)\kappa L\rangle=\delta_{L'L}\sqrt{L(L{+}1)(2L{+}1)}$.
+    \item \verb|RME_Q|: the quadrupole RME, carrying an extra $\sqrt{2L'+1}$ (Sec.~\ref{sub:conv}).
 \end{itemize}
-\textbf{Transformation} (\verb|U3SO3_to_U3U2U1.h|). Both expand a physical state
-in the Gelfand basis, returning the canonical-state indices into
-\verb|gArr=gelfandBasis(p.irr())| and an amplitude matrix with one orthonormal
+
+\textbf{Transformation:} Both expand a physical state \verb|p|
+in the Gelfand basis \verb|gArr|, returning the canonical-state indices and an amplitude matrix with one orthonormal
 column per $\kappa$.
 \begin{itemize}
-    \item \verb|u3::phys_to_cano(p,M,gArr)| --- the expansion at a single projection $M$.
-    \item \verb|u3::phys_to_cano_allM(p,gArr)| --- the expansion over all $M$.
+    \item \verb|u3::phys_to_cano(p,M,gArr)|: the expansion at a single projection $M$.
+    \item \verb|u3::phys_to_cano_allM(p,gArr)|: the expansion over all $M$.
 \end{itemize}
 
 \subsection{Coefficient containers}
-(\verb|Definitions.h|.) Every database call returns one of these structured
-containers; indices are zero-based and bounded by the \verb|*max()| counts.
-Accessors common to every container:
+(\verb|Definitions.h|.) Every container provides
+\verb|operator()(...)|, \verb|operator[](i)|, a member \verb|print()| method, and stream insertion via \verb|operator<<|. The indexing operators return a writable reference for a non-const C++
+container and a value for a const container. They access the same
+coefficients using different indexing schemes:
 \begin{itemize}
-    \item \verb|operator()(...)| --- the coefficient at the given multiplicity indices (signature per container below).
-    \item \verb|data()| --- the underlying flat buffer.
-    \item \verb|size()| --- the number of stored coefficients.
-    \item \verb|empty()| --- true for a forbidden or empty coupling.
+    \item \verb|block(i0,...,id)| selects a coefficient by its multiplicity
+    indices, in the order listed for each container below. Each index starts at
+    zero and is smaller than its corresponding \verb|*max()| count.
+    \item \verb|block[i]| selects a coefficient by a single flat index,
+    $0\leq i<\verb|block.size()|$. For axis sizes $d_0,\ldots,d_{m-1}$,
+    the equivalent flat index is
+    $
+      i=\sum_{j=0}^{m-1} i_j\prod_{k=j+1}^{m-1}d_k,
+    $
+    where an empty product is one. Thus, for a four-axis container,
+    $i=((i_0d_1+i_1)d_2+i_2)d_3+i_3$.
+    \item \verb|data()| exposes the underlying flat buffer;
+    \verb|size()| gives its number of coefficients; and \verb|empty()|
+    tests whether it contains no coefficients.
+    \item \verb|print(s)| and \verb|s << block|: output a formatted table of all multiplicity indices and their corresponding values to the stream \verb|s| (defaulting to \verb|std::cout| for \verb|print()|).
 \end{itemize}
-The multiplicity-axis counts, one per line, and the \verb|operator()| index order for each container:
 
-\textbf{\texttt{U3U2}} --- canonical coupling. Also exposes a flat \verb|operator[]|.
+In the equations below, $A,B,C,D$ denote $\rm U(3)$ irreps, and $AB,BC,AC,BD,CD$
+denote selected intermediate irreps in the indicated tensor products, rather
+than the tensor products themselves. The total irrep is denoted by $T$ for
+three- and four-irrep recoupling. Each $\rho$
+labels a particular occurrence of an output irrep in its coupling channel;
+$\kappa$ resolves repeated angular momenta within an SU(3) irrep. The
+multiplicity indices in these equations use the library's zero-based indexing.
+
+\textbf{\texttt{U3U2}}: canonical coupling of $A\otimes B\to C$, reduced with
+respect to U(2):
+$
+  \left\langle
+  A a; B b || C c
+  \right\rangle_{\rho},
+$
+where $a,b,c$ are their fixed U(2) sublabels
+$[n_{12},n_{22}]$. Only the outer multiplicity varies within the container,
+so \verb|block(rho)| and \verb|block[rho]| are identical.
 \begin{itemize}
-    \item \verb|rhomax()| --- the outer multiplicity $\rho$.
-    \item \verb|operator()(rho)| --- indexed by $\rho$.
+    \item \verb|rhomax()|: the outer multiplicity $\rho_{\max}$.
+    \item \verb|operator()(rho)|: indexed by $\rho$.
+    \item \verb|print(s = std::cout)|: prints the coefficient row over $\rho$.
 \end{itemize}
-\textbf{\texttt{U3SO3}} --- physical coupling.
+
+\textbf{\texttt{U3SO3}}: physical coupling of $A\otimes B\to C$, reduced with
+respect to SO(3):
+$
+  \left\langle A\,\kappa_A L_A;\,B\,\kappa_B L_B
+  \middle\| C\,\kappa_C L_C\right\rangle_{\rho},
+$
+where $L_A,L_B,L_C$ are fixed angular momenta. The three inner multiplicities and the outer
+multiplicity are the four container axes.
 \begin{itemize}
-    \item \verb|kappaAmax()| --- inner multiplicity $\kappa$ of leg $A$.
-    \item \verb|kappaBmax()| --- inner multiplicity $\kappa$ of leg $B$.
-    \item \verb|kappaCmax()| --- inner multiplicity $\kappa$ of leg $C$.
-    \item \verb|rhomax()| --- the outer multiplicity $\rho$.
+    \item \verb|kappaAmax()|: inner multiplicity $\kappa_{A,\max}$.
+    \item \verb|kappaBmax()|: inner multiplicity $\kappa_{B,\max}$.
+    \item \verb|kappaCmax()|: inner multiplicity $\kappa_{C,\max}$.
+    \item \verb|rhomax()|: the outer multiplicity $\rho_{\max}$.
     \item \verb|operator()(kappaA,kappaB,kappaC,rho)|.
+    \item \verb|print(s = std::cout)|: tabular print over $(\kappa_A,\kappa_B,\kappa_C,\rho)$.
 \end{itemize}
-\textbf{\texttt{U3U6}} --- $U$-recoupling, $(AB)C\leftrightarrow A(BC)$.
+
+\textbf{\texttt{U3U6}}: $U$-recoupling:
+$
+ U\!\left(A,B,T,C;\,AB,\rho_{AB},\rho_{AB\_C};\,
+ BC,\rho_{BC},\rho_{A\_BC}\right).
+$
+The labels $\rho_{AB\_C}$ and $\rho_{A\_BC}$ resolve the final couplings
+$AB\otimes C\to T$ and $A\otimes BC\to T$, respectively.
 \begin{itemize}
-    \item \verb|rhoABmax()| --- multiplicity of the $A\otimes B\to AB$ coupling.
-    \item \verb|rhoAB_Cmax()| --- multiplicity of the $AB\otimes C$ coupling.
-    \item \verb|rhoBCmax()| --- multiplicity of the $B\otimes C\to BC$ coupling.
-    \item \verb|rhoA_BCmax()| --- multiplicity of the $A\otimes BC$ coupling.
+    \item \verb|rhoABmax()|: multiplicity of the $A\otimes B\to AB$ coupling.
+    \item \verb|rhoAB_Cmax()|: multiplicity of the $AB\otimes C$ coupling.
+    \item \verb|rhoBCmax()|: multiplicity of the $B\otimes C\to BC$ coupling.
+    \item \verb|rhoA_BCmax()|: multiplicity of the $A\otimes BC$ coupling.
     \item \verb|operator()(rhoAB,rhoAB_C,rhoBC,rhoA_BC)|.
+    \item \verb|print(s = std::cout)|: tabular print over $(\rho_{AB},\rho_{AB\_C},\rho_{BC},\rho_{A\_BC})$.
 \end{itemize}
-\textbf{\texttt{U3Z6}} --- $Z$-recoupling, $(AB)C\leftrightarrow(AC)B$. It reuses the
-\verb|U3U6| getter names for its second route:
+
+\textbf{\texttt{U3Z6}}: $Z$-recoupling:
+$
+ Z\!\left(B,A,T,C;\,AB,\rho_{AB},\rho_{AB\_C};\,
+ AC,\rho_{AC},\rho_{AC\_B}\right).
+$
+The labels $\rho_{AB\_C}$ and $\rho_{AC\_B}$ resolve the couplings $AB\otimes C\to T$
+and $AC\otimes B\to T$, respectively. 
 \begin{itemize}
-    \item \verb|rhoABmax()| --- multiplicity of the $A\otimes B\to AB$ coupling.
-    \item \verb|rhoAB_Cmax()| --- multiplicity of the $AB\otimes C$ coupling.
-    \item \verb|rhoBCmax()| --- here the $A\otimes C\to AC$ channel.
-    \item \verb|rhoA_BCmax()| --- here the $AC\otimes B$ channel.
+    \item \verb|rhoABmax()|: multiplicity of the $A\otimes B\to AB$ coupling.
+    \item \verb|rhoAB_Cmax()|: multiplicity of the $AB\otimes C$ coupling.
+    \item \verb|rhoACmax()|: multiplicity of the $A\otimes C\to AC$ channel.
+    \item \verb|rhoAC_Bmax()|: multiplicity of the $AC\otimes B$ channel.
     \item \verb|operator()(rhoAB,rhoAB_C,rhoAC,rhoAC_B)|.
+    \item \verb|print(s = std::cout)|: tabular print over $(\rho_{AB},\rho_{AB\_C},\rho_{AC},\rho_{AC\_B})$.
 \end{itemize}
-\textbf{\texttt{U3U9}} --- $9$-$(\lambda\mu)$ recoupling.
+
+\textbf{\texttt{U3U9}}: 9-$\rm U(3)$ recoupling:
+\begin{equation}
+ \left[\begin{array}{cccc}
+ A & B & AB & \rho_{AB} \\
+ C & D & CD & \rho_{CD} \\
+ AC & BD & T & \rho_{AC\_BD} \\
+ \rho_{AC} & \rho_{BD} & \rho_{AB\_CD} &
+ \end{array}\right].
+\end{equation}
+The rightmost entries label the row couplings, and the bottom entries label
+the column couplings. In particular, $\rho_{AB\_CD}$ labels
+$AB\otimes CD\to T$ and is named \verb|rhoABCD| in the code;
+$\rho_{AC\_BD}$ labels $AC\otimes BD\to T$ and is named
+\verb|rhoACBD|. The container's axis order is 
+$
+ (\rho_{AC},\rho_{BD},\rho_{AB\_CD},
+   \rho_{AB},\rho_{CD},\rho_{AC\_BD})
+$.
+%which differs from reading the displayed array row by row.
 \begin{itemize}
-    \item \verb|rhoACmax()| --- multiplicity of the $A\otimes C\to AC$ coupling.
-    \item \verb|rhoBDmax()| --- multiplicity of the $B\otimes D\to BD$ coupling.
-    \item \verb|rhoABCDmax()| --- multiplicity of the $(AB)(CD)\to ABCD$ route.
-    \item \verb|rhoABmax()| --- multiplicity of the $A\otimes B\to AB$ coupling.
-    \item \verb|rhoCDmax()| --- multiplicity of the $C\otimes D\to CD$ coupling.
-    \item \verb|rhoACBDmax()| --- multiplicity of the $(AC)(BD)\to ABCD$ route.
+    \item \verb|rhoACmax()|: multiplicity of the $A\otimes C\to AC$ coupling.
+    \item \verb|rhoBDmax()|: multiplicity of the $B\otimes D\to BD$ coupling.
+    \item \verb|rhoABCDmax()|: multiplicity of the $AB \otimes CD \to T$ route.
+    \item \verb|rhoABmax()|: multiplicity of the $A\otimes B\to AB$ coupling.
+    \item \verb|rhoCDmax()|: multiplicity of the $C\otimes D\to CD$ coupling.
+    \item \verb|rhoACBDmax()|: multiplicity of the $AC \otimes BD \to T$ route.
     \item \verb|operator()(rhoAC,rhoBD,rhoABCD,rhoAB,rhoCD,rhoACBD)|.
+    \item \verb|print(s = std::cout)|: tabular print over all six recoupling multiplicity axes.
 \end{itemize}
+
 In C++ the \verb|U3U9| result is a view into a thread-local scratch buffer that
 the next database call overwrites; copy it before the next call. The other four
-own their buffers. (The Python bindings copy \verb|U3U9| automatically.)
+own their buffers.
 
 \subsection{Coefficient databases}
-Reached through singletons; each returns a container above.
+All coupling and recoupling coefficients are computed on demand and cached inside singleton database instances:
+\verb|u3::wigU3U2db()|, \verb|u3::wigU3SO3db()|, \verb|u3::u3u6db()|, \verb|u3::u3z6db()|, and \verb|u3::u3u9db()|.
+The library exposes two complementary access tiers:
 \begin{itemize}
-    \item \verb|u3::wigU3U2db().get(| $n_{13}^a,n_{23}^a,n_{33}^a,n_{12}^a,n_{22}^a,\ \dots^{b},\ \dots^{c}$ \verb|)| $\to$ \verb|U3U2| --- $\mathrm{U(3)}\supset\mathrm{U(2)}$ reduced coupling for $a\otimes b\to c$ (each state by its U(3) labels and U(2) sublabels $n_{12},n_{22}$), indexed by $\rho$.
-    \item \verb|u3::wigU3SO3db().get_U3SO3(| $\lambda_1,\mu_1,L_1,\ \lambda_2,\mu_2,L_2,\ \lambda_3,\mu_3,L_3$ \verb|)| $\to$ \verb|U3SO3| --- $\mathrm{SU(3)}\supset\mathrm{SO(3)}$ reduced coupling, indexed by $(\kappa_A,\kappa_B,\kappa_C,\rho)$.
-    \item \verb|u3::u3u6db().get_U3U6(| $A,B,ABC,C,AB,\ \rho_{AB},\rho_{AB\_C},\ BC,\rho_{BC},\rho_{A\_BC}$ \verb|)| $\to$ \verb|U3U6| --- recouples $(AB)C\leftrightarrow A(BC)$.
-    \item \verb|u3::u3z6db().get_U3Z6(| $B,A,ABC,C,AB,\ \rho_{AB},\rho_{AB\_C},\ AC,\rho_{AC},\rho_{AC\_B}$ \verb|)| $\to$ \verb|U3Z6| --- recouples $(AB)C\leftrightarrow(AC)B$ (note the leading $B,A$).
-    \item \verb|u3::u3u9db().get_U3U9(| $A,B,C,D,$ $AB,CD,AC,BD,ABCD,$ $\rho_{AC},\rho_{BD},\rho_{ABCD},$ $\rho_{AB},\rho_{CD},\rho_{ACBD}$ \verb|)| $\to$ \verb|U3U9|.
+    \item \textbf{Structured container getters} (\verb|get_U3U2|, \verb|get_U3SO3|, \verb|get_U3U6|, \verb|get_U3Z6|, \verb|get_U3U9|): return the dedicated multidimensional containers described above (\verb|U3U2|, \verb|U3SO3|, \verb|U3U6|, \verb|U3Z6|, \verb|U3U9|). These containers support multi-index coordinate access via \verb|operator()|, linear flat indexing via \verb|operator[]|, shape accessors (\verb|*max()|), and formatted stream printing.
+    \item \textbf{Direct and flat-buffer getters} (\verb|get|): return contiguous buffers without container wrapper overhead.% (\verb|Eigen::RowVectorXd| for $\mathrm{U(3)}\supset\mathrm{U(2)}$; \verb|std::vector<double>| for $\mathrm{U(3)}\supset\mathrm{SO(3)}$, $U6$, and $Z6$; and \verb|std::span<const double>| or \verb|std::vector<double>| for $U9$).
+   % \item \textbf{Table-level block retrieval} (\verb|get_coeffs|): \verb|wigU3U2db()| returns a shared pointer to the entire coefficient table for an irrep triple in a single concurrent-map lookup, allowing subsequent rows to be queried locally with zero locking or map overhead.
 \end{itemize}
-The multiplicity maxima are the \verb|Rho| values for the corresponding
-channels, supplied in the fixed interleaved positions shown; a mismatch trips an
-internal assertion. In \verb|get_U3U9|, note that the 3rd multiplicity argument $\rho_{ABCD}$ corresponds to the $(AB)(CD)\to ABCD$ coupling route and the 6th ($\rho_{ACBD}$) to $(AC)(BD)\to ABCD$; swapping them trips an internal assertion. A forbidden or empty coupling returns an empty container
-(safe to query for shape, not to index).
 
-A minimal C++ session:
+The available getters across the five databases are:
+\begin{itemize}
+    \item \textbf{Canonical coupling database} (\verb|u3::wigU3U2db()|):
+    \begin{itemize}
+        \item \verb|get_U3U2(| $n_{13}^a,n_{23}^a,n_{33}^a,n_{12}^a,n_{22}^a,\ \dots^b,\ \dots^c$ \verb|)| $\to$ \verb|U3U2|: structured container over $\rho$.
+        \item \verb|get(| $n_{13}^a,n_{23}^a,n_{33}^a,n_{12}^a,n_{22}^a,\ \dots^b,\ \dots^c$ \verb|)| $\to$ \verb|Eigen::RowVectorXd|: direct row vector of reduced coupling coefficients $\langle A a; B b || C c \rangle_\rho$ across all outer multiplicities $\rho = 0,\dots,\rho_{\max}-1$. Returns an empty vector if the coupling is forbidden or outside branching rules.
+\begin{comment} % Don't wanna expose this
+        \item \verb|get_coeffs(u3A, u3B, u3C)| $\to$ \verb|std::shared_ptr<const WigU3U2_coeffs>|: fetches the complete canonical coupling table for the irrep triple with a single cache lookup (no copy; returns \verb|nullptr| if $\rho_{\max}=0$). The returned object exposes:
+        \begin{itemize}
+            \item \verb|find_row(n12a, n22a, n12b, n22b, n12c, n22c)| $\to$ \verb|Accessor| (local row resolution without re-entering the concurrent map);
+            \item \verb|get_row(acc)| $\to$ \verb|Eigen::RowVectorXd| (row of coefficients across all $\rho$);
+            \item \verb|get(acc, rho)| $\to$ \verb|double| (individual coefficient);
+            \item \verb|matrix()| $\to$ \verb|const Eigen::MatrixXd&| (full table of dimensions $\text{allowed rows}\times\rho_{\max}$);
+            \item \verb|rhomax()| and \verb|size()| (total number of allowed row entries).
+        \end{itemize}
+        This is the primary high-throughput interface used internally by the physical coupling and recoupling solvers.
+\end{comment}
+    \end{itemize}
+
+    \item \textbf{Physical coupling database} (\verb|u3::wigU3SO3db()|):
+    \begin{itemize}
+        \item \verb|get_U3SO3(| $\lambda_1,\mu_1,L_1,\ \lambda_2,\mu_2,L_2,\ \lambda_3,\mu_3,L_3$ \verb|)| $\to$ \verb|U3SO3|: structured 4D container indexed by $(\kappa_A,\kappa_B,\kappa_C,\rho)$.
+        \item \verb|get(| $\lambda_1,\mu_1,L_1,\ \lambda_2,\mu_2,L_2,\ \lambda_3,\mu_3,L_3$ \verb|)| $\to$ \verb|std::vector<double>|: flat coefficient buffer laid out in row-major order of $(\kappa_A,\kappa_B,\kappa_C,\rho)$, with size $\kappa_{A,\max}\kappa_{B,\max}\kappa_{C,\max}\rho_{\max}$.
+    \end{itemize}
+
+    \item \textbf{$U$-recoupling database} (\verb|u3::u3u6db()|):
+    \begin{itemize}
+        \item \verb|get_U3U6(| $A,B,ABC,C,AB,\ \rho_{AB},\rho_{AB\_C},\ BC,\rho_{BC},\rho_{A\_BC}$ \verb|)| $\to$ \verb|U3U6|: structured container indexed by $(\rho_{AB},\rho_{AB\_C},\rho_{BC},\rho_{A\_BC})$.
+        \item \verb|get(| $A,B,ABC,C,AB,\ \rho_{AB},\rho_{AB\_C},\ BC,\rho_{BC},\rho_{A\_BC}$ \verb|)| $\to$ \verb|std::vector<double>|: flat buffer of length $\rho_{AB}\rho_{AB\_C}\rho_{BC}\rho_{A\_BC}$.
+        \item \verb|get(| $n_{13}^a,n_{23}^a,n_{33}^a,\ \dots,\ n_{13}^{bc},n_{23}^{bc},n_{33}^{bc}$ \verb|)| (18 integers) $\to$ \verb|std::vector<double>|: raw-integer overload taking the partition labels of $A,B,ABC,C,AB,BC$ directly, computing intermediate $\rho$ maxima internally.
+    \end{itemize}
+
+    \item \textbf{$Z$-recoupling database} (\verb|u3::u3z6db()|):
+    \begin{itemize}
+        \item \verb|get_U3Z6(| $B,A,ABC,C,AB,\ \rho_{AB},\rho_{AB\_C},\ AC,\rho_{AC},\rho_{AC\_B}$ \verb|)| $\to$ \verb|U3Z6|: structured container indexed by $(\rho_{AB},\rho_{AB\_C},\rho_{AC},\rho_{AC\_B})$ (note the leading $B,A$ exchanging the first pair).
+        \item \verb|get(| $B,A,ABC,C,AB,\ \rho_{AB},\rho_{AB\_C},\ AC,\rho_{AC},\rho_{AC\_B}$ \verb|)| $\to$ \verb|std::vector<double>|: flat buffer of length $\rho_{AB}\rho_{AB\_C}\rho_{AC}\rho_{AC\_B}$.
+        \item \verb|get(| $n_{13}^b,n_{23}^b,n_{33}^b,\ \dots,\ n_{13}^{ac},n_{23}^{ac},n_{33}^{ac}$ \verb|)| (18 integers) $\to$ \verb|std::vector<double>|: raw-integer overload taking the partition labels of $B,A,ABC,C,AB,AC$ directly.
+    \end{itemize}
+
+    \item \textbf{9-$\mathrm{U(3)}$ recoupling database} (\verb|u3::u3u9db()|):
+    \begin{itemize}
+        \item \verb|get_U3U9(| $A,B,C,D,AB,CD,AC,BD,ABCD,$ $\rho_{AC},\rho_{BD},\rho_{ABCD},\rho_{AB},\rho_{CD},\rho_{ACBD}$ \verb|)| $\to$ \verb|U3U9|: structured container view. Multiplicity parameters follow the container's axis order: column intermediate channels $(\rho_{AC},\rho_{BD},\rho_{ABCD})$ followed by row intermediate channels $(\rho_{AB},\rho_{CD},\rho_{ACBD})$.
+        \item \verb|get(| $A,B,C,D,AB,CD,AC,BD,ABCD,$ $\rho_{AB},\rho_{CD},\rho_{ABCD},\rho_{AC},\rho_{BD},\rho_{ACBD}$ \verb|)| $\to$ \verb|std::span<const double>| (or \verb|std::vector<double>|): flat buffer of length $\rho_{AC}\rho_{BD}\rho_{ABCD}\rho_{AB}\rho_{CD}\rho_{ACBD}$. \textbf{Note the multiplicity ordering difference}: in \verb|get|, intermediate row channels $(\rho_{AB},\rho_{CD},\rho_{ABCD})$ precede column channels $(\rho_{AC},\rho_{BD},\rho_{ACBD})$, whereas in \verb|get_U3U9| the column channels appear first to match internal storage strides.
+        \item \verb|get(| $n_{13}^a,n_{23}^a,n_{33}^a,\ \dots,\ n_{13}^{abcd},n_{23}^{abcd},n_{33}^{abcd}$ \verb|)| (27 integers) $\to$ \verb|std::vector<double>|: raw-integer overload taking the partition labels of all 9 participating irreps.
+    \end{itemize}
+\end{itemize}
+
+The multiplicity maxima passed to recoupling routines must match the exact \verb|Rho| values for the corresponding channels; a mismatch trips an internal assertion. A forbidden or empty coupling returns an empty container or buffer (safe to query for shape, not to index).
+
+Each database singleton provides a \verb|clear()| member function (and \verb|u3::clear()| flushes all five) to purge cached coefficient blocks while retaining allocated thread workspaces.
+
+\begin{comment}
+A minimal C++ session demonstrating both structured and direct database access:
 \begin{lstlisting}[language=C++]
 u3::initialize(&argc, &argv);
+
+// 1. Structured container query: U(3) > SO(3) coupling
 auto blk = u3::wigU3SO3db().get_U3SO3(2,0,2, 2,0,2, 4,0,2);
-double x = blk(0, 0, 0, 0);     // = -sqrt(2/9)
+double x = blk(0, 0, 0, 0);     // (kappaA,kappaB,kappaC,rho) = -sqrt(2/9)
+
+// 2. Direct flat-buffer query: same coefficients without container wrapper
+std::vector<double> flat = u3::wigU3SO3db().get(2,0,2, 2,0,2, 4,0,2);
+assert(flat[0] == x);
+
+// 3. Table-level canonical lookup: retrieve block once, query rows locally
+u3::irrep u3a(2,0), u3b(2,0), u3c(4,0);
+auto ctable = u3::wigU3U2db().get_coeffs(u3a, u3b, u3c);
+if (ctable) {
+  auto acc = ctable->find_row(2,0, 2,0, 4,0); // highest-weight sublabels
+  if (acc.allowed) {
+    Eigen::RowVectorXd row = ctable->get_row(acc);
+    double c0 = ctable->get(acc, 0);          // = 1.0
+  }
+}
+
 u3::finalize();
 \end{lstlisting}
+\end{comment}
 
 \subsection{Conventions and normalization}
 \label{sub:conv}
 Phase and normalization conventions follow Ref.~\cite{Dang2024EPJP1}; documented
 values and the generation procedure are in \verb|test/reference/|.
 \begin{itemize}
-    \item \textbf{Multiplicity indexing.} Counts come from \verb|Kappa|/\verb|Rho|; container accessors use zero-based indices $0,\dots,\text{max}{-}1$. The generator-RME routines report $1$-based labels in their out-parameters.
-    \item \textbf{Canonical-coupling phase.} For each $\rho$ block the phase and normalization are fixed by the highest-weight reduced coefficients -- the orthonormal null space of the system imposed by $E_{23}$ and $E_{12}$ annihilating the highest-weight coupled state. For $\rho_{\max}>1$ (and self-conjugate irreps) the solver fixes \emph{a} valid orthonormal $\rho$ basis (RREF + Gram--Schmidt + leading-sign); any alternative must be applied consistently to every $\rho$-carrying coefficient. Conjugation of a Gelfand state satisfies $C\ket{g} = (-1)^{n_{23}-n_{12}-n_{22}-n_{11}}\ket{g.\mathrm{conjugate}()}$ (\verb|gelfand::conjugate_phase()|).
-    \item \textbf{Physical\,$\to$\,canonical transformation.} A physical SO(3) state $\ket{(\lambda\mu)\,\kappa\,L\,M}$ is expanded in canonical Gelfand states $\ket{g}$ with $M = e_{11} - e_{22} = 2n_{11} - (n_{12} + n_{22})$. The highest-weight state $M=L$ is the null space of $L_+=\sqrt2(E_{13}+E_{32})$; $L_-$ fixes the lower-$M$ phases within a $\kappa$ multiplet. When compiled with \verb|ADD_SU3LIB_PHASE_U3SO3|, distinct conjugate irreps obey $C\ket{(\lambda\mu)\,\kappa\,L\,M} = (-1)^{\lambda+\mu-L+M}\ket{(\mu\lambda)\,\kappa\,L,-M}$ (for $\lambda>\mu$ the transformation is built from the conjugate irrep with the phase factor $(-1)^{n_{22}+n_{11}-L}$). For a self-conjugate irrep $(\lambda,\lambda)$ conjugation acts as an $M$-independent symmetric matrix $D$ ($D^2=\mathbb{1}$) that may mix $\kappa$.
-    \item \textbf{Generator RME factor.} \verb|RME_L|/\verb|RME_Q| carry an extra $\sqrt{2L'+1}$, so $\langle\kappa L\|\mathbf{Q}\|\kappa'L'\rangle=(-1)^{L-L'}\langle\kappa'L'\|\mathbf{Q}\|\kappa L\rangle$.
-    \item \textbf{Assertions are on.} Invalid labels or out-of-range indices abort in C++; the Python bindings guard database access and raise instead.
+    \item \textbf{Multiplicity indexing:} Counts come from \verb|Kappa|/\verb|Rho|; container accessors use zero-based indices.% $0,\dots,\text{max}{-}1$. %The generator-RME routines report zero-based labels in their out-parameters.
+    \item \textbf{Canonical-coupling phase:} For each $\rho$ block the phase and normalization are fixed by the highest-weight reduced coefficients---the orthonormal null space of the system imposed by $E_{23}$ and $E_{12}$ annihilating the highest-weight coupled state. For $\rho_{\max}>1$ (and self-conjugate irreps) the solver fixes \emph{a} valid orthonormal $\rho$ basis (Row Reduced Echelon Form + Gram-Schmidt + positive leading sign); any alternative must be applied consistently to every $\rho$-carrying coefficient. Conjugation of a Gelfand state satisfies $C\ket{g} = (-1)^{n_{23}-n_{12}-n_{22}-n_{11}}\ket{g.\mathrm{conjugate}()}$ (\verb|gelfand::conjugate_phase()|).
+    \item \textbf{Physical-to-canonical transformation:} A physical SO(3) state $\ket{(\lambda\mu)\,\kappa\,L\,M}$ is expanded in canonical Gelfand states $\ket{g}$ with $M = e_{11} - e_{22} = 2n_{11} - (n_{12} + n_{22})$. The highest-weight state $M=L$ belongs to the null space of $L_+$; $L_-$ fixes the lower-$M$ phases within a $\kappa$ multiplet. Distinct conjugate irreps obey $C\ket{(\lambda\mu)\,\kappa\,L\,M} = (-1)^{\lambda+\mu-L+M}\ket{(\mu\lambda)\,\kappa\,L,-M}$ (for $\lambda>\mu$ the transformation is built from the conjugate irrep with the phase factor $(-1)^{n_{22}+n_{11}-L}$). For a self-conjugate irrep $(\lambda,\lambda)$ conjugation acts as an $M$-independent symmetric matrix $D$ ($D^2=\mathbb{1}$) that may mix $\kappa$.
+    \item \textbf{Generator reduced matrix element factor:} \verb|RME_L|/\verb|RME_Q| carry an extra $\sqrt{2L'+1}$, so $\langle\kappa L\|\mathbf{Q}\|\kappa'L'\rangle=(-1)^{L-L'}\langle\kappa'L'\|\mathbf{Q}\|\kappa L\rangle$.
+    \item \textbf{Assertions are on.} Invalid labels or out-of-range indices abort via assertion.
 \end{itemize}
 
 \section{Python bindings}
@@ -448,14 +646,16 @@ The module \verb|u3lib| mirrors the C++ API one-to-one; build it with
 \verb|make python| and the interpreter whose ABI matches the extension. Irreps
 (\verb|su3.irrep|, \verb|irrep|), \verb|gelfand|, \verb|physicalvector|, the free
 functions \verb|Rho|, \verb|Kappa|, \verb|decomposition|, \verb|gelfandBasis|,
-\verb|physicalBasis|, the physical-generator RMEs \verb|RME_L|/\verb|RME_Q|, the
+\verb|physicalBasis|, the physical-generator reduced matrix elements \verb|RME_L|/\verb|RME_Q|, the
 transformation \verb|phys_to_cano|/\verb|phys_to_cano_allM|, and the five database
 accessors are all exposed with the same names and semantics as
 Sec.~\ref{sec:classes}. The structured containers provide
 \verb|__call__| (multiplicity-indexed), flat \verb|data()| as a NumPy array, and
-a printing method; database access before \verb|initialize()| or after
-\verb|finalize()| raises \verb|RuntimeError| rather than aborting. The extension
-links no MPI and uses \verb|sns| or a dense QR for the null-space solve.
+formatted printing via \verb|print()| and \verb|__str__|; database access before \verb|initialize()| or after
+\verb|finalize()| raises \verb|RuntimeError| rather than aborting. The \verb|U3U9|
+container, a scratch-buffer view in C++, is copied into owning storage
+automatically in Python.
+\begin{comment}
 \begin{lstlisting}[language=Python]
 import u3lib as u3
 u3.initialize()
@@ -465,40 +665,39 @@ try:
 finally:
     u3.finalize()
 \end{lstlisting}
+\end{comment}
 A worked introduction covering irreps, bases, coupling, and recoupling is
 provided as a Jupyter notebook, \verb|python/tutorial.ipynb|; build and
 toolchain details are in the top-level \verb|README.md|.
 
-\section{AI-enabled interface}
+\section{AI-ready interface}
 \label{sec:agents}
 
-\texttt{u3lib} ships a repository-local catalog of \emph{agent skills} under
+\subsection{Skill catalog and orchestration}
+
+\texttt{u3lib} ships a repository-local catalog of agent-ready skills under
 \verb|agents/|: an index (\verb|agents/AGENTS.md|), shared runtime instructions,
 and one skill per capability. Each skill states its inputs, the exact library
 call, the convention, and a built-in numerical check. A code-executing AI
 assistant pointed at the catalog carries out the requested computation using the
-configured local library; no network service is involved.
-
+configured local library; no network service is involved. 
 The catalog also provides an \verb|install| skill (\verb|agents/install/SKILL.md|).
-On a fresh checkout the agent builds the library first --- \verb|make config| to
-resolve or download the dependencies, then \verb|make| and \verb|make test| ---
-before running any calculation skill.
+On a fresh checkout the agent builds the library first---\verb|make config| to
+resolve or download the dependencies, then \verb|make| and \verb|make test|---before running any calculation skill.
+Table~\ref{tab:prompts} lists each skill with a representative prompt; the
+parenthetical results were checked against the library, so each prompt doubles
+as a self-test.
 
-It is important to be precise about what the agent does and does not do. \textbf{The
-agent performs no physics and no mathematics itself.} It does not derive or
-approximate coupling coefficients, Casimirs, or matrix elements. Its role is
-\emph{orchestration}: from a natural-language request it selects the matching
+It is important to be precise about what the agent does and does not do. The
+agent performs no physics and no mathematics itself. 
+%It does not derive or approximate coupling coefficients, Casimirs, or matrix elements. 
+Its role is orchestration: from a natural-language request it selects the matching
 skill, constructs valid inputs in the library's conventions, invokes the
 compiled C++/Python routine, and reports the returned numbers with their labels
 and the check that was run. All numerical work is done by the library; the agent
 is an interface that routes a request to the correct tool and formats the result,
-and it declines or asks for clarification when a request is ill-posed (for
-example, a request for the first-order Casimir of an SU(3) irrep, which is not
-defined).
-
-Table~\ref{tab:prompts} lists each skill with a representative prompt; the
-parenthetical results were checked against the library, so each prompt doubles
-as a self-test.
+and it declines or asks for clarification when a request is ill-posed 
+(e.g., a request for the first-order Casimir of an SU(3) irrep, which is not defined).
 
 \begin{table*}[tp]
     \centering
@@ -508,26 +707,157 @@ as a self-test.
     Skill & Example prompt (expected result) \\
     \hline
     \verb|dim| & ``Dimension of the SU(3) irrep $(2,1)$ -- equivalently the U(3) irrep $[3,1,0]$ or any shift such as $[4,2,1]$?'' ($15$; shift-invariant) \\
-    \verb|casimirs| & ``$C_2,C_3$ for the SU(3) irrep $(3,1)$, and $C_1,C_2,C_3$ for the U(3) irrep $[4,2,1]$.'' (SU(3): $50/3,160/9$; U(3): $C_1{=}7,\,32/3,\,56/9$ -- $C_1$ is U(3)-only) \\
-    \verb|cano-list| & ``Enumerate the canonical Gelfand basis of $(2,0)$ with each state's $\epsilon,2\Lambda,2M$ labels.'' ($6$ states $={}$\,dim) \\
+    \verb|casimirs| & ``$C_2,C_3$ for the SU(3) irrep $(3,1)$, and $C_1,C_2,C_3$ for the U(3) irrep $[4,2,1]$.'' (SU(3): $50/3,160/9$; U(3): $C_1{=}7,\,32/3,\,56/9$, U(3)-only) \\
+    \verb|cano-list| & ``Enumerate the canonical Gelfand basis of $(2,0)$ with each state's $\epsilon,2\Lambda,2M$ labels.'' ($6$ states) \\
     \verb|phys-list| & ``List the physical SO(3) basis $(\kappa,L)$ of $(4,2)$ and verify the dimension sum rule.'' ($L{=}6,5,4,3,2,0$ with $\kappa{=}1,1,2,1,2,1$; $\sum\kappa(2L{+}1){=}60$) \\
-    \verb|cano-generators| & ``Act with $E_{12}$ on the Gelfand state $\ket{2,0,0;2,0;1}$ of $(2,0)$; give the resulting state and matrix element.'' ($\sqrt2$) \\
-    \verb|phys-generators| & ``Compute $\langle(2,0)L{=}2\|\mathbf{Q}\|(2,0)L{=}2\rangle$.'' ($\sqrt{35/3}\approx3.416$) \\
+    \verb|cano-generators| & ``Act with $E_{12}$ on the Gelfand state $\ket{2,0,0;2,0;1}$ of $(2,0)$; give the resulting state and matrix element.'' ($\ket{2,0,0;2,0;2}$ with $\sqrt2$) \\
+    \verb|phys-generators| & ``Compute $\langle(2,0)\,\kappa{=}1\,L{=}2\|\mathbf{Q}\|(2,0)\,\kappa{=}1\,L{=}2\rangle$ and $\langle\|\mathbf{L}\|\rangle$.'' ($\sqrt{35/3}\approx3.416$ and $\sqrt{30}\approx5.477$) \\
     \verb|phys-to-cano| & ``Express $\ket{(2,0)\,\kappa{=}1\,L{=}2\,M{=}0}$ in the canonical Gelfand basis.'' (amplitudes $\sqrt{1/3},\sqrt{2/3}$) \\
     \verb|inner-mult| & ``SO(3) multiplicity $\kappa$ of $L{=}2$ in $(4,2)$?'' ($2$) \\
     \verb|outer-mult| & ``Outer multiplicity $\rho$ of $(1,1)$ in $(1,1)\otimes(1,1)$?'' ($2$) \\
     \verb|decomposition| & ``Full decomposition of $(2,0)\otimes(0,2)$ with outer multiplicities; check the dimension sum rule.'' ($(2,2){+}(1,1){+}(0,0)$) \\
-    \verb|cano-coupling| & ``$\mathrm{U(3)}{\supset}\mathrm{U(2)}$ reduced coupling for the highest weights of $(2,0)\times(2,0)\to(4,0)$; verify it equals $1$.'' \\
-    \verb|phys-coupling| & ``SO(3)-reduced coupling $(2,0)L{=}2\times(2,0)L{=}2\to(4,0)L{=}2$; check against $-\sqrt{2/9}$.'' \\
-    \verb|u6recoupling| & ``$U$-recoupling for $(1,0){\cdot}(1,0){\cdot}(1,0)$ through $(2,0)$ to $(3,0)$.'' ($1$) \\
-    \verb|z6recoupling| & ``$Z$-recoupling between the $AB$--$C$ and $AC$--$B$ routes for $(1,0){\cdot}(1,0){\cdot}(1,0)\to(3,0)$.'' ($1$) \\
-    \verb|u9recoupling| & ``$9$-$(\lambda\mu)$ recoupling for four fundamentals $(1,0)$ coupling to $(4,0)$.'' ($1$) \\
-    \verb|conjugation| & ``Conjugate the SU(3) irrep $(2,1)$ and its Gelfand states, reporting the phases.'' (irrep $\to(1,2)$, phase $-1$) \\
+    \verb|cano-coupling| & ``$\mathrm{U(3)}{\supset}\mathrm{U(2)}$ reduced coupling for highest-weight states $[2,0,0]\,[2,0]\times[2,0,0]\,[2,0]\to[4,0,0]\,[4,0]$ of $(2,0)\times(2,0)\to(4,0)$; verify it equals $1$.'' \\
+    \verb|phys-coupling| & ``SO(3)-reduced coupling $(2,0)\,\kappa{=}1\,L{=}2\times(2,0)\,\kappa{=}1\,L{=}2\to(4,0)\,\kappa{=}1\,L{=}2$; check against $-\sqrt{2/9}$.'' \\
+    \verb|u6recoupling| & ``$U$-recoupling for $(1,0)\otimes(1,0)\otimes(1,0)\to(3,0)$ through intermediate irreps $AB=(2,0)$ and $BC=(2,0)$.'' ($1$) \\
+    \verb|z6recoupling| & ``$Z$-recoupling between $(AB)C$ and $(AC)B$ routes for $(1,0)\otimes(1,0)\otimes(1,0)\to(3,0)$ with intermediate irreps $AB=(2,0)$ and $AC=(2,0)$.'' ($1$) \\
+    \verb|u9recoupling| & ``$9$-$(\lambda\mu)$ recoupling for four fundamentals $(1,0)$ coupling to $(4,0)$ with intermediate irreps $AB=CD=AC=BD=(2,0)$.'' ($1$) \\
+    \verb|conjugation| & ``Conjugate the SU(3) irrep $(2,1)$ and its Gelfand states, reporting the phases.'' (irrep $\to(1,2)$, phase power $-1$) \\
     \hline\hline
     \end{tabular}
     \caption{The \texttt{u3lib} agent skills with a representative prompt for each.}
     \label{tab:prompts}
 \end{table*}
+
+\subsection{Evaluation objectives}
+\label{app:benchmarking}
+To evaluate the practical value of the skill catalog, we compare autonomous
+coding agents with and without access to the skills. The central question is whether
+they improve task completion efficiency and
+correctness, and whether their benefit varies with the implementation
+complexity of the task. We examine two hypotheses:
+\begin{enumerate}
+    \item {Resource efficiency:} Domain skills reduce token consumption,
+    execution time, and API cost by supplying conventions and usage patterns
+    that the agent would otherwise need to discover from the source.
+    \item {Dependence on task complexity:} The benefit increases as tasks
+    move from Python integration to C++ workspace management and parallel
+    execution, where memory ownership and thread-safety requirements introduce
+    additional constraints.
+\end{enumerate}
+
+\subsection{Experimental methodology}
+
+\subsubsection{Benchmark Tasks}
+To examine how the benefit of domain skills varies with task complexity, we formulated three benchmark tasks spanning Python integration, C++ workspace management, and parallel execution:
+\begin{itemize}
+    \item {Task 1: Python Racah recoupling (\texttt{consumer/recouple.py}).}
+    A standalone Python utility computing $U$- and $Z$-recoupling coefficients through the pybind11 interface and verifying unitary symmetry relations across fundamental representations (e.g.\ $(1,0){\times}(1,0){\times}(1,0)\to(3,0)$). \emph{Architectural complexity: low} (declarative bindings, automatic memory, single-threaded).
+    
+    \item {Task 2: C++ 9-$\mathrm{U}(3)$ batch exporter (\texttt{consumer/u9\_batch.cpp}).}
+    A C++ executable evaluating 9-$\mathrm{U}(3)$ blocks via \verb|u3::u3u9db()|: it parses the multi-irrep label specification, computes intermediate outer multiplicities, and serializes block and entry records, copying scratch-buffer views into owning storage to avoid aliasing across iterations. \emph{Architectural complexity: medium} (C++ typing, headers, manual workspace lifecycle).
+
+    \item {Task 3: C++ multi-threaded coupling (\texttt{consumer/coupling\_batch.cpp}).}
+    Parallel canonical- and physical-basis coupling with OpenMP (\verb|#pragma omp parallel for|), requiring thread-private scratch workspaces to avoid races on the null-space solver, correct \verb|-fopenmp| configuration, and deterministic output. \emph{Architectural complexity: high} (shared-memory concurrency, thread-private state isolation).
+\end{itemize}
+
+\subsubsection{Sandbox Isolation and Cleanroom Protocol}
+To ensure reproducibility and prevent cross-trial contamination, every benchmark run was conducted in a strictly isolated, disposable sandbox directory %(\texttt{/tmp/u3lib-bench-...}) 
+equipped with an independent consumer build environment. A zero-leak snapshot protocol was strictly enforced:
+\begin{itemize}
+    \item {Control (zero skills):} a pristine checkout with all skills (\verb|agents/|) removed---full source, headers, and build scripts, but no catalog, as an agent would meet an unfamiliar codebase.
+    \item {Treatment (domain skills):} the same workspace plus the repository-local skill catalog indexed by \verb|agents/AGENTS.md|, which the prompt directed the agent to consult.
+\end{itemize}
+
+\subsubsection{Blinded Evaluation and Grader Mutation Validation}
+During trial execution, the agent operated autonomously with full bash tool capabilities (file viewing, file editing, directory inspection, and command execution). Upon the agent declaring task completion (or upon reaching a hard limit of 50 agent steps), the environment was locked, and an automated grading harness evaluated the consumer artifact against a hidden validation suite, % (\texttt{fixtures-main.json}). 
+which determined functional correctness by asserting numerical agreement (within $10^{-12}$ tolerance) against exact group-theoretical coupling and recoupling values across diverse irrep representations. To ensure the integrity of the evaluation harness itself, the grading suite was subjected to prior mutation testing: %(\texttt{validate\_grader.py}): 
+intentional phase inversions, memory leaks, uninitialized buffer reads, and artificial race conditions were injected into reference implementations. The grader achieved 100\% sensitivity and specificity, confirming zero false positives and zero false negatives.
+
+\subsubsection{Model and Statistical Protocol}
+All experiments used Anthropic's Claude 3.5 Sonnet under an autonomous agentic
+harness. For each task, $N = 10$ matched Control/Treatment pairs were run (60
+trajectories total), recording four metrics per run: functional pass rate; total
+token consumption (prompt, cache-read, and completion tokens); wall-clock
+latency; and API cost at official token pricing. Significance was assessed with
+two-tailed Welch's $t$-tests (unequal variance), reporting $t$, degrees of
+freedom, and $p$.
+
+\subsection{Results and discussion}
+
+\subsubsection{Overall Quantitative Findings}
+The empirical results across all 60 benchmark evaluations are summarized in Table~\ref{tab:benchmark_results} and illustrated graphically in Fig.~\ref{fig:benchmark_summary}. 
+Across the entire benchmark suite:
+\begin{itemize}
+    \item {Token Consumption:} Providing domain skills reduced mean token consumption from $550,103 \pm 178,309$ tokens to $306,778 \pm 104,076$ tokens---an aggregate reduction of {44.2\%} ($t = -6.46$, $p = 6.0 \times 10^{-8}$, Welch's $t$-test).
+    \item {Execution Latency:} Wall-clock execution time decreased from $91.61 \pm 28.85$\,s to $61.31 \pm 15.21$\,s, representing an aggregate speedup of {33.1\%} ($t = -5.09$, $p = 7.2 \times 10^{-6}$).
+    \item {API Cost:} Direct inference costs fell from an average of \$0.3488 to \$0.2413 per task ({$-$30.8\%}, $t = -7.16$, $p = 4.4 \times 10^{-9}$).
+    \item {Reliability:} Treatment runs achieved a 100\% pass rate across all 30 evaluations. In contrast, Control runs suffered a failure on Task 3 (9/10), resulting in an aggregate pass rate of 96.7\%.
+\end{itemize}
+
+\begin{table*}[tp]
+    \centering
+    \footnotesize
+    \setlength{\tabcolsep}{2.8pt}
+    \renewcommand{\arraystretch}{1.3}
+    \caption{Empirical performance comparison between Control (Zero Skills) and Treatment (Domain Skills) across $N=10$ independent matched pairs per task (60 runs total) using Claude 3.5 Sonnet. Tokens, execution duration, and costs are reported as $\text{Mean} \pm \text{Standard Deviation}$. Statistical significance is assessed via two-tailed Welch's $t$-tests.}
+    \label{tab:benchmark_results}
+    \vspace{0.2cm}
+    \begin{tabular}{llcccccc}
+    \hline\hline
+    Task & Condition & Pass Rate & Total Tokens & Time (s) & Cost (\$) & Token $\Delta$ & Time $\Delta$ \\
+    \hline
+    \textbf{Task 1} 
+      & Control ($N{=}10$)   & 100\% (10/10) & $381,613 \pm 80,140$ & $58.90 \pm 10.51$ & \$0.2780 & --- & --- \\
+      & Treatment ($N{=}10$) & 100\% (10/10) & $270,260 \pm 93,890$ & $46.61 \pm 7.88$  & \$0.2280 & \textbf{$-$29.2\%}$^*$ & \textbf{$-$20.9\%}$^{**}$ \\
+    \hline
+    \textbf{Task 2} 
+      & Control ($N{=}10$)   & 100\% (10/10) & $614,511 \pm 144,848$ & $105.21 \pm 20.86$ & \$0.3751 & --- & --- \\
+      & Treatment ($N{=}10$) & 100\% (10/10) & $329,829 \pm 62,106$  & $71.42 \pm 7.74$   & \$0.2499 & \textbf{$-$46.3\%}$^{***}$ & \textbf{$-$32.1\%}$^{***}$ \\
+    \hline
+    \textbf{Task 3} 
+      & Control ($N{=}10$)   & 90.0\% (9/10)  & $654,185 \pm 163,874$ & $110.73 \pm 18.35$ & \$0.3934 & --- & --- \\
+      & Treatment ($N{=}10$) & 100\% (10/10) & $320,246 \pm 141,267$ & $65.89 \pm 15.71$  & \$0.2459 & \textbf{$-$51.0\%}$^{***}$ & \textbf{$-$40.5\%}$^{***}$ \\
+    \hline\hline
+    \textbf{Aggregate} 
+      & Control ($N{=}30$)   & 96.7\% (29/30)  & $550,103 \pm 178,309$ & $91.61 \pm 28.85$ & \$0.3488 & --- & --- \\
+      & Treatment ($N{=}30$) & 100\% (30/30) & $306,778 \pm 104,076$ & $61.31 \pm 15.21$ & \$0.2413 & \textbf{$-$44.2\%}$^{***}$ & \textbf{$-$33.1\%}$^{***}$ \\
+    \hline\hline
+    \multicolumn{8}{l}{\scriptsize $^*p < 0.05$ ($t = -2.85$); \quad $^{**}p < 0.01$ ($t = -2.96$); \quad $^{***}p < 0.001$ (Task 2: $t_{\text{tok}}{=}-5.71, t_{\text{time}}{=}-4.80$;} \\
+    \multicolumn{8}{l}{\scriptsize Task 3: $t_{\text{tok}}{=}-4.88, t_{\text{time}}{=}-5.87$; \quad Grand Aggregate: $t_{\text{tok}}{=}-6.46, t_{\text{time}}{=}-5.09$; Welch's two-tailed $t$-test).}
+    \end{tabular}
+\end{table*}
+
+\begin{figure*}[tp] 
+    \centering
+    \includegraphics[width=0.98\linewidth]{fig_benchmark_summary.pdf}
+    \caption{Benchmark results comparing autonomous agent performance between Control (Zero Skills) and Treatment (Domain Skills) across $N=10$ independent trials per task. (a) Total token consumption (thousands) by task, showing monotonic savings of 29.2\%, 46.3\%, and 51.0\%. (b) Wall-clock execution duration (seconds) by task, showing speedups of 20.9\%, 32.1\%, and 40.5\%. Error bars indicate $\pm 1$ sample standard deviation.}
+    \label{fig:benchmark_summary}
+\end{figure*}
+
+\subsubsection{Dependence on task complexity}
+For the three tasks considered here, the relative reductions in token consumption and execution time increase with the intended progression in task complexity:
+\begin{align}
+\Delta_{\text{tokens}} &= -29.2\% \text{ (Task 1)} \;\longrightarrow\; -46.3\% \text{ (Task 2)} \;\longrightarrow\; -51.0\% \text{ (Task 3)}, \notag \\
+\Delta_{\text{time}}   &= -20.9\% \text{ (Task 1)} \;\longrightarrow\; -32.1\% \text{ (Task 2)} \;\longrightarrow\; -40.5\% \text{ (Task 3)}. \notag
+\end{align}
+
+This trend is consistent with the hypothesis that explicit guidance becomes more useful as implementation constraints increase. Three tasks alone do not establish a general scaling law; the following observations describe agent behavior within this benchmark:
+\begin{enumerate}
+    \item {Task 1 (exploration tax):} Unassisted Control agents produced correct recoupling solutions but paid a heavy exploration tax---typically 3--6 shell turns (\texttt{grep}, \texttt{ls}, inspecting pybind11 modules) to discover the exposed bindings (\verb|u3lib.u6recoupling|, \verb|u3lib.z6recoupling|) and their argument order. Treatment agents retrieved the signatures directly from the catalog, finishing in $16.6$ steps versus $22.8$ for Control.
+    \item {Task 2 (scratch-buffer aliasing):} The 9-$\mathrm{U}(3)$ database (\verb|u3::u3u9db()|) returns views into internal scratch buffers reused across queries. Without guidance, Control agents hit aliasing bugs (later queries overwriting stored blocks), struggled to locate \verb|U3_U9Coeffs.h|, and misordered the multiplicity strides, inflating consumption to $614,511$ tokens on average (worst case exceeding $853,000$). Treatment agents followed the recipe---copying views into owning storage and indexing correctly---and ran cleanly in $329,829$ tokens with about half the variance.
+    \item {Task 3 (concurrency):} Because the C++ null-space solver mutates internal scratch memory during factorization, naively sharing a database across threads races. One Control run (\texttt{task3-control-2}) failed the hidden tests after chasing non-deterministic segfaults; even successful Control runs averaged $33.6$ steps and $110.7$\,s to find the need for thread-private workspaces. Treatment agents applied the skill's OpenMP guidance from the first turn, finishing deterministically in $65.89$\,s and $320,246$ tokens.
+\end{enumerate}
+
+\subsubsection{Implications for scientific software}
+These results support the use of repository-local domain skills to document the
+mathematical conventions and implementation constraints that an autonomous
+agent must follow. In this benchmark, the skills reduced aggregate token
+consumption by 44.2\% and execution time by 33.1\%, while all treatment runs
+passed the validation suite. The single control failure occurred in the
+parallel C++ task. These observations motivate further evaluation across
+models and tasks; they do not establish that skills guarantee
+correctness or eliminate concurrency errors in general.
+
 
 \section{Build and installation}
 \label{sec:build}
@@ -538,48 +868,44 @@ directly. The source is hosted publicly at
 The build resolves dependency paths from a configuration environment
 rather than hardcoded paths; after sourcing it from the repository root the make
 targets are \verb|make| (example programs $\to$ \verb|bin/|), \verb|make test|
-(rebuild and run the regression suite), and \verb|make python| (the pybind11
+(build and run the regression suite), and \verb|make python| (the pybind11
 extension). The regression tests check dimensions, Gelfand interlacing and
 ordering, SO(3) branching, canonical/physical coupling orthonormality across
 $\kappa$ and $\rho$, conjugation identities, and documented analytic values;
 numerical agreement is tolerance-based rather than bitwise-identical across
 backends.
 
-The external libraries are resolved by \verb|make config| (which writes \verb|config/config.generated.mk|); the two numerical libraries are either downloaded from their pinned upstream sources and built locally under \verb|external-libs/| (not part of the repository), or taken from an existing install:
+The external libraries are resolved by \verb|make config| (which writes \verb|config/config.generated.mk|); they are either downloaded from their pinned upstream sources and built locally under \verb|external-libs/| (not part of the repository), or taken from an existing install:
 \begin{itemize}
-    \item \textbf{SU(2) Wigner backend:} libwignernj (\url{https://github.com/susilehtola/libwignernj}) --- the sole backend, enabled via \verb|USE_WIGNERNJ=1|, links dynamically (\verb|-lwignernj|).
-    \item \textbf{Null-space solver} (selected via \verb|NULLSPACE_SOLVER=qr|$\mid$\verb|sns|, default \verb|sns|):
-    \begin{itemize}
-        \item Dense QR --- the always-available dense solver; requires no external sparse solver.
-        \item \texttt{sns} (\url{https://gitlab.fit.cvut.cz/krastale/dp-sparse-nullspace}) --- sparse solver enabled via \verb|USE_SNS=1|; builds with sparse representation (\verb|-DNULLSPACE_SPARSE|) and falls back to dense QR for small or block-heavy cases.
-    \end{itemize}
-    \item Eigen3 --- \url{https://eigen.tuxfamily.org}
-    \item Boost (headers) --- \url{https://www.boost.org}
-    \item OpenMP (via the compiler runtime, e.g.\ GCC's libgomp) --- \url{https://www.openmp.org}
-    \item fmt --- \url{https://github.com/fmtlib/fmt}
-    \item pybind11 (Python bindings) --- \url{https://github.com/pybind/pybind11}
+    \item \texttt{libwignernj}: \url{https://github.com/susilehtola/libwignernj} %the sole backend, enabled via \verb|USE_WIGNERNJ=1|, links dynamically (\verb|-lwignernj|).
+    \item \red{\texttt{sns}: \url{https://gitlab.fit.cvut.cz/krastale/dp-sparse-nullspace}} % sparse solver enabled via \verb|USE_SNS=1|; builds with sparse representation (\verb|-DNULLSPACE_SPARSE|) and falls back to dense QR for small or block-heavy cases.
+    \item \texttt{Eigen3}: \url{https://eigen.tuxfamily.org}
+    \item \texttt{Boost}: \url{https://www.boost.org}
+    \item \texttt{OpenMP} (via the compiler runtime, e.g.\ GCC's libgomp): \url{https://www.openmp.org}
+    \item \texttt{fmt}: \url{https://github.com/fmtlib/fmt}
+    \item \texttt{pybind11}: \url{https://github.com/pybind/pybind11}
 \end{itemize}
 
-u3lib ships as an independent, self-contained repository with a uniform
-\verb|make config|/\verb|make|/\verb|make test|/\verb|make install| surface and no
-required environment variables. Its two numerical dependencies --- the
-libwignernj Wigner backend and the \texttt{sns} null-space solver (dense-QR
-fallback) --- are downloaded from their pinned upstream sources and built
-locally by \verb|make config| (into \verb|external-libs/|), or taken from an
-existing install. The heavier SLEPc/PETSc
-stack and the WIGXJPF backend used by earlier development builds have been
-dropped in favour of this lighter, portable footprint.
 
 \begin{acknowledgments}
-This work is dedicated to the memory of Jerry P. Draayer (who passed on September 13, 2026), whose pioneering contributions to algebraic nuclear physics and the Elliott SU(3) model inspired this framework.
-This library implements the U(3) coupling and recoupling procedure of
-Ref.~\cite{Dang2024EPJP1}. The authors also gratefully acknowledge Feng Pan and Michela Negro for their valuable discussions and contributions.
+This work is dedicated to the memory of J. P. Draayer, who passed on September 13, 2026 and whose pioneering contributions to algebraic computational nuclear physics through Elliott's $\rm SU(3)$ model and the Symplectic $\rm Sp(3,R)$ model inspired this framework. The authors also gratefully acknowledge F. Pan and D. Kekejian for valuable discussions. PD was supported by the Institute of International Education through the Quad Fellowship, Louisiana State University, and Quantum CodeX. DL and TD were funded by Quantum CodeX.
 \end{acknowledgments}
 
-\begin{thebibliography}{9}
-\bibitem{Dang2024EPJP1} P. Dang, J. P. Draayer, F. Pan, and K. S. Becker,
-``New Procedure for Evaluation of U(3) Coupling and Recoupling Coefficients,''
-Eur. Phys. J. Plus \textbf{139}, 704 (2024).
+\begin{thebibliography}{99}
+\bibitem{Dang2024EPJP1} P. Dang, J. P. Draayer, F. Pan, and K. S. Becker, ``New Procedure for Evaluation of U(3) Coupling and Recoupling Coefficients,'' Eur. Phys. J. Plus \textbf{139}, 704 (2024), \href{https://doi.org/10.1140/epjp/s13360-024-05501-8}{doi:10.1140/epjp/s13360-024-05501-8}.
+\bibitem{Draayer1973JMP} J. P. Draayer and Y. Akiyama, ``Wigner and Racah coefficients for $\rm SU_3$," J. Math. Phys. \textbf{14}, 1904 (1973), \href{https://doi.org/10.1063/1.1666267}{doi:10.1063/1.1666267}.
+\bibitem{Akiyama1973CPC} Y. Akiyama and J. P. Draayer, ``A User's Guide to Fortran Programs for Wigner and Racah Coefficients of $\rm SU_3$," Comp. Phys. Comms. \textbf{5}, 405 (1973), \href{https://doi.org/10.1016/0010-4655(73)90077-5}{doi:10.1016/0010-4655(73)90077-5}.
+\bibitem{Elliott1958I} J. P. Elliott, ``Collective motion in the nuclear shell model. I. Classification schemes for states of mixed configurations,'' Proc. R. Soc. Lond. A \textbf{245}, 128--145 (1958), \href{https://doi.org/10.1098/rspa.1958.0072}{doi:10.1098/rspa.1958.0072}.
+\bibitem{Elliott1958II} J. P. Elliott, ``Collective motion in the nuclear shell model II. The introduction of intrinsic wave-functions,'' Proc. R. Soc. Lond. A \textbf{245}, 562--581 (1958), \href{https://doi.org/10.1098/rspa.1958.0101}{doi:10.1098/rspa.1958.0101}.
+\bibitem{Dytrych2013PRL} T. Dytrych, K. D. Launey, J. P. Draayer, P. Maris, J. P. Vary, E. Saule, U. Catalyurek, M. Sosonkina, D. Langr, and M. A. Caprio, ``Collective Modes in Light Nuclei from First Principles,'' Phys. Rev. Lett. \textbf{111}, 252501 (2013), \href{https://doi.org/10.1103/PhysRevLett.111.252501}{doi:10.1103/PhysRevLett.111.252501}.
+\bibitem{Dytrych2020PRL} T. Dytrych, K. D. Launey, J. P. Draayer, D. J. Rowe, J. L. Wood, G. Rosensteel, C. Bahri, D. Langr, and R. B. Baker, ``Physics of Nuclei: Key Role of an Emergent Symmetry,'' Phys. Rev. Lett. \textbf{124}, 042501 (2020), \href{https://doi.org/10.1103/PhysRevLett.124.042501}{doi:10.1103/PhysRevLett.124.042501}.
+\bibitem{McCoy2020PRL} A. E. McCoy, M. A. Caprio, T. Dytrych, and P. J. Fasano, ``Emergent $\mathrm{Sp}(3,\mathbb{R})$ Dynamical Symmetry in the Nuclear Many-Body System from an Ab Initio Description,'' Phys. Rev. Lett. \textbf{125}, 102505 (2020), \href{https://doi.org/10.1103/PhysRevLett.125.102505}{doi:10.1103/PhysRevLett.125.102505}.
+\bibitem{Bahri2004CPC} C. Bahri, D. J. Rowe and J. P. Draayer, ``Programs for generating Clebsch–Gordan coefficients of SU(3) in SU(2) and SO(3) bases," Comp. Phys. Comms. \textbf{159}, 121 (2004), \href{https://doi.org/10.1016/j.cpc.2004.01.005}{doi:10.1016/j.cpc.2004.01.005}.
+\bibitem{Dytrych2021CPC} T. Dytrych, D. Langr, J. P. Draayer, K. D. Launey and D. Gazda, ``SU3lib: A C++ library for accurate computation of Wigner and Racah coefficients of SU(3)," Comp. Phys. Comms \textbf{269}, 108137 (2021), \href{https://doi.org/10.1016/j.cpc.2021.108137}{doi:10.1016/j.cpc.2021.108137}.
+\bibitem{Herko2026EPJA} J. Herko, M. A. Caprio, A. E. McCoy and P. J. Fasano, ``A modern Fortran library for $\rm SU(3)$ coupling and recoupling coefficients,"  Eur. Phys. J. A \textbf{62}, 95 (2026), \href{https://doi.org/10.1140/epja/s10050-026-01845-0}{doi:10.1140/epja/s10050-026-01845-0}.
+\bibitem{Bacon2006PRL} D. Bacon, I. L. Chuang, and A. W. Harrow, ``Efficient Quantum Circuits for Schur and Clebsch--Gordan Transforms,'' Phys. Rev. Lett. \textbf{97}, 170502 (2006), \href{https://doi.org/10.1103/PhysRevLett.97.170502}{doi:10.1103/PhysRevLett.97.170502}.
+\bibitem{Moca2012PRB} C. P. Moca, A. Alex, J. von Delft, and G. Zar\'and, ``SU(3) Anderson impurity model: A numerical renormalization group approach exploiting non-Abelian symmetries,'' Phys. Rev. B \textbf{86}, 195128 (2012), \href{https://doi.org/10.1103/PhysRevB.86.195128}{doi:10.1103/PhysRevB.86.195128}.
+\bibitem{Tan2013PRL} S.-H. Tan, Y. Y. Gao, H. de Guise, and B. C. Sanders, ``SU(3) Quantum Interferometry with Single-Photon Input Pulses,'' Phys. Rev. Lett. \textbf{110}, 113603 (2013), \href{https://doi.org/10.1103/PhysRevLett.110.113603}{doi:10.1103/PhysRevLett.110.113603}.
 \end{thebibliography}
 
 \end{document}
