@@ -28,11 +28,19 @@ namespace test
                                                   b.n22(), c.n12(), c.n22());
                         if (!acc.allowed)
                           continue;
+                        auto u3u2 = u3::wigU3U2db().get_U3U2(
+                            x.a.n13(), x.a.n23(), x.a.n33(), a.n12(), a.n22(),
+                            x.b.n13(), x.b.n23(), x.b.n33(), b.n12(), b.n22(),
+                            x.c.n13(), x.c.n23(), x.c.n33(), c.n12(), c.n22());
+                        require(u3u2.size() == size_t(rho), "U3U2 size");
                         for (int r = 0; r < rho; ++r)
+                        {
+                          near(u3u2(r), coeff.get(acc, r), "U3U2 agreement");
                           ref.check(key(label(x), int(a.n12()), int(a.n22()),
                                         int(b.n12()), int(b.n22()),
                                         int(c.n12()), int(c.n22()), r),
                                     coeff.get(acc, r));
+                        }
                       }
             // Reconstruct full canonical CG columns for EVERY output Gelfand
             // state.

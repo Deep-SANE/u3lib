@@ -11,8 +11,8 @@ Routes: `(A B)AB C -> T` and `(A C)AC B -> T`. Compute the four `u3::Rho` counts
 * **Important Argument Order:** Note that the first two irrep arguments are **`B, A`** (the Z convention exchanges the first pair), while total `T` precedes `C`:
 `get_U3Z6(B, A, T, C, AB, rAB, rAB_C, AC, rAC, rAC_B)`.
 Accessor: `block(iAB, iAB_C, iAC, iAC_B)`.
-The container getters `rhoBCmax()` and `rhoA_BCmax()` count the AC and AC_B
-channels here, despite their U-type names. Do not add an exchange phase to the
+The container getters `rhoACmax()` and `rhoAC_Bmax()` count the AC and AC_B
+channels, respectively. Do not add an exchange phase to the
 returned coefficients unless converting to a different stated convention.
 
 ```cpp

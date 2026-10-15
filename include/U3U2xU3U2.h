@@ -1140,6 +1140,7 @@ namespace u3
   class WigU3U2_db
   {
     using db_value_type = Eigen::RowVectorXd;
+    using value_type = coeffs_t;
 
     // using ht_key_type = std::array<uint8_t, 6>;
     using ht_key_type = uint64_t;
@@ -1327,6 +1328,21 @@ namespace u3
       assert(result.cols() == coeffs->rhomax());
 
       return result;
+    }
+
+    U3U2<value_type> get_U3U2(
+      int n13a, int n23a, int n33a, int n12a, int n22a,
+      int n13b, int n23b, int n33b, int n12b, int n22b,
+      int n13c, int n23c, int n33c, int n12c, int n22c)
+    {
+      db_value_type row = get(n13a, n23a, n33a, n12a, n22a,
+                              n13b, n23b, n33b, n12b, n22b,
+                              n13c, n23c, n33c, n12c, n22c);
+      if (row.size() == 0)
+        return {};
+
+      value_type v(row.data(), row.data() + row.size());
+      return U3U2<value_type>(std::move(v));
     }
 
     friend WigU3U2_db& wigU3U2db();

@@ -47,8 +47,8 @@ finally:
 ```
 
 Accessor: `block(iAB, iAB_C, iAC, iAC_B)`.
-The container getters `rhoBCmax()` and `rhoA_BCmax()` count the AC and AC_B
-channels here, despite their U-type names. Do not add an exchange phase to the
+The container getters `rhoACmax()` and `rhoAC_Bmax()` count the AC and AC_B
+channels, respectively. Do not add an exchange phase to the
 returned coefficients unless converting to a different stated convention.
 * **Important Argument Order:** The getter starts with `B, A` (`u3z6db().get_U3Z6(B, A, T, C, ...)`), despite the left route being `A x B`.
 
