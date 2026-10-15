@@ -1,6 +1,6 @@
 # u3lib
 
-**u3lib** is an **AI-enabled computational framework for U(3)/SU(3) algebra**:
+**u3lib** is an **AI-ready computational framework for U(3)/SU(3) algebra**:
 irreps and their invariants, canonical and physical bases, generators and their
 matrix elements, basis transformations, tensor-product decompositions, and the
 **Wigner coupling** and **Racah recoupling** coefficients — exposed through a
@@ -67,4 +67,4 @@ The agent resolves the steps through the repository-local [install skill](agents
 ## Documentation & AI Agent Skills
 
 - **Full Reference Manual:** For exhaustive mathematical derivations, phase conventions, getter signatures, and solver backends, consult [doc/Manual.pdf](doc/Manual.pdf).
-- **AI-Enabled Calculations:** `u3lib` provides a repository-local skill package under [`agents/`](agents/AGENTS.md) that enables code-executing AI assistants to plan and drive calculations through natural-language prompts. A complete table of representative prompts with checked reference values is provided in **Table IV of the [Manual](doc/Manual.pdf)** as well as in [`agents/AGENTS.md`](agents/AGENTS.md).
+- **AI-Ready Calculations:** `u3lib` provides a repository-local skill package under [`agents/`](agents/AGENTS.md) that enables code-executing AI assistants to plan and drive calculations through natural-language prompts. A complete table of representative prompts with checked reference values is provided in **Table IV of the [Manual](doc/Manual.pdf)** as well as in [`agents/AGENTS.md`](agents/AGENTS.md).
