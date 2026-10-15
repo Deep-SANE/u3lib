@@ -1,0 +1,2 @@
+run_id,task,condition,model,status,task_success,elapsed_seconds,input_tokens,output_tokens,total_tokens,cost_usd
+task1-treatment-1,1,treatment,gemini-flash-2.0,completed,False,36.57,,,,
