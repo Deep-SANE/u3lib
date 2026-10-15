@@ -68,7 +68,7 @@
 //                                     __call__(kappaA, kappaB, kappaC, rho)
 //    U3U6   rhoABmax(), rhoAB_Cmax(), rhoBCmax(), rhoA_BCmax();
 //                                     __call__(rhoAB, rhoAB_C, rhoBC, rhoA_BC)
-//    U3Z6   rhoABmax(), rhoAB_Cmax(), rhoBCmax(), rhoA_BCmax();
+//    U3Z6   rhoABmax(), rhoAB_Cmax(), rhoACmax(), rhoAC_Bmax();
 //                                     __call__(rhoAB, rhoAB_C, rhoAC, rhoAC_B)
 //    U3U9   rhoACmax(), rhoBDmax(), rhoABCDmax(), rhoABmax(), rhoCDmax(),
 //           rhoACBDmax();
@@ -164,7 +164,7 @@ PYBIND11_MODULE(u3lib, m)
   m.def("finalize_thread", []() { u3::finalize_thread(); });
 
   m.def("clear", &u3::clear, "Clear all cached coefficients (keep DBs alive).");
-  m.def("is_initialized", []() { return u3::initialized_flag(); },
+  m.def("is_initialized", []() { return u3::is_initialized(); },
         "True between initialize() and finalize(). The coefficient databases "
         "may only be used while this is True.");
 
@@ -369,8 +369,8 @@ PYBIND11_MODULE(u3lib, m)
   //  <(lambda,mu) kappa' L' || T || (lambda,mu) kappa L> for T = L and T = Q,
   //  with bra and ket in the SAME irrep. Returns a tuple
   //  (RME, bra_kappa, ket_kappa): RME is a (bra.kappa() x ket.kappa()) matrix
-  //  indexed by zero-based multiplicity; bra_kappa/ket_kappa are the 1-based
-  //  kappa labels for the rows/columns. The C++ RME convention carries an extra
+  //  indexed by zero-based multiplicity; bra_kappa/ket_kappa are the zero-based
+  //  kappa labels (0..kappa-1) for the rows/columns. The C++ RME convention carries an extra
   //  sqrt(2L'+1) (see U3generatorsRME.h). Requires an initialized session.
   m.def("RME_L",
         [](u3::physicalvector bra, u3::physicalvector ket) {
@@ -431,6 +431,7 @@ PYBIND11_MODULE(u3lib, m)
            "rho"_a)
       .def("__getitem__", [](const U3U2_t& o, size_t i) { return o[i]; })
       .def("data", [](const U3U2_t& o) { return to_numpy(o.data()); })
+      .def("print", [](const U3U2_t& o) { o.print(); }, "Print formatted coefficients.")
       .def("__str__", &to_str<U3U2_t>);
 
   using U3SO3_t = u3::U3SO3<u3::coeffs_t>;
@@ -448,6 +449,7 @@ PYBIND11_MODULE(u3lib, m)
            "kappaA"_a, "kappaB"_a, "kappaC"_a, "rho"_a)
       .def("__getitem__", [](const U3SO3_t& o, size_t i) { return o[i]; })
       .def("data", [](const U3SO3_t& o) { return to_numpy(o.data()); })
+      .def("print", [](const U3SO3_t& o) { o.print(); }, "Print formatted coefficients.")
       .def("__str__", &to_str<U3SO3_t>);
 
   using U3U6_t = u3::U3U6<u3::coeffs_t>;
@@ -464,6 +466,7 @@ PYBIND11_MODULE(u3lib, m)
            "rhoAB"_a, "rhoAB_C"_a, "rhoBC"_a, "rhoA_BC"_a)
       .def("__getitem__", [](const U3U6_t& o, size_t i) { return o[i]; })
       .def("data", [](const U3U6_t& o) { return to_numpy(o.data()); })
+      .def("print", [](const U3U6_t& o) { o.print(); }, "Print formatted coefficients.")
       .def("__str__", &to_str<U3U6_t>);
 
   using U3Z6_t = u3::U3Z6<u3::coeffs_t>;
@@ -472,14 +475,15 @@ PYBIND11_MODULE(u3lib, m)
       .def("empty", &U3Z6_t::empty)
       .def("rhoABmax", &U3Z6_t::rhoABmax)
       .def("rhoAB_Cmax", &U3Z6_t::rhoAB_Cmax)
-      .def("rhoBCmax", &U3Z6_t::rhoBCmax)     // header getter name (dim 2 = rhoAC)
-      .def("rhoA_BCmax", &U3Z6_t::rhoA_BCmax)
+      .def("rhoACmax", &U3Z6_t::rhoACmax)
+      .def("rhoAC_Bmax", &U3Z6_t::rhoAC_Bmax)
       .def("__call__",
            [](const U3Z6_t& o, size_t rhoAB, size_t rhoAB_C, size_t rhoAC,
               size_t rhoAC_B) { return o(rhoAB, rhoAB_C, rhoAC, rhoAC_B); },
            "rhoAB"_a, "rhoAB_C"_a, "rhoAC"_a, "rhoAC_B"_a)
       .def("__getitem__", [](const U3Z6_t& o, size_t i) { return o[i]; })
       .def("data", [](const U3Z6_t& o) { return to_numpy(o.data()); })
+      .def("print", [](const U3Z6_t& o) { o.print(); }, "Print formatted coefficients.")
       .def("__str__", &to_str<U3Z6_t>);
 
   using U3U9_t = u3::U3U9<u3::coeffs_t>;
@@ -500,6 +504,7 @@ PYBIND11_MODULE(u3lib, m)
            "rhoAC"_a, "rhoBD"_a, "rhoABCD"_a, "rhoAB"_a, "rhoCD"_a, "rhoACBD"_a)
       .def("__getitem__", [](const U3U9_t& o, size_t i) { return o[i]; })
       .def("data", [](const U3U9_t& o) { return to_numpy(o.data()); })
+      .def("print", [](const U3U9_t& o) { o.print(); }, "Print formatted coefficients.")
       .def("__str__", &to_str<U3U9_t>);
 
   // ==========================================================================
@@ -531,11 +536,8 @@ PYBIND11_MODULE(u3lib, m)
               int n22a, int n13b, int n23b, int n33b, int n12b, int n22b,
               int n13c, int n23c, int n33c, int n12c, int n22c) {
              require_init();
-             Eigen::RowVectorXd row =
-                 db.get(n13a, n23a, n33a, n12a, n22a, n13b, n23b, n33b, n12b,
-                        n22b, n13c, n23c, n33c, n12c, n22c);
-             u3::coeffs_t v(row.data(), row.data() + row.size());
-             return u3::U3U2<u3::coeffs_t>(std::move(v));
+             return db.get_U3U2(n13a, n23a, n33a, n12a, n22a, n13b, n23b, n33b, n12b,
+                                n22b, n13c, n23c, n33c, n12c, n22c);
            },
            "n13a"_a, "n23a"_a, "n33a"_a, "n12a"_a, "n22a"_a,
            "n13b"_a, "n23b"_a, "n33b"_a, "n12b"_a, "n22b"_a,
