@@ -13,3 +13,18 @@ python/u3lib.d
 .DS_Store
 __pycache__/
 *.pyc
+
+# LaTeX build artifacts (keep Manual.tex, Manual.pdf, References.bib, figures)
+doc/*.aux
+doc/*.bbl
+doc/*.blg
+doc/*.fdb_latexmk
+doc/*.fls
+doc/*.log
+doc/*.out
+doc/*.synctex.gz
+
+# Benchmark reproduction artifacts (keep results.{csv,json} + runner scripts).
+# Per-run agent workspaces and frozen snapshots are large and machine-specific.
+agents/benchmarks/*/task*-*/
+agents/benchmarks/snapshots/
