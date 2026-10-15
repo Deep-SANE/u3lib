@@ -31,8 +31,8 @@ reference.
   `kappa()` before use; `physicalBasis` already drops empty L.
 - The result is an `Eigen::MatrixXd` of shape `(bra.kappa(), ket.kappa())`,
   indexed `RME(i,j)` by **zero-based** multiplicity position. The out-parameters
-  `bra_kappa`/`ket_kappa` are **appended to** with the **1-based** kappa
-  labels `1..kappa()` for row/column presentation. Pass empty vectors or clear
+  `bra_kappa`/`ket_kappa` are **appended to** with the **zero-based** kappa
+  labels `0..kappa()-1` for row/column presentation. Pass empty vectors or clear
   them before each call; the functions do not clear them for you.
 - The reduced-matrix-element convention carries an extra `sqrt(2L'+1)` factor
   (bra), stated in the header. State this when comparing with another source;

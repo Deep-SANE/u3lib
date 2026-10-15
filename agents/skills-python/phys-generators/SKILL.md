@@ -10,7 +10,7 @@ Read [shared runtime instructions](../runtime.md). `u3.RME_L(bra, ket)` and
 for the angular-momentum generator `T=L` and the quadrupole `T=Q`, with bra and
 ket in the **same** normalized irrep (`n33=0`). Each returns a tuple `(RME, bra_kappa, ket_kappa)`:
 `RME` is a `(bra.kappa() x ket.kappa())` two-dimensional NumPy array indexed by zero-based
-multiplicity, and `bra_kappa`/`ket_kappa` are the 1-based kappa labels for the
+multiplicity, and `bra_kappa`/`ket_kappa` are the zero-based kappa labels `0..kappa-1` for the
 rows/columns. `RME_Q` expands into the canonical basis.
 
 ## Selection rules and conventions

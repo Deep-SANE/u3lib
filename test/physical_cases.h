@@ -1,4 +1,5 @@
 #pragma once
+#include <U3generatorsRME.h>
 #include "test_helpers.h"
 namespace test
 {
@@ -117,5 +118,34 @@ namespace test
                   0, "Physical reduced-CG orthogonality", 1e-9, 0);
             }
           });
+
+    suite.run(
+        "Physical generator RMEs (L, Q) zero-based multiplicity reporting",
+        [&]
+        {
+          u3::physicalvector p22_2(u3::irrep(2, 2), 2);
+          require(p22_2.kappa() == 2, "kappa(2,2; L=2) == 2");
+          std::vector<int> bk_L, kk_L;
+          auto rme_L = u3::RME_L(p22_2, p22_2, bk_L, kk_L);
+          require(bk_L.size() == 2 && kk_L.size() == 2, "RME_L out-param size");
+          require(bk_L[0] == 0 && bk_L[1] == 1, "RME_L bra_kappa zero-based");
+          require(kk_L[0] == 0 && kk_L[1] == 1, "RME_L ket_kappa zero-based");
+          require(rme_L.rows() == 2 && rme_L.cols() == 2, "RME_L shape");
+
+          std::vector<int> bk_Q, kk_Q;
+          auto rme_Q = u3::RME_Q(p22_2, p22_2, bk_Q, kk_Q);
+          require(bk_Q.size() == 2 && kk_Q.size() == 2, "RME_Q out-param size");
+          require(bk_Q[0] == 0 && bk_Q[1] == 1, "RME_Q bra_kappa zero-based");
+          require(kk_Q[0] == 0 && kk_Q[1] == 1, "RME_Q ket_kappa zero-based");
+          require(rme_Q.rows() == 2 && rme_Q.cols() == 2, "RME_Q shape");
+
+          // Off-diagonal L branch for Q (m = -2)
+          u3::physicalvector p22_0(u3::irrep(2, 2), 0);
+          std::vector<int> bk_Q02, kk_Q02;
+          auto rme_Q02 = u3::RME_Q(p22_0, p22_2, bk_Q02, kk_Q02);
+          require(bk_Q02.size() == 1 && kk_Q02.size() == 2, "RME_Q m=-2 size");
+          require(bk_Q02[0] == 0, "RME_Q m=-2 bra_kappa zero-based");
+          require(kk_Q02[0] == 0 && kk_Q02[1] == 1, "RME_Q m=-2 ket_kappa zero-based");
+        });
   }
 } // namespace test

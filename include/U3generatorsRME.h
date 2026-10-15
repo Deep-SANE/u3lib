@@ -18,10 +18,10 @@ namespace u3
     Eigen::MatrixXd RME(bra.kappa(), ket.kappa());
 
     // running through the multiplicity labels
-    for (int i = 1; i <= bra.kappa(); i++)
+    for (int i = 0; i < bra.kappa(); i++)
       bra_kappa.push_back(i);
 
-    for (int j = 1; j <= ket.kappa(); j++)
+    for (int j = 0; j < ket.kappa(); j++)
       ket_kappa.push_back(j);
 
     for (int i = 0; i < RME.rows(); i++)
@@ -54,10 +54,10 @@ namespace u3
     int m = bra.L() - ket.L();
 
     // running through the multiplicity labels
-    for (int i = 1; i <= bra.kappa(); i++)
+    for (int i = 0; i < bra.kappa(); i++)
       bra_kappa.push_back(i);
 
-    for (int j = 1; j <= ket.kappa(); j++)
+    for (int j = 0; j < ket.kappa(); j++)
       ket_kappa.push_back(j);
 
     // Implementation here are based on Eqs. (51)-(53) in F. Pan et al, Nucl.
