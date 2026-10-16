@@ -142,7 +142,12 @@ associated Fortran program for their evaluation \cite{Akiyama1973CPC}.
 These coefficients underpin nuclear structure calculations using Elliott's
 $\rm SU(3)$ model \cite{Elliott1958I,Elliott1958II} and other symmetry-adapted
 shell-model approaches \cite{Dytrych2013PRL,Dytrych2020PRL,McCoy2020PRL}, where they are
-consumed in large numbers, thus speed and accuracy are essential. Over the last five decades, the Draayer 
+consumed in large numbers, thus speed and accuracy are essential. The $\rm SU(3)$
+symmetry further underpins a broad family of nuclear-structure frameworks for
+medium-mass and heavy deformed nuclei, including the pseudo-$\rm SU(3)$
+\cite{Kota2020,Cseh2020PRC}, proxy-$\rm SU(3)$ \cite{Bonatsos2023Symmetry,Cseh2020PRC},
+and quasi-$\rm SU(3)$ \cite{Zuker1995PRC} schemes, as well as the
+multiconfigurational dynamical symmetry (MUSY) \cite{Cseh2021PRC}. Over the last five decades, the Draayer
 and Akiyama Fortran library had received various upgrades with improved numerical accuracy 
 \cite{Bahri2004CPC} and modern programming languages \cite{Dytrych2021CPC,Herko2026EPJA}.
 However, the underlying algorithm using hypergeometric functions with large factorials
@@ -151,7 +156,9 @@ brought forward a completely new algorithm that leverages the action of the rais
 of the symmetry group along with state-of-the-art numerical null space solvers \cite{Dang2024EPJP1} 
 \red{DL, perhaps you also want to cite your student's thesis here?} 
 
-The same algebraic tools also arise outside nuclear physics. In quantum
+The same algebraic tools also arise outside nuclear physics. In particle
+physics, flavor $\rm SU(3)$ underlies the eightfold-way classification of
+hadrons and the quark model \cite{GellMann1962PR,Neeman1961NP}. In quantum
 information, Schur transforms are constructed from successive Clebsch--Gordan
 transformations for $d$-level systems; for $d=3$, this provides a potential
 application of U(3) coupling data to qutrit basis transformations
@@ -888,7 +895,7 @@ The external libraries are resolved by \verb|make config| (which writes \verb|co
 
 
 \begin{acknowledgments}
-This work is dedicated to the memory of J. P. Draayer, who passed on September 13, 2026 and whose pioneering contributions to algebraic computational nuclear physics through Elliott's $\rm SU(3)$ model and the Symplectic $\rm Sp(3,R)$ model inspired this framework. The authors also gratefully acknowledge F. Pan and D. Kekejian for valuable discussions. PD was supported by the Institute of International Education through the Quad Fellowship, Louisiana State University, and Quantum CodeX. DL and TD were funded by Quantum CodeX.
+This work is dedicated to the memory of J. P. Draayer, who passed on September 13, 2026 and whose pioneering contributions to algebraic computational nuclear physics through Elliott's $\rm SU(3)$ model, the Symplectic $\rm Sp(3,R)$ model, the \textit{ab initio} Symmetry-Adapted No-Core Shell Model, and his recent effort in Wigner's $\rm SU(4)$ model inspired this framework. The authors also gratefully acknowledge F. Pan and D. Kekejian for valuable discussions. PD was supported by the Institute of International Education through the Quad Fellowship, Louisiana State University, and Quantum CodeX. DL and TD were funded by Quantum CodeX.
 \end{acknowledgments}
 
 \begin{thebibliography}{99}
@@ -900,9 +907,16 @@ This work is dedicated to the memory of J. P. Draayer, who passed on September 1
 \bibitem{Dytrych2013PRL} T. Dytrych, K. D. Launey, J. P. Draayer, P. Maris, J. P. Vary, E. Saule, U. Catalyurek, M. Sosonkina, D. Langr, and M. A. Caprio, ``Collective Modes in Light Nuclei from First Principles,'' Phys. Rev. Lett. \textbf{111}, 252501 (2013), \href{https://doi.org/10.1103/PhysRevLett.111.252501}{doi:10.1103/PhysRevLett.111.252501}.
 \bibitem{Dytrych2020PRL} T. Dytrych, K. D. Launey, J. P. Draayer, D. J. Rowe, J. L. Wood, G. Rosensteel, C. Bahri, D. Langr, and R. B. Baker, ``Physics of Nuclei: Key Role of an Emergent Symmetry,'' Phys. Rev. Lett. \textbf{124}, 042501 (2020), \href{https://doi.org/10.1103/PhysRevLett.124.042501}{doi:10.1103/PhysRevLett.124.042501}.
 \bibitem{McCoy2020PRL} A. E. McCoy, M. A. Caprio, T. Dytrych, and P. J. Fasano, ``Emergent $\mathrm{Sp}(3,\mathbb{R})$ Dynamical Symmetry in the Nuclear Many-Body System from an Ab Initio Description,'' Phys. Rev. Lett. \textbf{125}, 102505 (2020), \href{https://doi.org/10.1103/PhysRevLett.125.102505}{doi:10.1103/PhysRevLett.125.102505}.
+\bibitem{Kota2020} V. K. B. Kota, ``SU(3) Symmetry in Atomic Nuclei,'' Springer, Singapore (2020), \href{https://doi.org/10.1007/978-981-15-3603-8}{doi:10.1007/978-981-15-3603-8}.
+\bibitem{Bonatsos2023Symmetry} D. Bonatsos, A. Martinou, S. K. Peroulis, T. J. Mertzimekis, and N. Minkov, ``The Proxy-SU(3) Symmetry in Atomic Nuclei,'' Symmetry \textbf{15}, 169 (2023), \href{https://doi.org/10.3390/sym15010169}{doi:10.3390/sym15010169}.
+\bibitem{Cseh2020PRC} J. Cseh, ``Shell-like quarteting in heavy nuclei: Algebraic approaches based on the pseudo- and proxy-SU(3) schemes,'' Phys. Rev. C \textbf{101}, 054306 (2020), \href{https://doi.org/10.1103/PhysRevC.101.054306}{doi:10.1103/PhysRevC.101.054306}.
+\bibitem{Zuker1995PRC} A. P. Zuker, J. Retamosa, A. Poves, and E. Caurier, ``Spherical shell model description of rotational motion,'' Phys. Rev. C \textbf{52}, R1741 (1995), \href{https://doi.org/10.1103/PhysRevC.52.R1741}{doi:10.1103/PhysRevC.52.R1741}.
+\bibitem{Cseh2021PRC} J. Cseh, ``Microscopic structure and mathematical background of the multiconfigurational dynamical symmetry,'' Phys. Rev. C \textbf{103}, 064322 (2021), \href{https://doi.org/10.1103/PhysRevC.103.064322}{doi:10.1103/PhysRevC.103.064322}.
 \bibitem{Bahri2004CPC} C. Bahri, D. J. Rowe and J. P. Draayer, ``Programs for generating Clebsch–Gordan coefficients of SU(3) in SU(2) and SO(3) bases," Comp. Phys. Comms. \textbf{159}, 121 (2004), \href{https://doi.org/10.1016/j.cpc.2004.01.005}{doi:10.1016/j.cpc.2004.01.005}.
 \bibitem{Dytrych2021CPC} T. Dytrych, D. Langr, J. P. Draayer, K. D. Launey and D. Gazda, ``SU3lib: A C++ library for accurate computation of Wigner and Racah coefficients of SU(3)," Comp. Phys. Comms \textbf{269}, 108137 (2021), \href{https://doi.org/10.1016/j.cpc.2021.108137}{doi:10.1016/j.cpc.2021.108137}.
 \bibitem{Herko2026EPJA} J. Herko, M. A. Caprio, A. E. McCoy and P. J. Fasano, ``A modern Fortran library for $\rm SU(3)$ coupling and recoupling coefficients,"  Eur. Phys. J. A \textbf{62}, 95 (2026), \href{https://doi.org/10.1140/epja/s10050-026-01845-0}{doi:10.1140/epja/s10050-026-01845-0}.
+\bibitem{GellMann1962PR} M. Gell-Mann, ``Symmetries of Baryons and Mesons,'' Phys. Rev. \textbf{125}, 1067 (1962), \href{https://doi.org/10.1103/PhysRev.125.1067}{doi:10.1103/PhysRev.125.1067}.
+\bibitem{Neeman1961NP} Y. Ne'eman, ``Derivation of strong interactions from a gauge invariance,'' Nucl. Phys. \textbf{26}, 222 (1961), \href{https://doi.org/10.1016/0029-5582(61)90134-1}{doi:10.1016/0029-5582(61)90134-1}.
 \bibitem{Bacon2006PRL} D. Bacon, I. L. Chuang, and A. W. Harrow, ``Efficient Quantum Circuits for Schur and Clebsch--Gordan Transforms,'' Phys. Rev. Lett. \textbf{97}, 170502 (2006), \href{https://doi.org/10.1103/PhysRevLett.97.170502}{doi:10.1103/PhysRevLett.97.170502}.
 \bibitem{Moca2012PRB} C. P. Moca, A. Alex, J. von Delft, and G. Zar\'and, ``SU(3) Anderson impurity model: A numerical renormalization group approach exploiting non-Abelian symmetries,'' Phys. Rev. B \textbf{86}, 195128 (2012), \href{https://doi.org/10.1103/PhysRevB.86.195128}{doi:10.1103/PhysRevB.86.195128}.
 \bibitem{Tan2013PRL} S.-H. Tan, Y. Y. Gao, H. de Guise, and B. C. Sanders, ``SU(3) Quantum Interferometry with Single-Photon Input Pulses,'' Phys. Rev. Lett. \textbf{110}, 113603 (2013), \href{https://doi.org/10.1103/PhysRevLett.110.113603}{doi:10.1103/PhysRevLett.110.113603}.
