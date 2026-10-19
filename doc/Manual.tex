@@ -73,21 +73,22 @@
 \affiliation{Department of Physics and Astronomy, Louisiana State University, Baton Rouge, Louisiana, USA}
 
 \begin{abstract}
-\texttt{u3lib} is an AI-ready C++ framework for U(3)/SU(3) representation-theory
-computations in nuclear structure and related applications. Besides the fast and
-accurate evaluation of Wigner coupling and Racah recoupling coefficients---implemented 
-with the procedure of Dang \textit{et al.},
-which avoids the binomial coefficients and alternating sums of earlier
-formulations---the library offers the full algebraic toolkit for the symmetry group: 
-irreducible representations (irreps), dimensions, Casimir
-invariants, and conjugation; the canonical Gelfand--Tsetlin basis and 
-the physical $\mathrm{SU(3)}\supset\mathrm{SO(3)}$ basis with their inner multiplicities; 
-the matrix elements of the U(3) canonical generators;
-the reduced matrix elements of the physical generators; the tensor-product decomposition with outer multiplicities; and the transformation between
-the physical and canonical bases. The C++ API is mirrored one-to-one by Python
-bindings, and a repository-local catalog of domain skills lets a code-executing
-AI assistant drive any of these capabilities from a natural-language request.
+\texttt{u3lib} is a C++ library for U(3)/SU(3) representation-theory
+calculations in nuclear structure and related applications. It evaluates
+Wigner coupling and Racah recoupling coefficients using the procedure of
+Dang \textit{et al.}, which avoids the binomial coefficients and alternating
+sums used in earlier formulations. The library also provides irreducible
+representations (irreps), dimensions, Casimir invariants, conjugation, and
+tensor-product decompositions with outer multiplicities. It supports the
+canonical Gelfand-Tsetlin basis and the physical
+$\mathrm{SU(3)}\supset\mathrm{SO(3)}$ basis, including inner multiplicities
+and the transformation between the two bases. Generator routines return
+matrix elements in the canonical basis and reduced matrix elements in the
+physical basis. Python bindings mirror the C++ API. Domain skills supplied
+with the repository allow an AI assistant with code-execution access to call
+these routines from natural-language requests.
 %This document is the reference manual for the public release.
+
 \end{abstract}
 
 \keywords{U(3); SU(3); SO(3); Wigner coefficients; Racah coefficients; Clebsch--Gordan coefficients; Gelfand--Tsetlin basis; nuclear structure}
@@ -134,26 +135,25 @@ basis transformation, also obtained as the orthonormal null space of the physica
 \section{Introduction}
 \label{sec:intro}
 
-Computation of coupling and recoupling coefficients for the unitary group
-$\rm U(3)$ and its special unitary subgroup $\rm SU(3)$ has a long history, 
-dating back to the 1973 seminal pair of papers by Draayer and Akiyama 
-that proffered a generic algorithm \cite{Draayer1973JMP} and an 
+Algorithms for computing coupling and recoupling coefficients for the unitary group
+$\rm U(3)$ and its special unitary subgroup $\rm SU(3)$ date back to two papers published in 1973 by Draayer and Akiyama,
+which introduced a general algorithm \cite{Draayer1973JMP} and an
 associated Fortran program for their evaluation \cite{Akiyama1973CPC}.
 These coefficients underpin nuclear structure calculations using Elliott's
 $\rm SU(3)$ model \cite{Elliott1958I,Elliott1958II} and other symmetry-adapted
-shell-model approaches \cite{Dytrych2013PRL,Dytrych2020PRL,McCoy2020PRL}, where they are
-consumed in large numbers, thus speed and accuracy are essential. The $\rm SU(3)$
-symmetry further underpins a broad family of nuclear-structure frameworks for
+shell-model approaches \cite{Dytrych2013PRL,Dytrych2020PRL,McCoy2020PRL}, where large numbers of coefficients make speed and accuracy essential.
+The same symmetry is used in nuclear-structure frameworks for
 medium-mass and heavy deformed nuclei, including the pseudo-$\rm SU(3)$
 \cite{Kota2020,Cseh2020PRC}, proxy-$\rm SU(3)$ \cite{Bonatsos2023Symmetry,Cseh2020PRC},
 and quasi-$\rm SU(3)$ \cite{Zuker1995PRC} schemes, as well as the
-multiconfigurational dynamical symmetry (MUSY) \cite{Cseh2021PRC}. Over the last five decades, the Draayer
-and Akiyama Fortran library had received various upgrades with improved numerical accuracy 
-\cite{Bahri2004CPC} and modern programming languages \cite{Dytrych2021CPC,Herko2026EPJA}.
-However, the underlying algorithm using hypergeometric functions with large factorials
-and alternating sums had remained unchanged until recently when Dang \textit{et al.}
-brought forward a completely new algorithm that leverages the action of the raising generators
-of the symmetry group along with state-of-the-art numerical null space solvers \cite{Dang2024EPJP1} 
+multiconfigurational dynamical symmetry (MUSY) \cite{Cseh2021PRC}. Over the following five decades, the Draayer
+and Akiyama library was updated to improve numerical accuracy
+\cite{Bahri2004CPC} and implemented in modern programming languages
+\cite{Dytrych2021CPC,Herko2026EPJA}. These implementations retained the
+underlying algorithm based on hypergeometric functions with large factorials
+and alternating sums. Dang \textit{et al.} introduced a different approach:
+constructing the coefficients from the action of the group's raising generators
+using numerical null-space solvers \cite{Dang2024EPJP1}
 \red{DL, perhaps you also want to cite your student's thesis here?} 
 
 The same algebraic tools also arise outside nuclear physics. In particle
@@ -171,27 +171,26 @@ three-channel passive interferometers \cite{Tan2013PRL}. These examples suggest
 uses for \texttt{u3lib} as a source of representation-theoretic building blocks,
 with application-specific modeling and any basis conversion supplied by the user.
 
-In this paper, we present \texttt{u3lib}, a comprehensive high-performance framework for 
-the $\rm U(3)$ symmetry algebra where computation of the coupling and recoupling coefficients
-are two of the capabilities it provides. This library is part of a broader project called 
+In this paper, we present \texttt{u3lib}, a library for calculations with the
+$\rm U(3)$ symmetry algebra, including coupling and recoupling coefficients.
+The library is part of
 \texttt{DeepSANE}---\textbf{Deep}-learning and \textbf{S}ymmetry-adapted \textbf{A}b-initio 
 \textbf{N}uclear modeling: an AI-ready \textbf{E}cosystem. 
-To be specific, \texttt{u3lib} packages the engine as a reusable framework: in addition
-to the coefficients, it supplies irreps as C++ objects and their Casimir invariants, the canonical
+Alongside the coefficient routines, \texttt{u3lib} provides C++ objects for irreps
+and their Casimir invariants, the canonical
 Gelfand-Tsetlin $\rm U(3) \supset U(2) \supset U(1)$ and the physical $\rm SU(3) \supset SO(3)$ bases, 
 the generator matrix elements, the tensor-product decomposition, and the physical-to-canonical transformation. 
 The C++ API is header-only; Python bindings mirror it one-to-one.
 
-Large language models offer a way to orchestrate scientific workflows through
+Large language models can help run scientific calculations from
 natural-language requests. To support their use with \texttt{u3lib}, we provide
 an agent-skill catalog that guides AI assistants through the library's
-capabilities. Effective orchestration, however, requires more than identifying
-the relevant functions: an agent must also follow group-theoretical notation,
+capabilities. To use these routines correctly, an agent must follow group-theoretical notation,
 phase conventions, memory-lifetime rules, and thread-safety requirements.
 The repository-local skills make these requirements explicit alongside the
 source code and provide procedures for constructing and checking calculations.
-This effort is closely aligned with initiatives to standardize
-reusable domain-specific skills for computational research, such as the U.S.
+This approach follows the interest in reusable domain-specific skills for
+computational research seen in initiatives such as the U.S.
 Department of Energy (DOE) Genesis Mission and its scientific agent skill 
 catalog\footnote{See the DOE Genesis Mission skill catalog: \url{https://gitlab.osti.gov/genesis/genesis-skills}.}.
 We also evaluate whether this guidance improves task completion and
@@ -206,7 +205,7 @@ benchmark evaluation (Sec.~\ref{sec:agents}), and the installation (Sec.~\ref{se
 \section{Library structure}
 \label{sec:structure}
 
-\texttt{u3lib} is a header-only C++ library with a thin build layer. The top-level
+\texttt{u3lib} is a header-only C++ library with build targets for examples, tests, and Python bindings. The top-level
 directories are:
 \begin{itemize}
     \item \verb|include/|: the library itself (all algorithms live here; user
@@ -234,12 +233,11 @@ directories are:
 \section{Classes and library interface}
 \label{sec:classes}
 
-This section documents every public class and its methods, and the
-database/container interface through which coefficients are reached. All types
-are in the namespace \verb|u3| (SU(3)-only base members in \verb|su3|). The
-algebraic types and their methods do not require initialization; the coefficient
-databases do. Table~\ref{tab:main-funcs} is an at-a-glance map of the main
-entry points.
+This section describes the public classes, methods, and interfaces for accessing
+coefficients. Types belong to the \verb|u3| namespace, with SU(3) base types in
+\verb|su3|. The algebraic types can be used without initialization. Coefficient
+databases require initialization as described below.
+Table~\ref{tab:main-funcs} lists the main entry points.
 
 \begin{table*}[tp]
     \centering
@@ -254,7 +252,7 @@ entry points.
          \verb|U3SO3xU3SO3.h| & \verb|wigU3SO3db| & $\mathrm{SU(3)}{\supset}\mathrm{SO(3)}$ reduced coupling coefficients  \\
          \verb|U3_U6Z6Coeffs.h| & \verb|u3u6db|, \verb|u3z6db| & 6-$\rm U(3)$ recoupling coefficients (three irreps)  \\
          \verb|U3_U9Coeffs.h| & \verb|u3u9db| & 9-$\rm U(3)$ recoupling coefficients (four irreps)  \\
-         \verb|U3SO3_to_U3U2U1.h| & \verb|phys_to_cano| & physical-tocanonical transformation \\
+         \verb|U3SO3_to_U3U2U1.h| & \verb|phys_to_cano| & physical-to-canonical transformation \\
          \verb|U3generatorsRME.h| & \verb|RME_L|, \verb|RME_Q| & reduced matrix elements of $\mathbf{L}$, $\mathbf{Q}$ \\
     \hline\hline
     \end{tabular}
@@ -268,8 +266,8 @@ In \verb|u3lib.h|:
     \item \verb|initialize()| / \verb|initialize(&argc,&argv)|: set up the caches of the $\rm SU(2)$ coefficients from \texttt{libwignernj}, and the U(3) coefficient databases;
     \item \verb|finalize()|: destroy the databases;
     \item \verb|initialize_thread()| / \verb|finalize_thread()|: per-thread setup for multithreaded use;
-    \item \verb|clear()|: drop cached coefficients while keeping the databases alive;
-    \item \verb|is_initialized()|: query the state.
+    \item \verb|clear()|: clear cached coefficients while keeping the databases available;
+    \item \verb|is_initialized()|: check whether the library is initialized.
 \end{itemize}
 
 Note on shared-backend lifecycle: if \texttt{u3lib} runs in the same process as another library that shares the \texttt{libwignernj} backend, initialize all of them at startup and finalize only after all coefficient work is complete. Calling \verb|finalize()| while another user of the backend is still active destroys the shared state and causes runtime errors.
@@ -548,7 +546,7 @@ own their buffers.
 \subsection{Coefficient databases}
 All coupling and recoupling coefficients are computed on demand and cached inside singleton database instances:
 \verb|u3::wigU3U2db()|, \verb|u3::wigU3SO3db()|, \verb|u3::u3u6db()|, \verb|u3::u3z6db()|, and \verb|u3::u3u9db()|.
-The library exposes two complementary access tiers:
+The databases provide two ways to retrieve coefficients:
 \begin{itemize}
     \item \textbf{Structured container getters} (\verb|get_U3U2|, \verb|get_U3SO3|, \verb|get_U3U6|, \verb|get_U3Z6|, \verb|get_U3U9|): return the dedicated multidimensional containers described above (\verb|U3U2|, \verb|U3SO3|, \verb|U3U6|, \verb|U3Z6|, \verb|U3U9|). These containers support multi-index coordinate access via \verb|operator()|, linear flat indexing via \verb|operator[]|, shape accessors (\verb|*max()|), and formatted stream printing.
     \item \textbf{Direct and flat-buffer getters} (\verb|get|): return contiguous buffers without container wrapper overhead.% (\verb|Eigen::RowVectorXd| for $\mathrm{U(3)}\supset\mathrm{U(2)}$; \verb|std::vector<double>| for $\mathrm{U(3)}\supset\mathrm{SO(3)}$, $U6$, and $Z6$; and \verb|std::span<const double>| or \verb|std::vector<double>| for $U9$).
@@ -602,9 +600,9 @@ The available getters across the five databases are:
     \end{itemize}
 \end{itemize}
 
-The multiplicity maxima passed to recoupling routines must match the exact \verb|Rho| values for the corresponding channels; a mismatch trips an internal assertion. A forbidden or empty coupling returns an empty container or buffer (safe to query for shape, not to index).
+The multiplicity maxima passed to recoupling routines must match the exact \verb|Rho| values for the corresponding channels; a mismatch triggers an internal assertion. A forbidden or empty coupling returns an empty container or buffer. You can query its shape, but must not index it.
 
-Each database singleton provides a \verb|clear()| member function (and \verb|u3::clear()| flushes all five) to purge cached coefficient blocks while retaining allocated thread workspaces.
+Each database singleton provides a \verb|clear()| member function (and \verb|u3::clear()| clears all five) to remove cached coefficient blocks while retaining allocated thread workspaces.
 
 \begin{comment}
 A minimal C++ session demonstrating both structured and direct database access:
@@ -643,14 +641,14 @@ values and the generation procedure are in \verb|test/reference/|.
     \item \textbf{Canonical-coupling phase:} For each $\rho$ block the phase and normalization are fixed by the highest-weight reduced coefficients---the orthonormal null space of the system imposed by $E_{23}$ and $E_{12}$ annihilating the highest-weight coupled state. For $\rho_{\max}>1$ (and self-conjugate irreps) the solver fixes \emph{a} valid orthonormal $\rho$ basis (Row Reduced Echelon Form + Gram-Schmidt + positive leading sign); any alternative must be applied consistently to every $\rho$-carrying coefficient. Conjugation of a Gelfand state satisfies $C\ket{g} = (-1)^{n_{23}-n_{12}-n_{22}-n_{11}}\ket{g.\mathrm{conjugate}()}$ (\verb|gelfand::conjugate_phase()|).
     \item \textbf{Physical-to-canonical transformation:} A physical SO(3) state $\ket{(\lambda\mu)\,\kappa\,L\,M}$ is expanded in canonical Gelfand states $\ket{g}$ with $M = e_{11} - e_{22} = 2n_{11} - (n_{12} + n_{22})$. The highest-weight state $M=L$ belongs to the null space of $L_+$; $L_-$ fixes the lower-$M$ phases within a $\kappa$ multiplet. Distinct conjugate irreps obey $C\ket{(\lambda\mu)\,\kappa\,L\,M} = (-1)^{\lambda+\mu-L+M}\ket{(\mu\lambda)\,\kappa\,L,-M}$ (for $\lambda>\mu$ the transformation is built from the conjugate irrep with the phase factor $(-1)^{n_{22}+n_{11}-L}$). For a self-conjugate irrep $(\lambda,\lambda)$ conjugation acts as an $M$-independent symmetric matrix $D$ ($D^2=\mathbb{1}$) that may mix $\kappa$.
     \item \textbf{Generator reduced matrix element factor:} \verb|RME_L|/\verb|RME_Q| carry an extra $\sqrt{2L'+1}$, so $\langle\kappa L\|\mathbf{Q}\|\kappa'L'\rangle=(-1)^{L-L'}\langle\kappa'L'\|\mathbf{Q}\|\kappa L\rangle$.
-    \item \textbf{Assertions are on.} Invalid labels or out-of-range indices abort via assertion.
+    \item \textbf{Input checks.} Invalid labels or out-of-range indices abort via assertion.
 \end{itemize}
 
 \section{Python bindings}
 \label{sec:python}
 
-The module \verb|u3lib| mirrors the C++ API one-to-one; build it with
-\verb|make python| and the interpreter whose ABI matches the extension. Irreps
+The \verb|u3lib| module mirrors the C++ API. Build it with
+\verb|make python|, using an interpreter whose ABI matches the extension. Irreps
 (\verb|su3.irrep|, \verb|irrep|), \verb|gelfand|, \verb|physicalvector|, the free
 functions \verb|Rho|, \verb|Kappa|, \verb|decomposition|, \verb|gelfandBasis|,
 \verb|physicalBasis|, the physical-generator reduced matrix elements \verb|RME_L|/\verb|RME_Q|, the
@@ -673,38 +671,37 @@ finally:
     u3.finalize()
 \end{lstlisting}
 \end{comment}
-A worked introduction covering irreps, bases, coupling, and recoupling is
-provided as a Jupyter notebook, \verb|python/tutorial.ipynb|; build and
-toolchain details are in the top-level \verb|README.md|.
+For worked examples of irreps, bases, coupling, and recoupling, see the Jupyter
+notebook \verb|python/tutorial.ipynb|. Build and toolchain details are in the
+top-level \verb|README.md|.
 
 \section{AI-ready interface}
 \label{sec:agents}
 
 \subsection{Skill catalog and orchestration}
 
-\texttt{u3lib} ships a repository-local catalog of agent-ready skills under
-\verb|agents/|: an index (\verb|agents/AGENTS.md|), shared runtime instructions,
-and one skill per capability. Each skill states its inputs, the exact library
-call, the convention, and a built-in numerical check. A code-executing AI
-assistant pointed at the catalog carries out the requested computation using the
-configured local library; no network service is involved. 
-The catalog also provides an \verb|install| skill (\verb|agents/install/SKILL.md|).
-On a fresh checkout the agent builds the library first---\verb|make config| to
-resolve or download the dependencies, then \verb|make| and \verb|make test|---before running any calculation skill.
-Table~\ref{tab:prompts} lists each skill with a representative prompt; the
-parenthetical results were checked against the library, so each prompt doubles
-as a self-test.
+The \verb|agents/| directory contains skills that guide an AI assistant through
+\texttt{u3lib} calculations. The catalog includes an index
+(\verb|agents/AGENTS.md|), shared runtime instructions, and a skill for each
+capability. Each skill specifies the inputs, library call, conventions, and a
+numerical check. An assistant with code-execution access uses these instructions
+to run the configured local library. The library calculations do not require a
+network service.
 
-It is important to be precise about what the agent does and does not do. The
-agent performs no physics and no mathematics itself. 
-%It does not derive or approximate coupling coefficients, Casimirs, or matrix elements. 
-Its role is orchestration: from a natural-language request it selects the matching
-skill, constructs valid inputs in the library's conventions, invokes the
-compiled C++/Python routine, and reports the returned numbers with their labels
-and the check that was run. All numerical work is done by the library; the agent
-is an interface that routes a request to the correct tool and formats the result,
-and it declines or asks for clarification when a request is ill-posed 
-(e.g., a request for the first-order Casimir of an SU(3) irrep, which is not defined).
+The \verb|install| skill (\verb|agents/install/SKILL.md|) covers setup on a
+fresh checkout. The agent first runs \verb|make config| to resolve or download
+dependencies, followed by \verb|make| and \verb|make test|. It can then run the
+calculation skills. Table~\ref{tab:prompts} gives a sample request for each
+skill, with expected results checked against the library.
+
+The assistant translates a request into library calls: it selects a skill,
+prepares inputs in the required conventions, runs the compiled C++ or Python
+routine, and reports the results with their labels and numerical check.
+The library computes the coefficients, Casimirs, and matrix elements; the
+assistant does not derive or approximate them. If a request is ambiguous or
+asks for an undefined quantity, the assistant asks for clarification or
+explains the problem. For example, a first-order Casimir is not defined for
+an SU(3) irrep.
 
 \begin{table*}[tp]
     \centering
@@ -738,10 +735,9 @@ and it declines or asks for clarification when a request is ill-posed
 \subsection{Evaluation objectives}
 \label{app:benchmarking}
 To evaluate the practical value of the skill catalog, we compare autonomous
-coding agents with and without access to the skills. The central question is whether
-they improve task completion efficiency and
-correctness, and whether their benefit varies with the implementation
-complexity of the task. We examine two hypotheses:
+coding agents with and without access to the skills. We ask whether the skills help agents complete tasks
+correctly with fewer resources, and whether the benefit depends on the
+implementation complexity of the task. We examine two hypotheses:
 \begin{enumerate}
     \item {Resource efficiency:} Domain skills reduce token consumption,
     execution time, and API cost by supplying conventions and usage patterns
@@ -755,7 +751,7 @@ complexity of the task. We examine two hypotheses:
 \subsection{Experimental methodology}
 
 \subsubsection{Benchmark Tasks}
-To examine how the benefit of domain skills varies with task complexity, we formulated three benchmark tasks spanning Python integration, C++ workspace management, and parallel execution:
+We designed three tasks with increasing implementation complexity, covering Python integration, C++ workspace management, and parallel execution:
 \begin{itemize}
     \item {Task 1: Python Racah recoupling (\texttt{consumer/recouple.py}).}
     A standalone Python utility computing $U$- and $Z$-recoupling coefficients through the pybind11 interface and verifying unitary symmetry relations across fundamental representations (e.g.\ $(1,0){\times}(1,0){\times}(1,0)\to(3,0)$). \emph{Architectural complexity: low} (declarative bindings, automatic memory, single-threaded).
@@ -767,23 +763,32 @@ To examine how the benefit of domain skills varies with task complexity, we form
     Parallel canonical- and physical-basis coupling with OpenMP (\verb|#pragma omp parallel for|), requiring thread-private scratch workspaces to avoid races on the null-space solver, correct \verb|-fopenmp| configuration, and deterministic output. \emph{Architectural complexity: high} (shared-memory concurrency, thread-private state isolation).
 \end{itemize}
 
-\subsubsection{Sandbox Isolation and Cleanroom Protocol}
-To ensure reproducibility and prevent cross-trial contamination, every benchmark run was conducted in a strictly isolated, disposable sandbox directory %(\texttt{/tmp/u3lib-bench-...}) 
-equipped with an independent consumer build environment. A zero-leak snapshot protocol was strictly enforced:
+\subsubsection{Isolated test environments}
+Each run used a separate, disposable sandbox directory with its own consumer
+build environment, so files from one trial were unavailable to subsequent
+trials. The two conditions differed only in access to the skills:
 \begin{itemize}
-    \item {Control (zero skills):} a pristine checkout with all skills (\verb|agents/|) removed---full source, headers, and build scripts, but no catalog, as an agent would meet an unfamiliar codebase.
+    \item {Control (zero skills):} a clean checkout containing the source, headers, and build scripts, with the skill directory (\verb|agents/|) removed.
     \item {Treatment (domain skills):} the same workspace plus the repository-local skill catalog indexed by \verb|agents/AGENTS.md|, which the prompt directed the agent to consult.
 \end{itemize}
 
-\subsubsection{Blinded Evaluation and Grader Mutation Validation}
-During trial execution, the agent operated autonomously with full bash tool capabilities (file viewing, file editing, directory inspection, and command execution). Upon the agent declaring task completion (or upon reaching a hard limit of 50 agent steps), the environment was locked, and an automated grading harness evaluated the consumer artifact against a hidden validation suite, % (\texttt{fixtures-main.json}). 
-which determined functional correctness by asserting numerical agreement (within $10^{-12}$ tolerance) against exact group-theoretical coupling and recoupling values across diverse irrep representations. To ensure the integrity of the evaluation harness itself, the grading suite was subjected to prior mutation testing: %(\texttt{validate\_grader.py}): 
-intentional phase inversions, memory leaks, uninitialized buffer reads, and artificial race conditions were injected into reference implementations. The grader achieved 100\% sensitivity and specificity, confirming zero false positives and zero false negatives.
+\subsubsection{Hidden tests and grader validation}
+The agent could inspect files and directories, edit code, and execute shell
+commands. When it declared completion or reached the limit of 50 steps, the
+environment was locked and an automated grader tested the resulting program
+against a hidden validation suite. The tests compared coupling and recoupling
+values with exact group-theoretical results across a range of irreps, using a
+$10^{-12}$ tolerance.
+
+Before the trials, we tested the grader by introducing phase inversions,
+memory leaks, uninitialized buffer reads, and artificial race conditions into
+reference implementations. On these validation cases, the grader achieved
+100\% sensitivity and specificity, with no false positives or false negatives.
 
 \subsubsection{Model and Statistical Protocol}
-All experiments used Anthropic's Claude 3.5 Sonnet under an autonomous agentic
-harness. For each task, $N = 10$ matched Control/Treatment pairs were run (60
-trajectories total), recording four metrics per run: functional pass rate; total
+All experiments used Anthropic's Claude 3.5 Sonnet in an autonomous agent
+test environment. For each task, $N = 10$ matched Control/Treatment pairs were run (60
+runs total), recording four metrics per run: functional pass rate; total
 token consumption (prompt, cache-read, and completion tokens); wall-clock
 latency; and API cost at official token pricing. Significance was assessed with
 two-tailed Welch's $t$-tests (unequal variance), reporting $t$, degrees of
@@ -791,14 +796,14 @@ freedom, and $p$.
 
 \subsection{Results and discussion}
 
-\subsubsection{Overall Quantitative Findings}
-The empirical results across all 60 benchmark evaluations are summarized in Table~\ref{tab:benchmark_results} and illustrated graphically in Fig.~\ref{fig:benchmark_summary}. 
-Across the entire benchmark suite:
+\subsubsection{Overall results}
+Table~\ref{tab:benchmark_results} and Fig.~\ref{fig:benchmark_summary} summarize
+the 60 runs. Across the three tasks:
 \begin{itemize}
     \item {Token Consumption:} Providing domain skills reduced mean token consumption from $550,103 \pm 178,309$ tokens to $306,778 \pm 104,076$ tokens---an aggregate reduction of {44.2\%} ($t = -6.46$, $p = 6.0 \times 10^{-8}$, Welch's $t$-test).
     \item {Execution Latency:} Wall-clock execution time decreased from $91.61 \pm 28.85$\,s to $61.31 \pm 15.21$\,s, representing an aggregate speedup of {33.1\%} ($t = -5.09$, $p = 7.2 \times 10^{-6}$).
     \item {API Cost:} Direct inference costs fell from an average of \$0.3488 to \$0.2413 per task ({$-$30.8\%}, $t = -7.16$, $p = 4.4 \times 10^{-9}$).
-    \item {Reliability:} Treatment runs achieved a 100\% pass rate across all 30 evaluations. In contrast, Control runs suffered a failure on Task 3 (9/10), resulting in an aggregate pass rate of 96.7\%.
+    \item {Reliability:} Treatment runs achieved a 100\% pass rate across all 30 evaluations. One Control run failed Task 3 (9/10), giving an aggregate pass rate of 96.7\%.
 \end{itemize}
 
 \begin{table*}[tp]
@@ -850,9 +855,9 @@ For the three tasks considered here, the relative reductions in token consumptio
 
 This trend is consistent with the hypothesis that explicit guidance becomes more useful as implementation constraints increase. Three tasks alone do not establish a general scaling law; the following observations describe agent behavior within this benchmark:
 \begin{enumerate}
-    \item {Task 1 (exploration tax):} Unassisted Control agents produced correct recoupling solutions but paid a heavy exploration tax---typically 3--6 shell turns (\texttt{grep}, \texttt{ls}, inspecting pybind11 modules) to discover the exposed bindings (\verb|u3lib.u6recoupling|, \verb|u3lib.z6recoupling|) and their argument order. Treatment agents retrieved the signatures directly from the catalog, finishing in $16.6$ steps versus $22.8$ for Control.
-    \item {Task 2 (scratch-buffer aliasing):} The 9-$\mathrm{U}(3)$ database (\verb|u3::u3u9db()|) returns views into internal scratch buffers reused across queries. Without guidance, Control agents hit aliasing bugs (later queries overwriting stored blocks), struggled to locate \verb|U3_U9Coeffs.h|, and misordered the multiplicity strides, inflating consumption to $614,511$ tokens on average (worst case exceeding $853,000$). Treatment agents followed the recipe---copying views into owning storage and indexing correctly---and ran cleanly in $329,829$ tokens with about half the variance.
-    \item {Task 3 (concurrency):} Because the C++ null-space solver mutates internal scratch memory during factorization, naively sharing a database across threads races. One Control run (\texttt{task3-control-2}) failed the hidden tests after chasing non-deterministic segfaults; even successful Control runs averaged $33.6$ steps and $110.7$\,s to find the need for thread-private workspaces. Treatment agents applied the skill's OpenMP guidance from the first turn, finishing deterministically in $65.89$\,s and $320,246$ tokens.
+    \item {Task 1 (API discovery):} Control agents produced correct recoupling solutions but typically needed 3--6 shell turns (\texttt{grep}, \texttt{ls}, inspecting pybind11 modules) to discover the exposed bindings (\verb|u3lib.u6recoupling|, \verb|u3lib.z6recoupling|) and their argument order. Treatment agents retrieved the signatures directly from the catalog, finishing in $16.6$ steps versus $22.8$ for Control.
+    \item {Task 2 (scratch-buffer aliasing):} The 9-$\mathrm{U}(3)$ database (\verb|u3::u3u9db()|) returns views into internal scratch buffers reused across queries. Control agents encountered aliasing bugs when later queries overwrote stored blocks, spent time locating \verb|U3_U9Coeffs.h|, and misordered the multiplicity strides, inflating consumption to $614,511$ tokens on average (worst case exceeding $853,000$). Treatment agents used the documented copying and indexing procedures and completed the task in $329,829$ tokens with about half the variance.
+    \item {Task 3 (concurrency):} The C++ null-space solver modifies internal scratch memory during factorization, so sharing that state across threads causes races. One Control run (\texttt{task3-control-2}) failed the hidden tests after attempts to resolve non-deterministic segmentation faults; even successful Control runs averaged $33.6$ steps and $110.7$\,s to find the need for thread-private workspaces. Treatment agents applied the skill's OpenMP guidance from the first turn, completing the task with deterministic output in $65.89$\,s and $320,246$ tokens.
 \end{enumerate}
 
 \subsubsection{Implications for scientific software}
@@ -872,17 +877,19 @@ correctness or eliminate concurrency errors in general.
 \texttt{u3lib} is header-only; user programs include the headers in \verb|include/|
 directly. The source is hosted publicly at
 \url{https://github.com/Deep-SANE/u3lib}.
-The build resolves dependency paths from a configuration environment
-rather than hardcoded paths; after sourcing it from the repository root the make
-targets are \verb|make| (example programs $\to$ \verb|bin/|), \verb|make test|
+The build reads dependency paths from a configuration environment. After
+sourcing it from the repository root, use the following make targets: \verb|make| (example programs $\to$ \verb|bin/|), \verb|make test|
 (build and run the regression suite), and \verb|make python| (the pybind11
 extension). The regression tests check dimensions, Gelfand interlacing and
 ordering, SO(3) branching, canonical/physical coupling orthonormality across
 $\kappa$ and $\rho$, conjugation identities, and documented analytic values;
-numerical agreement is tolerance-based rather than bitwise-identical across
-backends.
+comparisons use numerical tolerances, since results need not be bitwise
+identical across backends.
 
-The external libraries are resolved by \verb|make config| (which writes \verb|config/config.generated.mk|); they are either downloaded from their pinned upstream sources and built locally under \verb|external-libs/| (not part of the repository), or taken from an existing install:
+\verb|make config| locates the dependencies and writes
+\verb|config/config.generated.mk|. It uses existing installations or downloads
+pinned versions from upstream sources and builds them under
+\verb|external-libs/|, which is not part of the repository:
 \begin{itemize}
     \item \texttt{libwignernj}: \url{https://github.com/susilehtola/libwignernj} %the sole backend, enabled via \verb|USE_WIGNERNJ=1|, links dynamically (\verb|-lwignernj|).
     \item \red{\texttt{sns}: \url{https://gitlab.fit.cvut.cz/krastale/dp-sparse-nullspace}} % sparse solver enabled via \verb|USE_SNS=1|; builds with sparse representation (\verb|-DNULLSPACE_SPARSE|) and falls back to dense QR for small or block-heavy cases.
