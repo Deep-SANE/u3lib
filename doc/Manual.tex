@@ -762,7 +762,7 @@ We designed three tasks with increasing implementation complexity, covering Pyth
     A C++ executable evaluating 9-$\mathrm{U}(3)$ blocks via \verb|u3::u3u9db()|: it parses the multi-irrep label specification, computes intermediate outer multiplicities, and serializes block and entry records, copying scratch-buffer views into owning storage to avoid aliasing across iterations. \emph{Architectural complexity: medium} (C++ typing, headers, manual workspace lifecycle).
 
     \item {Task 3: C++ multi-threaded coupling (\texttt{consumer/coupling\_batch.cpp}).}
-    Parallel canonical- and physical-basis coupling with OpenMP (\verb|#pragma omp parallel for|), requiring thread-private scratch workspaces to avoid races on the null-space solver, correct \verb|-fopenmp| configuration, and deterministic output. \emph{Architectural complexity: high} (shared-memory concurrency, thread-private state isolation).
+    Parallel canonical- and physical-basis coupling with OpenMP (\verb|#pragma omp parallel for|), requiring per-thread database cache and scratch state (initialized on each thread) to avoid races, correct \verb|-fopenmp| configuration, and deterministic output. \emph{Architectural complexity: high} (shared-memory concurrency, thread-private state isolation).
 \end{itemize}
 
 \subsubsection{Isolated test environments}
@@ -859,9 +859,10 @@ This trend is consistent with the hypothesis that explicit guidance becomes more
 \begin{enumerate}
     \item {Task 1 (API discovery):} Control agents produced correct recoupling solutions but typically needed 3--6 shell turns (\texttt{grep}, \texttt{ls}, inspecting pybind11 modules) to discover the exposed bindings (\verb|u3lib.u6recoupling|, \verb|u3lib.z6recoupling|) and their argument order. Treatment agents retrieved the signatures directly from the catalog, finishing in $16.6$ steps versus $22.8$ for Control.
     \item {Task 2 (scratch-buffer aliasing):} The 9-$\mathrm{U}(3)$ database (\verb|u3::u3u9db()|) returns views into internal scratch buffers reused across queries. Control agents encountered aliasing bugs when later queries overwrote stored blocks, spent time locating \verb|U3_U9Coeffs.h|, and misordered the multiplicity strides, inflating consumption to $614,511$ tokens on average (worst case exceeding $853,000$). Treatment agents used the documented copying and indexing procedures and completed the task in $329,829$ tokens with about half the variance.
-    \item {Task 3 (concurrency):} The C++ null-space solver modifies internal scratch memory during factorization, so sharing that state across threads causes races. One Control run (\texttt{task3-control-2}) failed the hidden tests after attempts to resolve non-deterministic segmentation faults; even successful Control runs averaged $33.6$ steps and $110.7$\,s to find the need for thread-private workspaces. Treatment agents applied the skill's OpenMP guidance from the first turn, completing the task with deterministic output in $65.89$\,s and $320,246$ tokens.
+    \item {Task 3 (concurrency):} The coefficient databases keep per-thread cache and scratch state, so sharing one database across threads without initializing each thread causes races. The second Control run failed the hidden tests after attempts to resolve non-deterministic segmentation faults; even successful Control runs averaged $33.6$ steps and $110.7$\,s to find the need for per-thread state. Treatment agents applied the skill's OpenMP guidance from the first turn, completing the task with deterministic output in $65.89$\,s and $320,246$ tokens.
 \end{enumerate}
 
+\begin{comment}
 \subsubsection{Implications for scientific software}
 These results support the use of repository-local domain skills to document the
 mathematical conventions and implementation constraints that an autonomous
@@ -871,7 +872,7 @@ passed the validation suite. The single control failure occurred in the
 parallel C++ task. These observations motivate further evaluation across
 models and tasks; they do not establish that skills guarantee
 correctness or eliminate concurrency errors in general.
-
+\end{comment}
 
 \section{Build and installation}
 \label{sec:build}
@@ -913,8 +914,8 @@ This work is dedicated to the memory of J. P. Draayer, who passed on September 1
 \bibitem{Akiyama1973CPC} Y. Akiyama and J. P. Draayer, ``A User's Guide to Fortran Programs for Wigner and Racah Coefficients of $\rm SU_3$," Comp. Phys. Comms. \textbf{5}, 405 (1973), \href{https://doi.org/10.1016/0010-4655(73)90077-5}{doi:10.1016/0010-4655(73)90077-5}.
 \bibitem{Elliott1958I} J. P. Elliott, ``Collective motion in the nuclear shell model. I. Classification schemes for states of mixed configurations,'' Proc. R. Soc. Lond. A \textbf{245}, 128--145 (1958), \href{https://doi.org/10.1098/rspa.1958.0072}{doi:10.1098/rspa.1958.0072}.
 \bibitem{Elliott1958II} J. P. Elliott, ``Collective motion in the nuclear shell model II. The introduction of intrinsic wave-functions,'' Proc. R. Soc. Lond. A \textbf{245}, 562--581 (1958), \href{https://doi.org/10.1098/rspa.1958.0101}{doi:10.1098/rspa.1958.0101}.
-\bibitem{Dytrych2013PRL} T. Dytrych, K. D. Launey, J. P. Draayer, P. Maris, J. P. Vary, E. Saule, U. Catalyurek, M. Sosonkina, D. Langr, and M. A. Caprio, ``Collective Modes in Light Nuclei from First Principles,'' Phys. Rev. Lett. \textbf{111}, 252501 (2013), \href{https://doi.org/10.1103/PhysRevLett.111.252501}{doi:10.1103/PhysRevLett.111.252501}.
-\bibitem{Dytrych2020PRL} T. Dytrych, K. D. Launey, J. P. Draayer, D. J. Rowe, J. L. Wood, G. Rosensteel, C. Bahri, D. Langr, and R. B. Baker, ``Physics of Nuclei: Key Role of an Emergent Symmetry,'' Phys. Rev. Lett. \textbf{124}, 042501 (2020), \href{https://doi.org/10.1103/PhysRevLett.124.042501}{doi:10.1103/PhysRevLett.124.042501}.
+\bibitem{Dytrych2013PRL} T. Dytrych, K. D. Launey, J. P. Draayer, P. Maris, J. P. Vary, \textit{et al.}, ``Collective Modes in Light Nuclei from First Principles,'' Phys. Rev. Lett. \textbf{111}, 252501 (2013), \href{https://doi.org/10.1103/PhysRevLett.111.252501}{doi:10.1103/PhysRevLett.111.252501}.
+\bibitem{Dytrych2020PRL} T. Dytrych, K. D. Launey, J. P. Draayer, D. J. Rowe, J. L. Wood, \textit{et al.}, ``Physics of Nuclei: Key Role of an Emergent Symmetry,'' Phys. Rev. Lett. \textbf{124}, 042501 (2020), \href{https://doi.org/10.1103/PhysRevLett.124.042501}{doi:10.1103/PhysRevLett.124.042501}.
 \bibitem{McCoy2020PRL} A. E. McCoy, M. A. Caprio, T. Dytrych, and P. J. Fasano, ``Emergent $\mathrm{Sp}(3,\mathbb{R})$ Dynamical Symmetry in the Nuclear Many-Body System from an Ab Initio Description,'' Phys. Rev. Lett. \textbf{125}, 102505 (2020), \href{https://doi.org/10.1103/PhysRevLett.125.102505}{doi:10.1103/PhysRevLett.125.102505}.
 \bibitem{Kota2020} V. K. B. Kota, ``SU(3) Symmetry in Atomic Nuclei,'' Springer, Singapore (2020), \href{https://doi.org/10.1007/978-981-15-3603-8}{doi:10.1007/978-981-15-3603-8}.
 \bibitem{Bonatsos2023Symmetry} D. Bonatsos, A. Martinou, S. K. Peroulis, T. J. Mertzimekis, and N. Minkov, ``The Proxy-SU(3) Symmetry in Atomic Nuclei,'' Symmetry \textbf{15}, 169 (2023), \href{https://doi.org/10.3390/sym15010169}{doi:10.3390/sym15010169}.
