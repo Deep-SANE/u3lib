@@ -16,8 +16,8 @@
 #include <nullspace_solver_qr.h>
 #if defined(NULLSPACE_SOLVER_SLEPC)
 #include <nullspace_solver_slepc.h>
-#elif defined(NULLSPACE_SOLVER_SNS)
-#include <nullspace_solver_sns.h>
+#elif defined(NULLSPACE_SOLVER_KRANS)
+#include <nullspace_solver_krans.h>
 #endif
 
 namespace u3
@@ -346,8 +346,8 @@ namespace u3
       // Building the projection matrix
       auto Lproj = u3::Lprojection(gArr, canoBasis);
       // and solving its null space
-#if defined(NULLSPACE_SOLVER_SNS)
-      transformation = utils::null_space_sns(Lproj, p.kappa());
+#if defined(NULLSPACE_SOLVER_KRANS)
+      transformation = utils::null_space_krans(Lproj, p.kappa());
 #elif defined(NULLSPACE_SOLVER_SLEPC)
       transformation = utils::null_space_slepc(Lproj, p.kappa());
 #else
@@ -359,8 +359,8 @@ namespace u3
     // Building the projection matrix
     auto Lproj = u3::Lprojection(gArr, canoBasis);
     // and solving its null space
-#if defined(NULLSPACE_SOLVER_SNS)
-    transformation = utils::null_space_sns(Lproj, p.kappa());
+#if defined(NULLSPACE_SOLVER_KRANS)
+    transformation = utils::null_space_krans(Lproj, p.kappa());
 #elif defined(NULLSPACE_SOLVER_SLEPC)
     transformation = utils::null_space_slepc(Lproj, p.kappa());
 #else
@@ -461,8 +461,8 @@ namespace u3
       // Building the projection matrix
       auto Lproj = u3::Lprojection(gArr, canoBasis[0]);
       // and solving its null space
-#if defined(NULLSPACE_SOLVER_SNS)
-      transformation[0] = utils::null_space_sns(Lproj, p.kappa());
+#if defined(NULLSPACE_SOLVER_KRANS)
+      transformation[0] = utils::null_space_krans(Lproj, p.kappa());
 #elif defined(NULLSPACE_SOLVER_SLEPC)
       transformation[0] = utils::null_space_slepc(Lproj, p.kappa());
 #else
@@ -474,8 +474,8 @@ namespace u3
     // Building the projection matrix
     auto Lproj = u3::Lprojection(gArr, canoBasis[0]);
     // and solving its null space
-#if defined(NULLSPACE_SOLVER_SNS)
-    transformation[0] = utils::null_space_sns(Lproj, p.kappa());
+#if defined(NULLSPACE_SOLVER_KRANS)
+    transformation[0] = utils::null_space_krans(Lproj, p.kappa());
 #elif defined(NULLSPACE_SOLVER_SLEPC)
     transformation[0] = utils::null_space_slepc(Lproj, p.kappa());
 #else

@@ -31,8 +31,8 @@
 #include <nullspace_solver_qr.h>
 #if defined(NULLSPACE_SOLVER_SLEPC)
 #include <nullspace_solver_slepc.h>
-#elif defined(NULLSPACE_SOLVER_SNS)
-#include <nullspace_solver_sns.h>
+#elif defined(NULLSPACE_SOLVER_KRANS)
+#include <nullspace_solver_krans.h>
 #endif
 
 #include <omp.h>
@@ -525,9 +525,9 @@ namespace u3
 
     auto mat = E23E12(gArr1, gArr2, indices);
 
-#if defined(NULLSPACE_SOLVER_SNS)
+#if defined(NULLSPACE_SOLVER_KRANS)
     Eigen::MatrixXd nullspace =
-        utils::null_space_sns(mat, coeffs.rhomax());
+        utils::null_space_krans(mat, coeffs.rhomax());
 #elif defined(NULLSPACE_SOLVER_SLEPC)
     Eigen::MatrixXd nullspace =
         utils::null_space_slepc(mat, coeffs.rhomax());

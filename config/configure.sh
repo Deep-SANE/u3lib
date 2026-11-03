@@ -12,7 +12,7 @@
 # Non-interactive use (CI, scripted installs):
 #   ./configure.sh --yes                  detect, and install anything undetected
 #   ./configure.sh --cxx=g++-16 --boost=/path --eigen=/path/eigen3 \
-#                  --fmt=/path --wignernj=fetch --sns=/path/to/sns-install --yes
+#                  --fmt=/path --wignernj=fetch --krans=/path/to/krans-install --yes
 # A flag value of "fetch" forces step 3 (download + build) for that dependency;
 # a path forces step 2 (use that existing install).
 set -uo pipefail
@@ -26,7 +26,7 @@ JOBS="$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)"
 # arrays, for bash 3.2 compatibility on stock macOS).
 YES=0
 OPT_cxx=""; OPT_cc=""; OPT_boost=""; OPT_eigen=""; OPT_fmt=""
-OPT_wignernj=""; OPT_sns=""
+OPT_wignernj=""; OPT_krans=""
 for arg in "$@"; do
   case "$arg" in
     --yes|-y) YES=1 ;;
@@ -37,7 +37,7 @@ for arg in "$@"; do
     --eigen=*) OPT_eigen="${arg#*=}" ;;
     --fmt=*)  OPT_fmt="${arg#*=}" ;;
     --wignernj=*) OPT_wignernj="${arg#*=}" ;;
-    --sns=*)  OPT_sns="${arg#*=}" ;;
+    --krans=*)  OPT_krans="${arg#*=}" ;;
     --help|-h)
       sed -n '2,20p' "$0"; exit 0 ;;
     *) echo "unknown option: $arg" >&2; exit 2 ;;
@@ -175,11 +175,9 @@ if is_install "$FMT_DIR"; then
 fi
 [[ -f "$FMT_DIR/include/fmt/core.h" ]] || die "fmt not found under $FMT_DIR (expected include/fmt/core.h)"
 
-# Pinned upstream sources for the two vendored-at-build-time numerical libraries.
+# Pinned upstream source for the vendored-at-build-time numerical library.
 WIGNERNJ_REPO="https://github.com/susilehtola/libwignernj"
 WIGNERNJ_TAG="v0.7.0"
-SNS_REPO="https://gitlab.fit.cvut.cz/krastale/dp-sparse-nullspace"
-SNS_COMMIT="a46ddd3a7a8ccf6108960903441874b6b83ae4aa"
 
 # --- libwignernj (existing install dir, or 'fetch' to download + build) ---
 valid_wignernj() { [[ -f "$1/include/wignernj.hpp" ]] && ls "$1"/lib/libwignernj.* >/dev/null 2>&1; }
@@ -203,39 +201,31 @@ if is_install "$WIGNERNJ_DIR"; then
 fi
 valid_wignernj "$WIGNERNJ_DIR" || die "libwignernj not usable at $WIGNERNJ_DIR (need include/wignernj.hpp + lib/libwignernj.*)"
 
-# --- sns (existing install dir, or 'fetch' to download + build) ---
-valid_sns() { [[ -d "$1/include/sns" && -f "$1/lib/libsns_core.a" ]]; }
-SNS_DET=""; valid_sns "$EXT/dp-sparse-nullspace/install" && SNS_DET="$EXT/dp-sparse-nullspace/install"
-SNS_DIR="$(decide sns "sns" "$SNS_DET")"
-if is_install "$SNS_DIR"; then
-  say "Fetching sns and building (Eigen-only static libs) -> external-libs/dp-sparse-nullspace/install"
-  command -v git >/dev/null 2>&1 || die "git required to fetch sns"
-  command -v cmake >/dev/null 2>&1 || die "cmake required to build sns"
-  src="$EXT/dp-sparse-nullspace/src"
-  rm -rf "$EXT/dp-sparse-nullspace"
-  git clone "$SNS_REPO" "$src" >/dev/null 2>&1 || die "sns clone failed ($SNS_REPO)"
-  git -C "$src" checkout -q "$SNS_COMMIT" || die "sns checkout of pinned commit failed"
-  eigen_prefix="${EIGEN_DIR%/include/eigen3}"
-  # Only when Eigen was fetched locally: steer sns's FetchContent at our clone so
-  # it never downloads Eigen itself. With a system Eigen, find_package resolves it
-  # and this variable would be unused (CMake would warn), so we omit it.
-  if [[ "$EIGEN_DIR" == "$EXT"/* ]]; then
-    FC_EIGEN=( -DFETCHCONTENT_SOURCE_DIR_EIGEN="$EIGEN_DIR" )
-  else
-    FC_EIGEN=()
-  fi
-  cmake -S "$src" -B "$EXT/dp-sparse-nullspace/build" \
-    -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER="$CXX" \
-    -DCMAKE_PREFIX_PATH="$eigen_prefix" -DCMAKE_CXX_FLAGS="-I$EIGEN_DIR" \
-    ${FC_EIGEN[@]+"${FC_EIGEN[@]}"} >/dev/null || die "sns: cmake configure failed"
-  cmake --build "$EXT/dp-sparse-nullspace/build" -j "$JOBS" --target sns_core sns_eigen >/dev/null || die "sns: build failed"
-  mkdir -p "$EXT/dp-sparse-nullspace/install/lib" "$EXT/dp-sparse-nullspace/install/include"
-  cp "$EXT/dp-sparse-nullspace/build"/libsns_core.a "$EXT/dp-sparse-nullspace/build"/libsns_eigen.a \
-    "$EXT/dp-sparse-nullspace/install/lib/" || die "sns: archives not found after build"
-  cp -R "$src/include/sns" "$EXT/dp-sparse-nullspace/install/include/sns"
-  SNS_DIR="$EXT/dp-sparse-nullspace/install"
+# --- krans (Deep-SANE/krans): sibling checkout; auto-cloned + built here if missing ---
+KRANS_REPO="git@github.com:Deep-SANE/krans.git"  # TODO: switch to public https URL once KraNS is published
+valid_krans() { [[ -d "$1/include/krans" && -f "$1/build/libkrans_core.a" && -f "$1/build/libkrans_eigen.a" ]]; }
+# Location: --krans=PATH, env KRANS_DIR, or the sibling ../krans next to u3lib.
+KRANS_DIR="${OPT_krans:-${KRANS_DIR:-}}"
+[[ -z "$KRANS_DIR" ]] && KRANS_DIR="$(cd "$ROOT/.." && pwd)/krans"
+# Clone it next to u3lib if the source is not present yet (helps users who
+# forgot to install it): a plain clone, not vendored under external-libs.
+if [[ ! -d "$KRANS_DIR/include/krans" ]]; then
+  command -v git >/dev/null 2>&1 || die "git required to fetch krans"
+  say "krans not found; cloning -> $KRANS_DIR"
+  git clone "$KRANS_REPO" "$KRANS_DIR" >/dev/null 2>&1 || die "krans clone failed ($KRANS_REPO).
+Check your SSH access to the Deep-SANE organization, or clone it manually:
+  git clone $KRANS_REPO \"$KRANS_DIR\""
 fi
-valid_sns "$SNS_DIR" || die "sns not usable at $SNS_DIR (need include/sns + lib/libsns_core.a)"
+# Build the static libraries in place if they are not present yet.
+if [[ ! -f "$KRANS_DIR/build/libkrans_core.a" || ! -f "$KRANS_DIR/build/libkrans_eigen.a" ]]; then
+  command -v cmake >/dev/null 2>&1 || die "cmake required to build krans"
+  say "Building krans in place -> $KRANS_DIR/build"
+  cmake -S "$KRANS_DIR" -B "$KRANS_DIR/build" -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_COMPILER="$CXX" >/dev/null || die "krans: cmake configure failed"
+  cmake --build "$KRANS_DIR/build" -j >/dev/null || die "krans: build failed"
+fi
+valid_krans "$KRANS_DIR" || die "krans not usable at $KRANS_DIR (need include/krans + build/libkrans_{core,eigen}.a)"
+say "Found krans at $KRANS_DIR"
 
 # --- OpenMP (probe the chosen compiler) ---
 USE_OPENMP=0
@@ -254,9 +244,9 @@ say "Writing $GEN"
   echo "LDFLAGS :="
   echo "USE_WIGNERNJ := 1"
   echo "WIGNERNJ_DIR := $WIGNERNJ_DIR"
-  echo "USE_SNS := 1"
-  echo "SNS_DIR := $SNS_DIR"
-  echo "NULLSPACE_SOLVER := sns"
+  echo "USE_KRANS := 1"
+  echo "KRANS_DIR := $KRANS_DIR"
+  echo "NULLSPACE_SOLVER := krans"
   echo "BOOST_ROOT := $BOOST_ROOT"
   echo "EIGEN_DIR := $EIGEN_DIR"
   if [[ "$FMT_DIR" != "none" ]]; then
