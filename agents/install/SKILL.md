@@ -16,7 +16,8 @@ resolves every dependency and records the result in `config/config.generated.mk`
 
 - A C++20 compiler with OpenMP (real GCC, or Clang with libomp).
 - To let `make config` download dependencies: `git`, `cmake`, and `curl` or `wget`.
-- For the Python extension only: a Python interpreter with `pybind11` installed.
+- For the Python extension only: a Python interpreter with `pybind11` (and `ipykernel`
+  for the tutorial). `make python` auto-detects a suitable one, or pass `PYTHON=`.
 
 ## 1. Configure
 
@@ -31,8 +32,11 @@ into `external-libs/` (not part of the repository).
   anything undetected. Give explicit paths when needed, e.g.
   `make config CONFIG_ARGS="--boost=/path --eigen=/path/eigen3 --yes"`.
 
-Dependencies are Eigen3, Boost (headers), fmt, libwignernj, and sns. Boost's
-download is large (~130 MB), so prefer a system Boost when one is available.
+Dependencies are Eigen3, Boost (headers), fmt, libwignernj, and the KraNS
+null-space solver. libwignernj is fetched and built into `external-libs/`; KraNS
+is used as a sibling checkout (`../krans`) that `make config` clones from the
+Deep-SANE organization and builds in place if it is missing. Boost's download is
+large (~130 MB), so prefer a system Boost when one is available.
 
 ## 2. Build and verify
 
@@ -43,8 +47,10 @@ download is large (~130 MB), so prefer a system Boost when one is available.
 
 ## 3. Python extension (only for a Python calculation)
 
-- `make python PYTHON=/path/to/python` — build `python/u3lib.so` with an
-  interpreter that has `pybind11`. Verify the import and a known value:
+- `make python` — build `python/u3lib.so`. The interpreter is auto-detected (one
+  with `pybind11`, preferring one that also has `ipykernel` for the Jupyter
+  tutorial); override with `make python PYTHON=/path/to/python`. Verify the import
+  and a known value:
 
   ```sh
   cd python && python3 -c "import u3lib as u; u.initialize(); print(u.irrep(4,2).dim()); u.finalize()"

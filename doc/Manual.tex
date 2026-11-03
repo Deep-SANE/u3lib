@@ -109,9 +109,10 @@ these routines from natural-language requests.
 \textit{Programming language}: C++ (C++20), with Python bindings via pybind11.
 
 \noindent
-\textit{External libraries}: \texttt{Eigen3} for QR-based null space solver; \texttt{Boost} for hash tables; 
+\textit{External libraries}: \texttt{Eigen3} for QR-based null space solver; \texttt{Boost} for hash tables;
 \texttt{OpenMP} for multi-threading; \texttt{fmt} for formatting output; \texttt{libwignernj} for $\rm SU(2)$ coupling
-and recoupling coefficients; and \red{\texttt{sns} for null space solver catered to sparse matrices ... TBD by DL}. 
+and recoupling coefficients; and \texttt{KraNS} for iterative sparse null-space solvers on large matrices
+(with an automatic dense-QR fallback for small or block-heavy cases).
 The Python extension additionally uses \texttt{pybind11}.
 
 \noindent
@@ -900,13 +901,17 @@ pinned versions from upstream sources and builds them under
 \verb|external-libs/|, which is not part of the repository:
 \begin{itemize}
     \item \texttt{libwignernj}: \url{https://github.com/susilehtola/libwignernj} %the sole backend, enabled via \verb|USE_WIGNERNJ=1|, links dynamically (\verb|-lwignernj|).
-    \item \red{\texttt{sns}: \url{https://gitlab.fit.cvut.cz/krastale/dp-sparse-nullspace}} % sparse solver enabled via \verb|USE_SNS=1|; builds with sparse representation (\verb|-DNULLSPACE_SPARSE|) and falls back to dense QR for small or block-heavy cases.
     \item \texttt{Eigen3}: \url{https://eigen.tuxfamily.org}
     \item \texttt{Boost}: \url{https://www.boost.org}
     \item \texttt{OpenMP} (via the compiler runtime, e.g.\ GCC's libgomp): \url{https://www.openmp.org}
     \item \texttt{fmt}: \url{https://github.com/fmtlib/fmt}
     \item \texttt{pybind11}: \url{https://github.com/pybind/pybind11}
 \end{itemize}
+
+The \texttt{KraNS} null-space solver (\url{https://github.com/Deep-SANE/krans})
+is used as a sibling checkout alongside \texttt{u3lib} rather than vendored under
+\verb|external-libs/|; \verb|make config| clones it from the Deep-SANE
+organization and builds it in place when it is not already present. 
 
 
 \begin{acknowledgments}

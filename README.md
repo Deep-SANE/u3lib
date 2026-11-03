@@ -34,11 +34,11 @@ u3lib is self-contained and needs no environment variables. Configure once, then
 make config   # resolve all dependencies, writing config/config.generated.mk
 make          # build C++ driver programs in src/ (-> bin/)
 make test     # recompile and run regression test suite (test/, -> bin/test/)
-make python   # build the pybind11 extension -> python/u3lib.so (PYTHON=/path/to/python)
+make python   # build pybind11 extension -> python/u3lib.so (auto-detects a pybind11+Jupyter python; override PYTHON=...)
 make clean
 ```
 
-`make config` detects each dependency and lets you accept the detected default, point to your own install, or — for the two numerical libraries — download the pinned upstream source and build it locally (into `external-libs/`, which is not part of the repository). It is interactive by default; for scripted use pass flags through, e.g. `make config CONFIG_ARGS="--yes"`.
+`make config` detects each dependency and lets you accept the detected default, point to your own install, or fetch and build it. The **KraNS** null-space solver is used as a sibling repository next to u3lib (`../krans`), built in place if not already installed; `make config` clones it from Deep-SANE automatically if it is missing. Configuration is interactive by default; for scripted use pass flags through, e.g. `make config CONFIG_ARGS="--yes"`.
 
 **Installing with an AI agent.** Point a code-executing assistant at this repository and prompt, for example:
 
@@ -47,8 +47,8 @@ make clean
 The agent resolves the steps through the repository-local [install skill](agents/install/SKILL.md).
 
 - **Regression Tests (`make test`):** Tests dimensions, basis interlacing, branching rules, coupling orthonormality, and documented analytic values. Checks remain enabled in release builds (`-UNDEBUG`).
-- **Python Extension (`make python`):** Builds `python/u3lib.so`. See `python/tutorial.ipynb` for interpreter requirements and interactive usage.
-- **Dependencies:** a C++20 compiler and OpenMP are required on the system; the library dependencies — Eigen3, Boost (headers), fmt, the **libwignernj** SU(2) Wigner backend, and the **sns** null-space solver (dense-QR fallback) — are each either detected, taken from a path you give, or **downloaded and built by `make config`** (into `external-libs/`, which is not committed). Fetching needs `git`, `cmake`, and `curl` or `wget`. Linux and macOS are both supported. Full configuration options are in [doc/Manual.pdf](doc/Manual.pdf).
+- **Python Extension (`make python`):** Builds `python/u3lib.so`. The interpreter is auto-detected — one that has `pybind11` and, for the tutorial, `ipykernel` — and can be overridden with `make python PYTHON=/path/to/python`. See `python/tutorial.ipynb` for interactive usage.
+- **Dependencies:** a C++20 compiler and OpenMP are required on the system; the library dependencies — Eigen3, Boost, fmt, libwignernj, and KraNS — are each either **detected**, **taken from a path** you give, or **fetched and built by `make config`**. Fetching needs `git`, `cmake`, and `curl` or `wget`. Linux and macOS are both supported. Full configuration options are in [doc/Manual.pdf](doc/Manual.pdf).
 
 ---
 
