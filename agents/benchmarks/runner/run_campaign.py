@@ -18,7 +18,7 @@ SNAPSHOTS = BENCH / 'snapshots'
 DEFAULT_FIXTURES = EVALUATOR / 'fixtures.json'
 GRADER = EVALUATOR / 'grade.py'
 GEMINI_AGENT = HERE / 'gemini_agent.py'
-PY_EXEC = '/Users/phongdang/miniforge3/bin/python3'
+PY_EXEC = os.environ.get('BENCH_PYTHON', sys.executable)
 TIMEOUT = 1800
 
 TASK_NAMES = {
@@ -31,7 +31,7 @@ TASK_NAMES = {
 def build_env(workspace: Path) -> dict:
     env = os.environ.copy()
     py_lib = workspace / 'u3lib/python'
-    env['PATH'] = f"/Users/phongdang/miniforge3/bin:/opt/homebrew/bin:{env.get('PATH', '')}"
+    env['PATH'] = f"{os.path.dirname(PY_EXEC)}:{env.get('PATH', '')}"
     env['PYTHONPATH'] = f"{py_lib}:{env.get('PYTHONPATH', '')}"
     env['U3LIB_DIR'] = str(workspace / 'u3lib')
     return env

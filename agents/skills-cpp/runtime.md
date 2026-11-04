@@ -16,7 +16,7 @@ standalone programs.
 - u3lib is header-only. Compile a driver (a program in `src/`, or a standalone
   `.cpp`) against the library's configured flags: the include paths for
   `u3lib/include`, `u3lib/include/internal`, `utils`, Eigen, Boost,
-  and libwignernj, plus its link flags. The null-space solver is `sns` (its
+  and libwignernj, plus its link flags. The null-space solver is `krans` (its
   wrapper falls back to dense QR); do not silently change the selected solver.
 - For a standalone calculation, use this lifecycle around coefficient work:
 

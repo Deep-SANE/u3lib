@@ -114,7 +114,7 @@ these regression values rather than making them an external reference.
 - Platform: macOS arm64; GNU C++ (Homebrew GCC) 16.2.0.
 - Values are backend-independent to the test tolerances: numerical agreement is
   tolerance-based, not bitwise, across Wigner/solver backends. The current
-  libwignernj + sns (dense-QR fallback) stack reproduces every saved value.
+  libwignernj + krans (dense-QR fallback) stack reproduces every saved value.
 - Basis fixing: the library's RREF, Gram-Schmidt and leading-nonzero sign rule;
   `ADD_SU3LIB_PHASE_U3SO3` enabled as in the source.
 - Reproduction: run `make config` then `make reference-tool` from the

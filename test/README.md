@@ -80,7 +80,7 @@ compared directly, without sign alignment or basis rotation.
 
 RREF, Gram-Schmidt and the sign convention fix the multiplicity basis for
 fixed ordering. This applies to the library's configured solvers (dense QR and
-sns). Floating-point pivot thresholds can still matter for ill-conditioned
+krans). Floating-point pivot thresholds can still matter for ill-conditioned
 cases; a failure should be investigated, not resolved by automatically
 regenerating references or loosening tolerances.
 

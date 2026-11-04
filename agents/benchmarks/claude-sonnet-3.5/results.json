@@ -2240,7 +2240,7 @@
     "grader": {
       "success": false,
       "error": "missing local test file",
-      "traceback": "Traceback (most recent call last):\n  File \"/Users/phongdang/Desktop/DeepSANE/u3lib/agents/benchmarks/evaluator/grade.py\", line 84, in <module>\n    n=grade(int(sys.argv[1]),Path(sys.argv[2]).resolve(),json.loads(Path(sys.argv[3]).read_text()))\n  File \"/Users/phongdang/Desktop/DeepSANE/u3lib/agents/benchmarks/evaluator/grade.py\", line 37, in grade\n    submission_files(consumer)\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^\n  File \"/Users/phongdang/Desktop/DeepSANE/u3lib/agents/benchmarks/evaluator/grade.py\", line 34, in submission_files\n    assert tests,'missing local test file'\n           ^^^^^\nAssertionError: missing local test file\n"
+      "traceback": "Traceback (most recent call last):\n  File \"agents/benchmarks/evaluator/grade.py\", line 84, in <module>\n    n=grade(int(sys.argv[1]),Path(sys.argv[2]).resolve(),json.loads(Path(sys.argv[3]).read_text()))\n  File \"agents/benchmarks/evaluator/grade.py\", line 37, in grade\n    submission_files(consumer)\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^\n  File \"agents/benchmarks/evaluator/grade.py\", line 34, in submission_files\n    assert tests,'missing local test file'\n           ^^^^^\nAssertionError: missing local test file\n"
     },
     "token_usage": {
       "input_tokens": 36,

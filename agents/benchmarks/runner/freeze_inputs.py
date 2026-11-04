@@ -23,7 +23,7 @@ def make_environment_sh(root: Path):
     content = """#!/usr/bin/env bash
 export U3LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/u3lib" && pwd)"
 export PYTHONPATH="$U3LIB_DIR/python:${PYTHONPATH:-}"
-export PATH="/Users/phongdang/miniforge3/bin:/opt/homebrew/bin:${PATH}"
+export PATH="${PATH}"
 """
     (root / 'environment.sh').write_text(content)
     (root / 'environment.sh').chmod(0o755)

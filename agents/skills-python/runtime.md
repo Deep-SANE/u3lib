@@ -16,7 +16,7 @@ standalone programs.
   hardcode another machine's paths. The sole Wigner backend is libwignernj.
 - Use the Python interpreter matching the extension ABI. If the extension is
   missing or stale, run `make python PYTHON=/path/to/interpreter` from the repository root
-  with the intended interpreter. The null-space solve uses sns (dense-QR fallback).
+  with the intended interpreter. The null-space solve uses krans (dense-QR fallback).
 - Use the module path supplied by the environment and inspect `u3lib.__file__`.
   For a repository-local build, add its `python/` directory to the import path.
   Do not override an explicitly supplied runtime with a stale local extension.
