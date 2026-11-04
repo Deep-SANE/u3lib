@@ -202,7 +202,7 @@ fi
 valid_wignernj "$WIGNERNJ_DIR" || die "libwignernj not usable at $WIGNERNJ_DIR (need include/wignernj.hpp + lib/libwignernj.*)"
 
 # --- krans (Deep-SANE/krans): sibling checkout; auto-cloned + built here if missing ---
-KRANS_REPO="git@github.com:Deep-SANE/krans.git"  # TODO: switch to public https URL once KraNS is published
+KRANS_REPO="https://github.com/Deep-SANE/krans.git"
 valid_krans() { [[ -d "$1/include/krans" && -f "$1/build/libkrans_core.a" && -f "$1/build/libkrans_eigen.a" ]]; }
 # Location: --krans=PATH, env KRANS_DIR, or the sibling ../krans next to u3lib.
 KRANS_DIR="${OPT_krans:-${KRANS_DIR:-}}"
@@ -213,7 +213,7 @@ if [[ ! -d "$KRANS_DIR/include/krans" ]]; then
   command -v git >/dev/null 2>&1 || die "git required to fetch krans"
   say "krans not found; cloning -> $KRANS_DIR"
   git clone "$KRANS_REPO" "$KRANS_DIR" >/dev/null 2>&1 || die "krans clone failed ($KRANS_REPO).
-Check your SSH access to the Deep-SANE organization, or clone it manually:
+Please clone it manually:
   git clone $KRANS_REPO \"$KRANS_DIR\""
 fi
 # Build the static libraries in place if they are not present yet.
