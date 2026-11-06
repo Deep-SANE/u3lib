@@ -7,7 +7,7 @@ matrix elements, basis transformations, tensor-product decompositions, and the
 C++ API, Python bindings, and an agent-driven skill layer over all of it.
 
 - **Paper:** [Eur. Phys. J. Plus **139**, 704 (2024)](https://doi.org/10.1140/epjp/s13360-024-05501-8)
-- **Manual:** [Manual (PDF)](doc/Manual.pdf); LaTeX source in `doc/Manual.tex`.
+- **Manual:** [Manual (PDF)](https://deep-sane.github.io/u3lib/Manual.pdf), built automatically from the LaTeX source in `doc/Manual.tex`.
 
 > **Note for AI Agents:** Do not parse this human documentation. Refer directly to [agents/AGENTS.md](agents/AGENTS.md) for repository guidance, first-time build/installation, runtime lifecycle, and task-specific skills.
 
@@ -48,7 +48,7 @@ The agent resolves the steps through the repository-local [install skill](agents
 
 - **Regression Tests (`make test`):** Tests dimensions, basis interlacing, branching rules, coupling orthonormality, and documented analytic values. Checks remain enabled in release builds (`-UNDEBUG`).
 - **Python Extension (`make python`):** Builds `python/u3lib.so`. The interpreter is auto-detected — one that has `pybind11` and, for the tutorial, `ipykernel` — and can be overridden with `make python PYTHON=/path/to/python`. See `python/tutorial.ipynb` for interactive usage.
-- **Dependencies:** a C++20 compiler and OpenMP are required on the system; the library dependencies — Eigen3, Boost, fmt, libwignernj, and KraNS — are each either **detected**, **taken from a path** you give, or **fetched and built by `make config`**. Fetching needs `git`, `cmake`, and `curl` or `wget`. Linux and macOS are both supported. Full configuration options are in [doc/Manual.pdf](doc/Manual.pdf).
+- **Dependencies:** a C++20 compiler and OpenMP are required on the system; the library dependencies — Eigen3, Boost, fmt, libwignernj, and KraNS — are each either **detected**, **taken from a path** you give, or **fetched and built by `make config`**. Fetching needs `git`, `cmake`, and `curl` or `wget`. Linux and macOS are both supported. Full configuration options are in the [Manual (PDF)](https://deep-sane.github.io/u3lib/Manual.pdf).
 
 ---
 
@@ -58,7 +58,7 @@ The agent resolves the steps through the repository-local [install skill](agents
 - `src/` — C++ example driver programs; compiled into `bin/`.
 - `python/` — pybind11 bindings (`pyu3lib.cpp`), build script, tutorial notebook (`tutorial.ipynb`), and notes.
 - `test/` — regression suite (`test_*.cpp`, `*_cases.h`, and reference tables under `reference/`).
-- `doc/` — full reference manual (`Manual.pdf` and LaTeX source).
+- `doc/` — LaTeX source of the full reference manual (`Manual.tex`); the PDF is built on every change and published on [GitHub Pages](https://deep-sane.github.io/u3lib/Manual.pdf).
 - `agents/` — AI-agent skill catalog (`AGENTS.md`), runtime instructions, and task skills.
 - `bin/` — compiled binary output (not source; git-ignored).
 
@@ -66,5 +66,5 @@ The agent resolves the steps through the repository-local [install skill](agents
 
 ## Documentation & AI Agent Skills
 
-- **Full Reference Manual:** For exhaustive mathematical derivations, phase conventions, getter signatures, and solver backends, consult [doc/Manual.pdf](doc/Manual.pdf).
-- **AI-Ready Calculations:** `u3lib` provides a repository-local skill package under [`agents/`](agents/AGENTS.md) that enables code-executing AI assistants to plan and drive calculations through natural-language prompts. A complete table of representative prompts with checked reference values is provided in **Table IV of the [Manual](doc/Manual.pdf)** as well as in [`agents/AGENTS.md`](agents/AGENTS.md).
+- **Full Reference Manual:** For exhaustive mathematical derivations, phase conventions, getter signatures, and solver backends, consult the [Manual (PDF)](https://deep-sane.github.io/u3lib/Manual.pdf).
+- **AI-Ready Calculations:** `u3lib` provides a repository-local skill package under [`agents/`](agents/AGENTS.md) that enables code-executing AI assistants to plan and drive calculations through natural-language prompts. A complete table of representative prompts with checked reference values is provided in **Table IV of the [Manual](https://deep-sane.github.io/u3lib/Manual.pdf)** as well as in [`agents/AGENTS.md`](agents/AGENTS.md).
