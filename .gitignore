@@ -14,7 +14,9 @@ python/u3lib.d
 __pycache__/
 *.pyc
 
-# LaTeX build artifacts (keep Manual.tex, Manual.pdf, References.bib, figures)
+# LaTeX build artifacts (keep Manual.tex, References.bib, figures).
+# Manual.pdf is built by CI and published on GitHub Pages.
+doc/Manual.pdf
 doc/*.aux
 doc/*.bbl
 doc/*.blg
