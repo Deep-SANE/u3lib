@@ -90,7 +90,8 @@ decide() {
 # (covers many Linux distro and HPC/module setups). Echo a valid path or nothing.
 detect_boost() {
   local p
-  for p in "$BREW_BOOST" /opt/homebrew/opt/boost /usr/local /usr; do
+  # BOOST_ROOT from the environment first (set by e.g. HPC `module load Boost`).
+  for p in "${BOOST_ROOT:-}" "$BREW_BOOST" /opt/homebrew/opt/boost /usr/local /usr; do
     [[ -n "$p" && -d "$p/include/boost" ]] && { echo "$p"; return; }
   done
 }
