@@ -796,7 +796,7 @@ reference implementations. On these validation cases, the grader achieved
 100\% sensitivity and specificity, with no false positives or false negatives.
 
 \subsubsection{Model and Statistical Protocol}
-All experiments used Anthropic's Claude 3.5 Sonnet in an autonomous agent
+All experiments used Anthropic's Claude Sonnet 5.5 (\texttt{claude-sonnet-5-5}) in an autonomous agent
 test environment. For each task, $N = 10$ matched Control/Treatment pairs were run (60
 runs total), recording four metrics per run: functional pass rate; total
 token consumption (prompt, cache-read, and completion tokens); wall-clock
@@ -821,7 +821,7 @@ the 60 runs. Across the three tasks:
     \footnotesize
     \setlength{\tabcolsep}{2.8pt}
     \renewcommand{\arraystretch}{1.3}
-    \caption{Empirical performance comparison between Control (Zero Skills) and Treatment (Domain Skills) across $N=10$ independent matched pairs per task (60 runs total) using Claude 3.5 Sonnet. Tokens, execution duration, and costs are reported as $\text{Mean} \pm \text{Standard Deviation}$. Statistical significance is assessed via two-tailed Welch's $t$-tests.}
+    \caption{Empirical performance comparison between Control (Zero Skills) and Treatment (Domain Skills) across $N=10$ independent matched pairs per task (60 runs total) using Claude Sonnet 5.5. Tokens, execution duration, and costs are reported as $\text{Mean} \pm \text{Standard Deviation}$. Statistical significance is assessed via two-tailed Welch's $t$-tests.}
     \label{tab:benchmark_results}
     \vspace{0.2cm}
     \begin{tabular}{llcccccc}

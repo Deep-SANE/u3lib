@@ -253,7 +253,7 @@ def update_summary(results_dir: Path):
 def main():
     parser = argparse.ArgumentParser(description="Unified Sandbox Campaign Runner")
     parser.add_argument('--model', type=str, required=True,
-                        choices=['claude-sonnet-3.5', 'gemini-flash-2.0'],
+                        choices=['claude-sonnet-5.5', 'gemini-flash-2.0'],
                         help="Model to run")
     parser.add_argument('--task', type=int, default=1, choices=[1, 2, 3],
                         help="Task number (default: 1)")
