@@ -155,8 +155,10 @@ underlying algorithm based on hypergeometric functions with large factorials
 and alternating sums. Dang \textit{et al.} introduced a different approach that does 
 not involve these instability-prone functions
 by constructing the coefficients from the action of the group's raising generators
-using numerical null-space solvers \cite{Dang2024EPJP1,Alex2011JMP}
-\red{DL, perhaps you also want to cite your student's thesis here?} 
+using numerical null-space solvers \cite{Dang2024EPJP1,Alex2011JMP}.
+For the large sparse matrices arising in this approach,
+a dedicated iterative null-space solver, now known as
+\texttt{KraNS}, was developed \cite{Krastenov2026MSc}.
 
 The same algebraic tools also arise outside nuclear physics. In particle
 physics, flavor $\rm SU(3)$ underlies the eightfold-way classification of
@@ -937,6 +939,7 @@ This work is dedicated to the memory of J. P. Draayer, who passed on September 1
 \bibitem{Dytrych2021CPC} T. Dytrych, D. Langr, J. P. Draayer, K. D. Launey and D. Gazda, ``SU3lib: A C++ library for accurate computation of Wigner and Racah coefficients of SU(3)," Comp. Phys. Comms \textbf{269}, 108137 (2021), \href{https://doi.org/10.1016/j.cpc.2021.108137}{doi:10.1016/j.cpc.2021.108137}.
 \bibitem{Herko2026EPJA} J. Herko, M. A. Caprio, A. E. McCoy and P. J. Fasano, ``A modern Fortran library for $\rm SU(3)$ coupling and recoupling coefficients,"  Eur. Phys. J. A \textbf{62}, 95 (2026), \href{https://doi.org/10.1140/epja/s10050-026-01845-0}{doi:10.1140/epja/s10050-026-01845-0}.
 \bibitem{Alex2011JMP} A. Alex, M. Kalus, A. Huckleberry, and J. von Delft, ``A numerical algorithm for the explicit calculation of $\rm SU(N)$ and $\rm SL(N,\mathbb{C})$ Clebsch--Gordan coefficients,'' J. Math. Phys. \textbf{52}, 023507 (2011), \href{https://doi.org/10.1063/1.3521562}{doi:10.1063/1.3521562}.
+\bibitem{Krastenov2026MSc} A. Krastenov, ``Sparse Null Space Solver in C++,'' Master's thesis, Faculty of Information Technology, Czech Technical University in Prague (2026).
 \bibitem{GellMann1962PR} M. Gell-Mann, ``Symmetries of Baryons and Mesons,'' Phys. Rev. \textbf{125}, 1067 (1962), \href{https://doi.org/10.1103/PhysRev.125.1067}{doi:10.1103/PhysRev.125.1067}.
 \bibitem{Neeman1961NP} Y. Ne'eman, ``Derivation of strong interactions from a gauge invariance,'' Nucl. Phys. \textbf{26}, 222 (1961), \href{https://doi.org/10.1016/0029-5582(61)90134-1}{doi:10.1016/0029-5582(61)90134-1}.
 \bibitem{Bacon2006PRL} D. Bacon, I. L. Chuang, and A. W. Harrow, ``Efficient Quantum Circuits for Schur and Clebsch--Gordan Transforms,'' Phys. Rev. Lett. \textbf{97}, 170502 (2006), \href{https://doi.org/10.1103/PhysRevLett.97.170502}{doi:10.1103/PhysRevLett.97.170502}.
