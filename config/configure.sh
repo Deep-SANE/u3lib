@@ -181,7 +181,9 @@ WIGNERNJ_REPO="https://github.com/susilehtola/libwignernj"
 WIGNERNJ_TAG="v0.7.0"
 
 # --- libwignernj (existing install dir, or 'fetch' to download + build) ---
-valid_wignernj() { [[ -f "$1/include/wignernj.hpp" ]] && ls "$1"/lib/libwignernj.* >/dev/null 2>&1; }
+valid_wignernj() {
+  [[ -f "$1/include/wignernj.hpp" ]] && (ls "$1"/lib/libwignernj.* 2>/dev/null || ls "$1"/lib64/libwignernj.* 2>/dev/null) >/dev/null 2>&1
+}
 WJ_DET=""; valid_wignernj "$EXT/libwignernj/install" && WJ_DET="$EXT/libwignernj/install"
 WIGNERNJ_DIR="$(decide wignernj "libwignernj" "$WJ_DET")"
 if is_install "$WIGNERNJ_DIR"; then
@@ -193,12 +195,18 @@ if is_install "$WIGNERNJ_DIR"; then
     || die "libwignernj clone failed ($WIGNERNJ_REPO @ $WIGNERNJ_TAG)"
   cmake -S "$EXT/libwignernj/src" -B "$EXT/libwignernj/build" \
     -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER="$CC" \
+    -DCMAKE_INSTALL_LIBDIR=lib \
     -DBUILD_FORTRAN=OFF -DBUILD_TESTS=OFF -DBUILD_EXAMPLES=OFF \
     -DBUILD_CXX_TESTS=OFF -DBUILD_PYTHON=OFF -DBUILD_SHARED_LIBS=ON \
     -DCMAKE_INSTALL_PREFIX="$EXT/libwignernj/install" >/dev/null || die "libwignernj: cmake configure failed"
   cmake --build "$EXT/libwignernj/build" -j "$JOBS" >/dev/null || die "libwignernj: build failed"
   cmake --install "$EXT/libwignernj/build" >/dev/null || die "libwignernj: install failed"
   WIGNERNJ_DIR="$EXT/libwignernj/install"
+fi
+# On 64-bit Linux (RHEL/CentOS), CMake's GNUInstallDirs may install to lib64.
+# Ensure a lib -> lib64 symlink exists so -L$(WIGNERNJ_DIR)/lib always resolves.
+if [[ -d "$WIGNERNJ_DIR/lib64" && ! -d "$WIGNERNJ_DIR/lib" ]]; then
+  ln -s lib64 "$WIGNERNJ_DIR/lib"
 fi
 valid_wignernj "$WIGNERNJ_DIR" || die "libwignernj not usable at $WIGNERNJ_DIR (need include/wignernj.hpp + lib/libwignernj.*)"
 
