@@ -14,7 +14,7 @@ resolves every dependency and records the result in `config/config.generated.mk`
 
 ## Prerequisites (system tools; the library does not install these)
 
-- A C++20 compiler with OpenMP (real GCC, or Clang with libomp).
+- A C++20 compiler with OpenMP (real GCC, or Clang with libomp; **macOS note**: default Apple Clang `/usr/bin/clang++` lacks native OpenMP, install GCC via `brew install gcc` and export `CXX=g++-14`, or use Homebrew LLVM with `libomp`).
 - To let `make config` download dependencies: `git`, `cmake`, and `curl` or `wget`.
 - For the Python extension only: a Python interpreter with `pybind11` (and `ipykernel`
   for the tutorial). `make python` auto-detects a suitable one, or pass `PYTHON=`.
@@ -22,7 +22,7 @@ resolves every dependency and records the result in `config/config.generated.mk`
 ## 1. Configure
 
 `make config` resolves each dependency by the chain **detect → ask → install**:
-it detects a system install (standard locations and `pkg-config`), otherwise
+it detects a system or cluster install (standard locations, HPC module paths, and `pkg-config`), otherwise
 prompts for a path, otherwise downloads the pinned upstream source and builds it
 into `external-libs/` (not part of the repository).
 
@@ -33,14 +33,17 @@ into `external-libs/` (not part of the repository).
   `make config CONFIG_ARGS="--boost=/path --eigen=/path/eigen3 --yes"`.
 
 Dependencies are Eigen3, Boost (headers), fmt, libwignernj, and the KraNS
-null-space solver. libwignernj is fetched and built into `external-libs/`; KraNS
-is used as a sibling checkout (`../krans`) that `make config` clones from the
-Deep-SANE organization and builds in place if it is missing. Boost's download is
-large (~130 MB), so prefer a system Boost when one is available.
+null-space solver. `make config` auto-detects existing cluster/module installations
+(e.g. on HPC systems) and extracts Eigen3 directly from a sibling KraNS build if already
+configured. libwignernj is fetched and built into `external-libs/` (with automatic `lib64`
+support on Linux). KraNS is used as a sibling checkout (`../krans`) that `make config`
+clones automatically from its public repository (`https://github.com/Deep-SANE/krans.git`)
+and builds in place if missing. Boost's download is large (~130 MB), so prefer a system
+or cluster module Boost when available.
 
 ## 2. Build and verify
 
-- `make` — build the C++ driver programs into `bin/`.
+- `make -j` — build the C++ driver programs in parallel into `bin/`.
 - `make test` — build and run the regression suite. Success prints
   `PASS: all test executables`. Treat any `FAIL` as a blocking error: report it
   and do not proceed to calculations.
