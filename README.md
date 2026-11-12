@@ -32,8 +32,8 @@ u3lib is self-contained and needs no environment variables. Configure once, then
 
 ```bash
 make config   # resolve all dependencies, writing config/config.generated.mk
-make          # build C++ driver programs in src/ (-> bin/)
-make test     # recompile and run regression test suite (test/, -> bin/test/)
+make -j       # build C++ driver programs in parallel (src/ -> bin/)
+make -j test  # recompile and run regression test suite in parallel (test/, -> bin/test/)
 make python   # build pybind11 extension -> python/u3lib.so (auto-detects a pybind11+Jupyter python; override PYTHON=...)
 make clean
 ```
