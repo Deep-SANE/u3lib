@@ -49,6 +49,8 @@ namespace utils
     opt.nullity_known = nullity; // stop exactly at the target
     opt.block_size =
         std::max<std::size_t>(static_cast<std::size_t>(nullity) + 8, 16);
+    opt.tol_abs = 1e-14;
+    opt.tol_rel = 1e-14;
 
     auto basis = krans::solvers::find_nullspace_lobpcg(A, vf, opt);
 
@@ -72,7 +74,7 @@ namespace utils
     // path leaves ~1e-14 noise in positions that are exact zeros in the QR
     // reference, so the default 1e-15 threshold would anchor on that noise and
     // flip whole-column signs; genuine coupling coefficients are >> 1e-10.
-    SignConvention(res, 1e-10);
+    SignConvention(res, 1e-12);
 
     // Inaccurate result -> fall back to QR (graceful; no abort/assert, since
     // this is an opt-in iterative path).
