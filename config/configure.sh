@@ -229,8 +229,12 @@ fi
 if [[ ! -f "$KRANS_DIR/build/libkrans_core.a" || ! -f "$KRANS_DIR/build/libkrans_eigen.a" ]]; then
   command -v cmake >/dev/null 2>&1 || die "cmake required to build krans"
   say "Building krans in place -> $KRANS_DIR/build"
+  eigen_prefix="${EIGEN_DIR%/include/eigen3}"
+  eigen_prefix="${eigen_prefix%/include}"
   cmake -S "$KRANS_DIR" -B "$KRANS_DIR/build" -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_CXX_COMPILER="$CXX" >/dev/null || die "krans: cmake configure failed"
+    -DCMAKE_CXX_COMPILER="$CXX" \
+    -DCMAKE_PREFIX_PATH="$eigen_prefix" \
+    -DEIGEN3_INCLUDE_DIR="$EIGEN_DIR" >/dev/null || die "krans: cmake configure failed"
   cmake --build "$KRANS_DIR/build" -j >/dev/null || die "krans: build failed"
 fi
 valid_krans "$KRANS_DIR" || die "krans not usable at $KRANS_DIR (need include/krans + build/libkrans_{core,eigen}.a)"
