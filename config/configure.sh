@@ -91,29 +91,92 @@ decide() {
 detect_boost() {
   local p
   # BOOST_ROOT from the environment first (set by e.g. HPC `module load Boost`).
-  for p in "${BOOST_ROOT:-}" "$BREW_BOOST" /opt/homebrew/opt/boost /usr/local /usr; do
+  for p in "${BOOST_ROOT:-}" "$HOME/boost-install" "$HOME/.local" \
+           /usr/local/packages/boost/* \
+           "$BREW_BOOST" /opt/homebrew/opt/boost /usr/local /usr; do
     [[ -n "$p" && -d "$p/include/boost" ]] && { echo "$p"; return; }
   done
 }
+
+detect_eigen_from_krans() {
+  local kdir="${OPT_krans:-${KRANS_DIR:-$(cd "$ROOT/.." 2>/dev/null && pwd)/krans}}"
+  local cache="$kdir/build/CMakeCache.txt"
+  local p inc
+  if [[ -f "$cache" ]]; then
+    # 1. Directly stored EIGEN3_INCLUDE_DIR
+    p="$(grep "^EIGEN3_INCLUDE_DIR:PATH=" "$cache" 2>/dev/null | cut -d= -f2- | tr -d '\r')"
+    [[ -n "$p" && -f "$p/Eigen/Dense" ]] && { echo "$p"; return; }
+    [[ -n "$p" && -f "$p/include/eigen3/Eigen/Dense" ]] && { echo "$p/include/eigen3"; return; }
+    [[ -n "$p" && -f "$p/include/Eigen/Dense" ]] && { echo "$p/include"; return; }
+
+    # 2. CMake package config dir (e.g. /usr/share/eigen3/cmake -> /usr/include/eigen3)
+    p="$(grep "^Eigen3_DIR:PATH=" "$cache" 2>/dev/null | cut -d= -f2- | tr -d '\r')"
+    if [[ -n "$p" ]]; then
+      local pfx="${p%/share/eigen3/cmake}"
+      pfx="${pfx%/lib*/cmake/eigen3}"
+      for inc in "$pfx/include/eigen3" "$pfx/include"; do
+        [[ -f "$inc/Eigen/Dense" ]] && { echo "$inc"; return; }
+      done
+    fi
+
+    # 3. FetchContent source directory recorded in cache
+    p="$(grep "^eigen_SOURCE_DIR:STATIC=" "$cache" 2>/dev/null | cut -d= -f2- | tr -d '\r')"
+    [[ -n "$p" && -f "$p/Eigen/Dense" ]] && { echo "$p"; return; }
+  fi
+
+  # 4. Standard FetchContent directory in krans build
+  if [[ -f "$kdir/build/_deps/eigen-src/Eigen/Dense" ]]; then
+    echo "$kdir/build/_deps/eigen-src"
+    return
+  fi
+}
+
 detect_eigen() {
-  local inc p
+  local inc p v val
+
+  # 1. Extract from sibling krans build if already configured
+  p="$(detect_eigen_from_krans)"
+  [[ -n "$p" && -f "$p/Eigen/Dense" ]] && { echo "$p"; return; }
+
+  # 2. Environment variables (HPC modules: module load eigen)
+  for v in EIGEN3_ROOT EIGEN_DIR EIGEN3_DIR EIGEN_ROOT EIGEN_INC EIGEN3_INCLUDE_DIR; do
+    eval "val=\${$v:-}"
+    if [[ -n "$val" ]]; then
+      [[ -f "$val/Eigen/Dense" ]] && { echo "$val"; return; }
+      [[ -f "$val/include/eigen3/Eigen/Dense" ]] && { echo "$val/include/eigen3"; return; }
+      [[ -f "$val/include/Eigen/Dense" ]] && { echo "$val/include"; return; }
+    fi
+  done
+
+  # 3. Auto-probe common HPC package paths (e.g. LSU HPC SuperMike/QueenBee)
+  for p in /usr/local/packages/eigen/*/*/include/eigen3 \
+           /usr/local/packages/eigen/*/include/eigen3 \
+           /usr/local/packages/eigen/*/*/include \
+           /usr/local/packages/eigen/*/include; do
+    [[ -f "$p/Eigen/Dense" ]] && { echo "$p"; return; }
+  done
+
+  # 4. pkg-config
   if have_pkgconfig && pkg-config --exists eigen3 2>/dev/null; then
     inc="$(pkg-config --variable=includedir eigen3 2>/dev/null)"
     [[ -n "$inc" && -f "$inc/eigen3/Eigen/Dense" ]] && { echo "$inc/eigen3"; return; }
     [[ -n "$inc" && -f "$inc/Eigen/Dense" ]] && { echo "$inc"; return; }
   fi
+
+  # 5. Standard system / Homebrew paths
   for p in "${BREW_EIGEN:+$BREW_EIGEN/include/eigen3}" \
            /opt/homebrew/opt/eigen/include/eigen3 /usr/include/eigen3 /usr/local/include/eigen3; do
     [[ -n "$p" && -f "$p/Eigen/Dense" ]] && { echo "$p"; return; }
   done
 }
+
 detect_fmt() {
   local inc p
   if have_pkgconfig && pkg-config --exists fmt 2>/dev/null; then
     inc="$(pkg-config --variable=includedir fmt 2>/dev/null)"
     [[ -n "$inc" && -f "$inc/fmt/core.h" ]] && { echo "${inc%/include}"; return; }
   fi
-  for p in "$BREW_FMT" /opt/homebrew/opt/fmt /usr/local /usr; do
+  for p in "$BREW_FMT" "$HOME/fmt" "$HOME/.local" /usr/local/packages/fmt/* /opt/homebrew/opt/fmt /usr/local /usr; do
     [[ -n "$p" && -f "$p/include/fmt/core.h" ]] && { echo "$p"; return; }
   done
 }
