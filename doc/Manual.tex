@@ -75,8 +75,8 @@
 \begin{abstract}
 \texttt{u3lib} is a C++ library for U(3)/SU(3) representation-theory
 calculations in nuclear structure and related applications. It evaluates
-Wigner coupling and Racah recoupling coefficients using the procedure of
-Dang \textit{et al.}, which avoids the binomial coefficients and alternating
+Wigner coupling and Racah recoupling coefficients using the procedure proposed in 2024
+by Dang \textit{et al.}, which avoids the binomial coefficients and alternating
 sums used in earlier formulations. The library also provides irreducible
 representations (irreps), dimensions, Casimir invariants, conjugation, and
 tensor-product decompositions with outer multiplicities. It supports the
@@ -694,7 +694,9 @@ The \verb|agents/| directory contains skills that guide an AI assistant through
 \texttt{u3lib} calculations. The catalog includes an index
 (\verb|agents/AGENTS.md|), shared runtime instructions, and a skill for each
 capability. Each skill specifies the inputs, library call, conventions, and a
-numerical check. An assistant with code-execution access uses these instructions
+numerical check. When an AI assistant with code-execution access enters the library
+and opens the \texttt{README.md} file, it is told to skip the rest of the file and 
+go directly to the \verb|agents/| directory and use those instructions
 to run the configured local library. The library calculations do not require a
 network service.
 
