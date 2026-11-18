@@ -10,7 +10,6 @@
 \usepackage{float}
 \usepackage{physics}
 \usepackage{comment}
-\usepackage{footnote}
 %\usepackage{url}
 
 %Add colors
@@ -24,6 +23,9 @@
 
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,linkcolor=red, citecolor=blue,  urlcolor=blue}
+\makeatletter
+\def\@yfootnote{\stepcounter\@mpfn\protected@xdef\@thefnmark{\thempfn}\@footnotemark}
+\makeatother
 
 \usepackage{listings}
 \usepackage{xcolor}
@@ -205,12 +207,13 @@ Department of Energy (DOE) Genesis Mission and its scientific agent skill
 catalog\footnote{See the DOE Genesis Mission skill catalog: \url{https://gitlab.osti.gov/genesis/genesis-skills}.}.
 We also evaluate whether this guidance improves task completion and
 reduces the resources needed to integrate the library, particularly as
-implementation complexity increases.
+implementation complexity increases. 
 
 The remainder of this paper documents the repository structure
 (Sec.~\ref{sec:structure}), the classes and interface (Sec.~\ref{sec:classes}),
 the Python bindings (Sec.~\ref{sec:python}), the AI-ready interface and its
-benchmark evaluation (Sec.~\ref{sec:agents}), and the installation (Sec.~\ref{sec:build}).
+benchmark evaluation (Sec.~\ref{sec:agents}), the installation (Sec.~\ref{sec:build})
+and a short summary (Sec.~\ref{sec:conclusion}).
 
 \section{Library structure}
 \label{sec:structure}
@@ -917,9 +920,13 @@ is used as a sibling checkout alongside \texttt{u3lib} rather than vendored unde
 \verb|external-libs/|; \verb|make config| clones it from the Deep-SANE
 organization and builds it in place when it is not already present. 
 
+\section{Conclusion}
+\label{sec:conclusion}
+
+In summary, we have presented \texttt{u3lib}, an open-source, header-only C++20 library with one-to-one Python bindings for $\rm U(3)$ symmetry algebra. Built on the generator-action and null-space procedure of Dang \textit{et al.}~\cite{Dang2024EPJP1} and paired with the iterative sparse solver \texttt{KraNS}~\cite{Krastenov2026MSc}, the framework evaluates canonical $\mathrm{U(3)}\supset\mathrm{U(2)}$ and physical $\mathrm{SU(3)}\supset\mathrm{SO(3)}$ coupling coefficients as well as 6- and 9-$\rm U(3)$ recoupling coefficients without the factorial-heavy alternating sums of traditional formulations. The library also provides irrep invariants, canonical Gelfand--Tsetlin and physical basis enumeration, generator matrix elements, basis transformations, and tensor-product decompositions. To support autonomous scientific workflows, the repository includes a structured catalog of domain skills that encode group-theoretical conventions, scratch-buffer lifetimes, and OpenMP thread-isolation rules for code-executing AI agents. Across 60 controlled benchmark runs spanning Python integration, C++ batch processing, and multi-threaded OpenMP execution, access to these skills raised task completion to 100\% while reducing mean token consumption by 44.2\%, wall-clock runtime by 33.1\%, and inference cost by 30.8\%, with the largest savings of 51.0\% in tokens and 40.5\% in runtime occurring on the concurrent C++ task. While three tasks on a single language model do not establish a universal scaling law and motivate broader evaluation across models and workloads, these results indicate that repository-local domain guidance becomes increasingly effective as implementation and concurrency constraints tighten. Within the broader \texttt{DeepSANE} ecosystem, \texttt{u3lib} provides the algebraic foundation for higher-rank extensions such as Wigner's $\rm U(4)$ supermultiplet library \texttt{u4lib} and symmetry-adapted \textit{ab initio} nuclear-structure framework \texttt{SAM}, while offering a reusable building block for $\rm U(3)$/$\rm SU(3)$ calculations in quantum information, condensed-matter physics, and lattice gauge theory.
 
 \begin{acknowledgments}
-This work is dedicated to the memory of J. P. Draayer, who passed on September 13, 2026 and whose pioneering contributions to algebraic computational nuclear physics through Elliott's $\rm SU(3)$ model, the Symplectic $\rm Sp(3,R)$ model, the \textit{ab initio} Symmetry-Adapted No-Core Shell Model, and his recent effort in Wigner's $\rm SU(4)$ model inspired this framework. The authors also gratefully acknowledge F. Pan and D. Kekejian for valuable discussions. PD was supported by the Institute of International Education through the Quad Fellowship, Louisiana State University, and Quantum CodeX. DL and TD were funded by Quantum CodeX.
+This work is dedicated to the memory of J. P. Draayer, who passed on September 13, 2026 and whose pioneering contributions to algebraic computational nuclear physics through Elliott's $\rm SU(3)$ model, the Symplectic $\rm Sp(3,R)$ model, the \textit{ab initio} Symmetry-Adapted No-Core Shell Model, and his recent effort in Wigner's $\rm SU(4)$ model inspired this framework. The authors also gratefully acknowledge F. Pan and D. Kekejian for valuable discussions. PD was supported by the Institute of International Education through the Quad Fellowship, Louisiana State University, and Quantum CodeX. DL and TD were funded by Quantum CodeX. This work was supported in part by complimentary access to \href{https://antigravity.google/use-cases/science}{Google Antigravity} and Gemini 4 Argon to accelerate scientific workflows.
 \end{acknowledgments}
 
 \begin{thebibliography}{99}
