@@ -6,7 +6,8 @@ matrix elements, basis transformations, tensor-product decompositions, and the
 **Wigner coupling** and **Racah recoupling** coefficients — exposed through a
 C++ API, Python bindings, and an agent-driven skill layer over all of it.
 
-- **Paper:** [Eur. Phys. J. Plus **139**, 704 (2024)](https://doi.org/10.1140/epjp/s13360-024-05501-8)
+- **Preprint:** [arXiv:2611.26558](https://arxiv.org/abs/2611.26558) — describes u3lib; see [Citing](#citing).
+- **Method paper:** [Eur. Phys. J. Plus **139**, 704 (2024)](https://doi.org/10.1140/epjp/s13360-024-05501-8) — the procedure u3lib uses for the coupling and recoupling coefficients.
 - **Manual:** [Manual (PDF)](https://deep-sane.github.io/u3lib/Manual.pdf), built automatically from the LaTeX source in `doc/Manual.tex`.
 
 > **Note for AI Agents:** Do not parse this human documentation. Refer directly to [agents/AGENTS.md](agents/AGENTS.md) for repository guidance, first-time build/installation, runtime lifecycle, and task-specific skills.
@@ -68,3 +69,45 @@ The agent resolves the steps through the repository-local [install skill](agents
 
 - **Full Reference Manual:** For exhaustive mathematical derivations, phase conventions, getter signatures, and solver backends, consult the [Manual (PDF)](https://deep-sane.github.io/u3lib/Manual.pdf).
 - **AI-Ready Calculations:** `u3lib` provides a repository-local skill package under [`agents/`](agents/AGENTS.md) that enables code-executing AI assistants to plan and drive calculations through natural-language prompts. A complete table of representative prompts with checked reference values is provided in **Table IV of the [Manual](https://deep-sane.github.io/u3lib/Manual.pdf)** as well as in [`agents/AGENTS.md`](agents/AGENTS.md).
+
+---
+
+## Citing
+
+If you use u3lib in your work, please cite the u3lib preprint:
+
+> D. Langr, P. Dang, T. Dytrych, M. Negro: **u3lib: An AI-Ready Computational Framework for
+> U(3) Symmetry Algebra, Wigner Coupling, and Racah Recoupling Coefficients.** arXiv:2611.26558
+> [nucl-th], 2026.
+> [doi:10.48550/arXiv.2611.26558](https://doi.org/10.48550/arXiv.2611.26558)
+
+If your results use the Wigner coupling or Racah recoupling coefficients, please also cite the
+paper that describes the procedure u3lib implements:
+
+> P. Dang, J. P. Draayer, F. Pan, K. S. Becker: **New procedure for evaluation of U(3) coupling and
+> recoupling coefficients.** Eur. Phys. J. Plus **139**, 704 (2024).
+> [doi:10.1140/epjp/s13360-024-05501-8](https://doi.org/10.1140/epjp/s13360-024-05501-8)
+
+```bibtex
+@misc{Langr2026u3lib,
+  author        = {Langr, Daniel and Dang, Phong and Dytrych, Tom{\'a}{\v{s}} and Negro, Michela},
+  title         = {u3lib: An {AI}-Ready Computational Framework for {U(3)} Symmetry Algebra,
+                   {Wigner} Coupling, and {Racah} Recoupling Coefficients},
+  year          = {2026},
+  eprint        = {2611.26558},
+  archivePrefix = {arXiv},
+  primaryClass  = {nucl-th},
+  doi           = {10.48550/arXiv.2611.26558},
+  url           = {https://arxiv.org/abs/2611.26558}
+}
+
+@article{Dang2024U3,
+  author  = {Dang, Phong and Draayer, Jerry P. and Pan, Feng and Becker, Kevin S.},
+  title   = {New procedure for evaluation of {U(3)} coupling and recoupling coefficients},
+  journal = {Eur. Phys. J. Plus},
+  volume  = {139},
+  pages   = {704},
+  year    = {2024},
+  doi     = {10.1140/epjp/s13360-024-05501-8}
+}
+```
